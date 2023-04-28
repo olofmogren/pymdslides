@@ -351,9 +351,9 @@ def render_latex_matplotlib(formula, x, y, text_color):
       img_invert = ImageOps.invert(baseline_img)
       box = img_invert.getbbox() # (left, upper, right, lower)
       baseline_offset = box[1] # distance from upper edge to top of b character in the 'base' test above.
-      baseline_f = tmp_f+'baseline.png'
-      baseline_img.save(baseline_f)
-      print('baseline_offset', baseline_offset, 'em', em)
+      #baseline_f = tmp_f+'baseline.png'
+      #baseline_img.save(baseline_f)
+      #print('baseline_offset', baseline_offset, 'em', em)
     #pdf.image(logo_path, x=page_width-30, y=page_height-35, w=24, h=30)
     pixel_per_mm = .17 # magical numbers that make the text align with the equations.
     arbitrary_image_margin_mm = 1
@@ -385,7 +385,7 @@ def render_latex_matplotlib(formula, x, y, text_color):
       img.save(tmp_f)
       
     pdf.image(tmp_f, x=x, y=y-y_offset, w=width_mm, h=height_mm)
-    #os.remove(tmp_f)
+    os.remove(tmp_f)
     #print(tmp_f)
     x += width_mm
     y += height_mm-y_offset # TODO: also give the y_offset space above the line
