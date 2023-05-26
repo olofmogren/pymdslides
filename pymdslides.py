@@ -11,6 +11,8 @@ from matplotlib import rcParams
 rcParams['text.usetex'] = True
 #import latextools
 import numpy as np
+from subprocess import Popen,PIPE
+from datetime import datetime
 
 import cairosvg
 from pdfrw import PdfReader, PdfWriter, PageMerge
@@ -1014,6 +1016,13 @@ def logo_watermark(pdf_file, logo_path):
   print('pdfrw writing', pdf_file)
   writer.write(pdf_file)
 
+def get_git_commit(script_home):
+  p = Popen(["/usr/bin/git","log","--pretty=format:\"%H\"","-1"], cwd=script_home, stdout=PIPE, stderr=PIPE)
+  res_out,res_err = p.communicate()
+  git_commit = res_out.decode()
+  print("{}: git commit: {}".format(datetime.today().strftime('%Y-%m-%d %H:%M:%S'), git_commit))
+  return git_commit
+
 if __name__ == "__main__":
   md_file = sys.argv[1]
   print('md_file:',md_file)
@@ -1035,11 +1044,15 @@ if __name__ == "__main__":
   pdf.set_font('Lato', '', 60)
   pdf.set_text_color(0,0,0)
 
+  #pdf.set_image_filter("FlatDecode")
   pdf.oversized_images = "DOWNSCALE"
+  print('pdf.oversized_images_ratio', pdf.oversized_images_ratio)
 
   layout = layouts[-1]
 
   vector_images = {}
+
+  document_title = ""
 
   with open(md_file, 'r') as f:
     md_contents = f.read()
@@ -1052,6 +1065,8 @@ if __name__ == "__main__":
   headlines_h2 = {}
   for line in md_contents.split('\n'):
     if line.startswith('#') and (len(line) <= 1 or line[1] != '#'):
+      if not document_title:
+        document_title = line[3:].strip()
       headlines.append(line[2:].strip())
     if line.startswith('##') and (len(line) <= 2 or line[2] != '#'):
       headlines_h2[len(headlines)-1] = line[3:].strip()
@@ -1116,13 +1131,26 @@ if __name__ == "__main__":
       content.append(line)
 
   print('generating page (last)')
-  if 'hidden' in formatting and formatting['hidden']:
+  if 'visibility' in formatting and formatting['visibility'] == 'hidden':
+    print('------------------------------------\n"visibility":"hidden" is deprecated. use "hidden": true instead.')
+    print('------------------------------------\nThis page is hidden. Will not generate pdf page.')
+    vector_images_page = []
+  elif 'hidden' in formatting and formatting['hidden']:
     print('------------------------------------\nThis page is hidden. Will not generate pdf page.')
   else:
     vector_images_page = dump_page_content_to_pdf(pdf, content, formatting, headlines, raster_images)
     print('------------------------------------')
   if len(vector_images_page) > 0:
      vector_images[pdf.pages_count-1] = vector_images_page
+
+
+  git_commit = get_git_commit(script_home)
+
+  pdf.set_title(document_title)
+  pdf.set_producer('pymdslides, git commit: '+git_commit+' https://github.com/olofmogren/pymdslides/')
+  pdf.set_creator('pymdslides, git commit: '+git_commit+' https://github.com/olofmogren/pymdslides/')
+  pdf.set_creation_date(datetime.now(datetime.utcnow().astimezone().tzinfo))
+
   print('writing pdf file:',pdf_file)
   pdf.output(pdf_file)
 
