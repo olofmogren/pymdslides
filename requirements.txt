@@ -1,4 +1,9 @@
 fpdf
 pdfrw
 cairosvg
+matplotlib
+yaml
+PIL
+numpy
+subprocess
 
