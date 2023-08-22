@@ -1,6 +1,10 @@
 # Slide1
 
-[//]: # ({"layout": "center", "packed_images": false, "crop_images": false})
+---
+layout: center
+packed_images: false
+crop_images: false
+---
 
 * layout: center
 * Three images
@@ -12,7 +16,10 @@
 
 # Image left
 
-[//]: # ({"layout": "image_left_half", "packed_images": true})
+---
+layout: image_left_half
+packed_images: true
+---
 
 * layout: image_left_half
 * packed_images: true
@@ -23,7 +30,11 @@
 
 # Image left small
 
-[//]: # ({"layout": "image_left_small", "packed_images": false, "crop_images": true})
+---
+layout: image_left_small
+packed_images: true
+crop_images: true
+---
 
 * layout: image_left_small
 * Another bullet
@@ -33,7 +44,10 @@
 
 # Image right
 
-[//]: # ({"layout": "image_right_half", "packed_images": true})
+---
+layout: image_right_half
+packed_images: true
+---
 
 * One bullet
 * Another bullet
@@ -43,7 +57,9 @@
 
 # Image right small
 
-[//]: # ({"layout": "image_right_small"})
+---
+layout: image_right_small
+---
 
 * One bullet
 * Another bullet
@@ -53,7 +69,10 @@
 
 # Center again, not cropping
 
-[//]: # ({"layout": "center", "crop_images": false})
+---
+layout: center
+crop_images: false
+---
 
 * One bullet
 * Another bullet
@@ -64,7 +83,10 @@
 
 # Image center
 
-[//]: # ({"layout": "image_center", "crop_images": true})
+---
+layout: image_center
+crop_images: true
+---
 
 * Default cropping
 * Another bullet
@@ -74,7 +96,13 @@
 
 # Image fill
 
-[//]: # ({"layout": "image_fill", "text_color": [0,0,140]})
+---
+layout: image_fill
+text_color:
+  - 0
+  - 0
+  - 140
+---
 
 * The image_fill layout puts image as background, with or without text.
 * Another bullet: $a = \frac{b}{c}$
@@ -84,13 +112,31 @@
 
 # Black slide
 
-[//]: # ({"background_color": [0,0,0], "text_color": [255,255,255]})
-
+---
+background_color:
+  - 0
+  - 0
+  - 0
+text_color:
+  - 255
+  - 255
+  - 255
+---
 * Only bullet
 
 # Latex and formatting
 
-[//]: # ({"layout": "center", "background_color": [255,255,255], "text_color": [0,0,0]})
+---
+background_color:
+- 255
+- 255
+- 255
+layout: center
+text_color:
+- 0
+- 0
+- 0
+---
 
 A bit *of italic*
 $a = \frac{b}{c}$
@@ -100,10 +146,20 @@ A text, following with a $\frac{formula}{divisor}$
 
 # Some more strangeness
 
-[//]: # ({"layout": "center", "background_color": [255,255,255], "text_color": [0,0,140]})
+---
+background_color:
+- 255
+- 255
+- 255
+layout: center
+text_color:
+- 0
+- 0
+- 140
+---
 
 $a = \left(\frac{\frac{\sum_i^N X_i^2}{y}}{c}\right)$
-* (link)[#Slide1]
+* (Link to page 1)[#Slide1]
 
 # Another formula
 
@@ -115,7 +171,10 @@ $a = \left(\frac{\frac{\sum_i^N X_i^2}{y}}{c}\right)$
 
 # Two column layout
 
-[//]: # ({"layout": "center", "columns": 2})
+---
+columns: 2
+layout: center
+---
 
 * First bullet
 * Second bullet
@@ -127,7 +186,11 @@ $a = \left(\frac{\frac{\sum_i^N X_i^2}{y}}{c}\right)$
 
 # Three column layout
 
-[//]: # ({"layout": "center", "columns": 3, "crop_images": false})
+---
+columns: 3
+crop_images: false
+layout: center
+---
 
 ![Neurons in space](neurons-in-space-explosion-detailed.jpg)
 ![Image alt text](testing_image.png)
@@ -148,12 +211,16 @@ $a = \left(\frac{\frac{\sum_i^N X_i^2}{y}}{c}\right)$
 
 # Thank you 
 
-[//]: # ({"layout": "image_right_half"})
+---
+layout: image_right_half
+---
 
 # Level four headlines
 ## create boxes
 
-[//]: # ({"layout": "image_right_half"})
+---
+layout: image_right_half
+---
 ![Image alt text](testing_image.png)
 
 &nbsp;
@@ -186,7 +253,9 @@ We can fill a page with boxes.
 
 # Images side-by-side
 
-[//]: # ({"layout": "image_fill"})
+---
+layout: image_fill
+---
 
 ![](testing_image.png)
 ![](neurons-in-space-explosion-detailed.jpg)
@@ -195,7 +264,9 @@ We can fill a page with boxes.
 
 #  
 
-[//]: # ({"layout": "center"})
+---
+layout: center
+---
 
 &nbsp;
 (Thank you!)[#Latex and formatting]

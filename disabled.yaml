@@ -1,0 +1,9 @@
+fonts:
+    font_file_standard: 'fonts/Lato-Regular.ttf'
+    font_file_standard_italic: 'fonts/Lato-Italic.ttf'
+    font_file_standard_bold: 'fonts/Lato-Bold.ttf'
+    font_file_standard_bolditalic: 'fonts/Lato-BolIta.ttf'
+    font_file_title: 'fonts/CodePro-Bold.ttf'
+    font_file_footer: 'fonts/RobotoMono-Regular.ttf'
+logo_path: 'rise.png'
+
