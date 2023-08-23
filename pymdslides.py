@@ -43,7 +43,7 @@ default_dimensions = {
         'margin_tiny_footer': 4,
 }
 
-def dump_page_content_to_pdf(pdf, content, formatting, headlines, raster_images):
+def dump_page_content_to_pdf(pdf, content, formatting, headlines, raster_images, md_file_stripped, line_number):
   print('--------------------------------------')
   pdf.add_page()
   #pdf.text(txt=content, markdown=True)
@@ -105,15 +105,15 @@ def dump_page_content_to_pdf(pdf, content, formatting, headlines, raster_images)
       l4_boxes.append(l4_lines)
       l4_subtitle = None
       l4_lines = []
-  return render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, formatting, headlines, raster_images)
+  return render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, formatting, headlines, raster_images, md_file_stripped, line_number)
 
-def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, formatting, headlines, raster_images):
-  print('rendering page',title)
+def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, formatting, headlines, raster_images, md_file_stripped, line_number):
+  print('{}:{}: rendering page "{}"'.format(md_file_stripped, line_number, title))
   lines = strip_lines(lines)
   vector_images = []
   text_color = default_text_color
   if 'text_color' in formatting:
-    print('text_color',formatting['text_color'])
+    print('{}:{}: text_color {}'.format(md_file_stripped, line_number, formatting['text_color']))
     text_color = formatting['text_color']
   #if 'background_color' in formatting and not same_color(formatting['background_color'], [255,255,255]):
   if 'background_color' not in formatting:
@@ -125,13 +125,13 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
 
   packed_images = True
   if 'background_image' in formatting:
-    print('background_image', formatting['background_image'])
+    print('{}:{}: background_image {}'.format(md_file_stripped, line_number, formatting['background_image']))
     vec_imgs = put_images_on_page([formatting['background_image']], [''], formatting['layout'], len(lines) > 0, packed_images, True, background=True, raster_images=raster_images)
     vector_images += vec_imgs
 
   if 'packed_images' in formatting and formatting['packed_images'] == False:
     packed_images = False
-  print('crop_images', formatting['crop_images'])
+  print('{}:{}: crop_images {}'.format(md_file_stripped, line_number, formatting['crop_images']))
   vec_imgs = put_images_on_page(images, alt_texts, formatting['layout'], len(lines) > 0, packed_images, formatting['crop_images'], background=False, raster_images=raster_images)
   vector_images += vec_imgs
   
@@ -181,11 +181,11 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
     #print('offsets:', column_offsets)
     #print('line:', line)
     if len(line) > 1 and line[0] == '|' and line[-1] == '|':
-      print('detected table', line)
+      print('{}:{}:detected table {}'.format(md_file_stripped, line_number, line))
       current_table.append(line[1:-1].split('|'))
       continue
     elif(len(current_table)):
-      print('rendering table')
+      print('{}:{}: rendering table'.format(md_file_stripped, line_number))
       x , y = render_table(current_table, x, y, column_offsets, headlines, text_color)
       current_table = []
     x, y = render_text_line(line, x, y, column_offsets, headlines, text_color, column_divider=column_divider)
@@ -200,12 +200,12 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
     pdf.text(txt=formatting['tiny_footer'], x=x, y=formatting['dimensions']['page_height']-formatting['dimensions']['margin_tiny_footer']) #, w=offsets['w'], align='L')
     pdf.set_text_color(text_color)
   elif(len(current_table)):
-    print('rendering table')
+    print('{}: {}: rendering table'.format(md_file_stripped, line_number))
     x , y = render_table(current_table, x, y, column_offsets, headlines, text_color)
     current_table = []
 
   if len(l4_boxes):
-    print('l4_boxes', l4_boxes)
+    print('{}:{}: l4_boxes: \n  {}'.format(md_file_stripped, line_number, yaml.dump(l4_boxes).replace('\n', '\n  ')))
   box_offsets_list = []
   for i,lines in enumerate(l4_boxes):
     box_width = int(.5*formatting['dimensions']['page_width'])
@@ -1061,6 +1061,7 @@ if __name__ == "__main__":
   md_file = sys.argv[1]
   print('md_file:',md_file)
   pdf_file = '.'.join(md_file.split('.')[:-1])+'.pdf'
+  md_file_stripped = md_file.split('/')[-1]
 
   raster_images = False
   if '--raster-images' in sys.argv:
@@ -1171,19 +1172,19 @@ if __name__ == "__main__":
 
         #pdf.set_image_filter("FlatDecode")
         pdf.oversized_images = "DOWNSCALE"
-        print('pdf.oversized_images_ratio', pdf.oversized_images_ratio)
+        print('{}:{}: pdf.oversized_images_ratio {}'.format(md_file_stripped, line_number, pdf.oversized_images_ratio))
       else:
-        print('generating page (#) {}'.format(page_number))
+        print('{}:{}: generating page (#) {}'.format(md_file_stripped, line_number, page_number))
         if 'visibility' in formatting and formatting['visibility'] == 'hidden':
-          print('------------------------------------\n"visibility":"hidden" is deprecated. use "hidden": true instead.')
-          print('------------------------------------\nThis page is hidden. Will not generate pdf page.')
+          print('------------------------------------\n"{}:{}: visibility":"hidden" is deprecated. use "hidden": true instead.'.format(md_file_stripped, line_number))
+          print('------------------------------------\n{}:{}: This page is hidden. Will not generate pdf page.'.format(md_file_stripped, line_number))
           vector_images_page = []
 
         elif 'hidden' in formatting and formatting['hidden']:
-          print('------------------------------------\nThis page is hidden. Will not generate pdf page.')
+          print('------------------------------------\n{}:{}: This page is hidden. Will not generate pdf page.'.format(md_file_stripped, line_number))
           vector_images_page = []
         else:
-          vector_images_page = dump_page_content_to_pdf(pdf, content, formatting, headlines, raster_images)
+          vector_images_page = dump_page_content_to_pdf(pdf, content, formatting, headlines, raster_images, md_file_stripped, line_number)
           page_number += 1
           print('------------------------------------')
         if len(vector_images_page) > 0:
@@ -1210,7 +1211,7 @@ if __name__ == "__main__":
       try:
         new_formatting = json.loads(current_comment)
         formatting.update(new_formatting)
-        print('Setting formatting',formatting)
+        print('{}:{}: Setting formatting from json syntax: \n  {}'.format(md_file_stripped, line_number, yaml.dump(formatting).replace('\n', '\n  ')))
       except Exception as e:
         #print('Ignoring markdown comment, not valid formatting information in json syntax: ',current_comment)
         #print(e)
@@ -1223,22 +1224,22 @@ if __name__ == "__main__":
       try:
         new_formatting = yaml.safe_load(current_yaml)
         formatting.update(new_formatting)
-        print('Setting formatting from Yaml syntax',formatting)
+        print('{}:{}: Setting formatting from Yaml syntax: \n  {}'.format(md_file_stripped, line_number, yaml.dump(formatting).replace('\n', '\n  ')))
       except Exception as e:
         #print(e)
         raise SyntaxError('Line '+str(line_number)+': Incorrect YAML formatting information: '+current_yaml+'\nMore information: '+str(e))
       current_yaml = '' # reset yaml. Next line is not a continuation of a comment.
 
 
-  print('generating page (last)')
+  print('{}:{}: generating page (last)'.format(md_file_stripped, line_number))
   if 'visibility' in formatting and formatting['visibility'] == 'hidden':
-    print('------------------------------------\n"visibility":"hidden" is deprecated. use "hidden": true instead.')
-    print('------------------------------------\nThis page is hidden. Will not generate pdf page.')
+    print('------------------------------------\n"{}:{}: visibility":"hidden" is deprecated. use "hidden": true instead.'.format(md_file_stripped, line_number))
+    print('------------------------------------\n{}:{}: This page is hidden. Will not generate pdf page.'.format(md_file_stripped, line_number))
     vector_images_page = []
   elif 'hidden' in formatting and formatting['hidden']:
-    print('------------------------------------\nThis page is hidden. Will not generate pdf page.')
+    print('------------------------------------\n{}:{}: This page is hidden. Will not generate pdf page.'.format(md_file_stripped, line_number))
   else:
-    vector_images_page = dump_page_content_to_pdf(pdf, content, formatting, headlines, raster_images)
+    vector_images_page = dump_page_content_to_pdf(pdf, content, formatting, headlines, raster_images, md_file_stripped, line_number)
     print('------------------------------------')
   if len(vector_images_page) > 0:
      vector_images[pdf.pages_count-1] = vector_images_page
