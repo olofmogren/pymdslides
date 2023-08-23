@@ -255,6 +255,10 @@ We can fill a page with boxes.
 
 ---
 layout: image_fill
+text_color:
+- 255
+- 100
+- 100
 ---
 
 ![](testing_image.png)

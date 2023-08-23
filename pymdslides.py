@@ -154,7 +154,7 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
     x_subtitle = x+formatting['dimensions']['em']
     y_subtitle = y-formatting['dimensions']['em_title']//2
     if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
-      pdf.set_font('font_title', '', formatting['dimensions']['font_size_title'])
+      pdf.set_font('font_title', '', formatting['dimensions']['font_size_subtitle'])
     else:
       pdf.set_font_size(formatting['dimensions']['font_size_subtitle'])
     pdf.set_xy(x_subtitle,y_subtitle)
@@ -172,7 +172,7 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
     column_offsets = offsets
     column_divider = False
     if 'columns' in formatting and formatting['columns'] > 1:
-      if len(line) > 2 and all([c == '-' for c in line]) and column < formatting['columns']-1:
+      if len(line) > 3 and all([c == '-' for c in line]) and column < formatting['columns']-1:
         column += 1
         column_offsets = get_column_offsets(offsets, formatting['columns'], column)
         column_divider = True
@@ -250,7 +250,7 @@ def strip_lines(lines):
   divisions = []
   divisors = []
   for i,line in enumerate(lines):
-    if len(line) > 2 and all([c == '-' for c in line]):
+    if len(line) > 3 and all([c == '-' for c in line]):
       # new column/divider
       if len(divisors) > 0:
         divisions.append(lines[divisors[-1]+1:i])
@@ -323,7 +323,7 @@ def render_text_line(line, x, y, offsets, headlines, text_color, column_divider=
     if len(line) == 0:
       #print('empty line!')
       y += int(0.5*formatting['dimensions']['em'])
-    elif len(line) > 2 and all([c == '-' for c in line]):
+    elif len(line) > 3 and all([c == '-' for c in line]):
       pdf.set_line_width(0.5)
       pdf.set_draw_color(160,160,160)
       if column_divider:
@@ -1102,7 +1102,6 @@ if __name__ == "__main__":
     if headlines[i] == '' and i in headlines_h2:
       headlines[i] = headlines_h2[i]
   current_yaml = ''
-  current_comment = ''
   page_number = 0
   for line_number,line in enumerate(md_contents.split('\n')):
     #print(line)
@@ -1123,11 +1122,6 @@ if __name__ == "__main__":
       # this line contains a continuation of yaml content. Parsing later.
       current_yaml += '\n'+line
       #print('current_yaml',current_yaml)
-    elif current_comment:
-      # This code is DEPRECATED.
-      # this line contains a continuation of commented content. Parsing later.
-      current_comment += line
-      #print('current_comment',current_comment)
     elif line.startswith('# '):
       if preamble:
           # formatting from preamble is global for whole document:
@@ -1193,31 +1187,12 @@ if __name__ == "__main__":
         formatting = global_formatting.copy()
       content = [line]
       #current_headline = line[2:]
-    elif line.startswith('[//]: # ('):
-      # This code is DEPRECATED.
-      # this line contains commented content. Parsing later.
-      current_comment = line[9:]
-      #print('current_comment',current_comment)
     elif line == '---':
       # this line begins yaml content. Parsing later.
       current_yaml = line
       #print('current_yaml',current_yaml)
     else:
       content.append(line)
-    if current_comment and current_comment[-1] == ')':
-      # This code is DEPRECATED.
-      # this and possibly preceding lines has contained commented content. Parse formatting json:
-      current_comment = current_comment[:-1] # remove last parenthesis (markdown syntax)
-      try:
-        new_formatting = json.loads(current_comment)
-        formatting.update(new_formatting)
-        print('{}:{}: Setting formatting from json syntax: \n  {}'.format(md_file_stripped, line_number, yaml.dump(formatting).replace('\n', '\n  ')))
-      except Exception as e:
-        #print('Ignoring markdown comment, not valid formatting information in json syntax: ',current_comment)
-        #print(e)
-        raise SyntaxError('Line '+str(line_number)+': Incorrect json style formatting information: '+current_comment+'\nMore information: '+str(e))
-      current_comment = '' # reset comment. Next line is not a continuation of a comment.
-      print('Json formatting is deprecated. The old syntax with markdown comments: [//]: # (json). Instead, use Yaml syntax.')
     if len(current_yaml) > 3 and current_yaml[-3:] == '---':
       # this and possibly preceding lines has contained yaml content. Parse formatting yaml:
       current_yaml = current_yaml[3:-3] # remove beginning and ending three dashes (syntax)
@@ -1228,7 +1203,7 @@ if __name__ == "__main__":
       except Exception as e:
         #print(e)
         raise SyntaxError('Line '+str(line_number)+': Incorrect YAML formatting information: '+current_yaml+'\nMore information: '+str(e))
-      current_yaml = '' # reset yaml. Next line is not a continuation of a comment.
+      current_yaml = '' # reset yaml. Next line is not a continuation of a yaml configuration.
 
 
   print('{}:{}: generating page (last)'.format(md_file_stripped, line_number))
