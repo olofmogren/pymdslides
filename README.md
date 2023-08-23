@@ -1,6 +1,6 @@
 # pymdslides
 
-Script to generate PDF slides from markdown input. Can be configured with custom fonts and has a number of built in layouts. Supports latex via matplotlib.
+Script to generate PDF slides from markdown input. Can be configured with custom fonts and has a number of built in layouts. Supports latex via matplotlib. pymdslides is built around pyfpdf. For other dependencies, look at dependencies.txt.
 
 Level 1 headlines generates a new page. Each document can have a configuration inside a yaml section, and each page can have one specific configuration which is specified insida a yaml section after the headline.
 
