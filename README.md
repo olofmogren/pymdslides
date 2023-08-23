@@ -4,5 +4,5 @@ Script to generate PDF slides from markdown input. Can be configured with custom
 
 Level 1 headlines generates a new page. Each document can have a configuration inside a yaml section, and each page can have one specific configuration which is specified insida a yaml section after the headline.
 
-See example documents for guidance on usage.
+See example documents and default_config.yaml for guidance on usage. The configuration should be put in a file called config.yaml in the same directory as pymdslides.py to be effective.
 
