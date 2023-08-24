@@ -19,6 +19,9 @@ from pdfrw import PdfReader, PdfWriter, PageMerge
 from pdfrw.pagemerge import RectXObj
 import shutil
 import yaml
+import copy
+from markdown_it import MarkdownIt
+from mdit_plain.renderer import RendererPlain
 
 
 layouts = ['image_left_half', 'image_left_small', 'image_right_half', 'image_right_small', 'center', 'image_center', 'image_fill']
@@ -146,8 +149,15 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
     pdf.set_font('font_title', '', formatting['dimensions']['font_size_title'])
   else:
     pdf.set_font_size(formatting['dimensions']['font_size_title'])
+  # CENTERING TITLE:
+  if formatting['layout'] == 'center':
+    width = pdf.get_string_width(title)
+    centering_offset = round((offsets['w']-width)/2)
+    print('title_width',width,x,centering_offset)
+    x = x+centering_offset
   pdf.set_xy(x,y)
   pdf.text(txt=title, x=x, y=y)#, w=offsets['w'])
+  x = offsets['x0']
   y += formatting['dimensions']['em_title']
 
   if subtitle:
@@ -157,8 +167,17 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
       pdf.set_font('font_title', '', formatting['dimensions']['font_size_subtitle'])
     else:
       pdf.set_font_size(formatting['dimensions']['font_size_subtitle'])
+    # CENTERING SUBTITLE:
+    if formatting['layout'] == 'center':
+      x_subtitle = x
+      width = pdf.get_string_width(subtitle)
+      centering_offset = round((offsets['w']-width)/2)
+      print('subtitle_width',width,x,centering_offset)
+      x_subtitle = x_subtitle+centering_offset
     pdf.set_xy(x_subtitle,y_subtitle)
     pdf.text(txt=subtitle, x=x_subtitle, y=y_subtitle)#, w=offsets['w'])
+  x = offsets['x0']
+  y += formatting['dimensions']['em_title']
 
   offsets = get_offsets_for_text(formatting['layout'], images=(len(images) > 0))
   column_offsets = offsets
@@ -169,7 +188,7 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
   column = 0
   current_table = []
   for line in lines:
-    column_offsets = offsets
+    #column_offsets = offsets
     column_divider = False
     if 'columns' in formatting and formatting['columns'] > 1:
       if len(line) > 3 and all([c == '-' for c in line]) and column < formatting['columns']-1:
@@ -188,7 +207,8 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
       print('{}:{}: rendering table'.format(md_file_stripped, line_number))
       x , y = render_table(current_table, x, y, column_offsets, headlines, text_color)
       current_table = []
-    x, y = render_text_line(line, x, y, column_offsets, headlines, text_color, column_divider=column_divider)
+    #print('column_offsets',column_offsets)
+    x, y = position_and_render_text_line(line, x, y, column_offsets, headlines, text_color, formatting, column_divider=column_divider)
   if 'tiny_footer' in formatting:
     pdf.set_text_color(formatting.get('tiny_footer_color', default_tiny_footer_color))
     if 'fonts' in formatting and 'font_file_footer' in formatting['fonts']:
@@ -230,7 +250,7 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
     x = box_offsets['x0']+formatting['dimensions']['internal_margin']
     y = box_offsets['y0']+formatting['dimensions']['internal_margin']
     for line in lines:
-      x, y = render_text_line(line, x, y, box_offsets, headlines, text_color, column_divider=False)
+      x, y = position_and_render_text_line(line, x, y, box_offsets, headlines, text_color, formatting, column_divider=False)
   return vector_images
 
 def no_text(lines):
@@ -303,14 +323,30 @@ def get_column_offsets(offsets, num_columns, column):
   column_offsets['w'] = column_width_excl_margin
   return column_offsets
 
+def position_and_render_text_line(line, x, y, offsets, headlines, text_color, formatting, column_divider=False):
+  origin_x = x
+  if formatting['layout'] == 'center':
+    # CENTERING LINE:
+    width = get_text_line_width(line, x, y, offsets, headlines, text_color, column_divider)
+    print('centering',offsets)
+    print('width', width)
+    centering_offset = round((offsets['w']-width)/2)
+    print('centering_offset', centering_offset)
+    x = x+centering_offset
+  x, y, width = render_text_line(line, x, y, offsets, headlines, text_color, column_divider)
+  x = origin_x
+  return x, y
+    
 def render_text_line(line, x, y, offsets, headlines, text_color, column_divider=False):
     #print('line:',line)
     origin_x = x
     origin_y = y
+    print(offsets)
+    width = offsets['w']
     pdf.set_xy(x,y)
     if pdf.will_page_break(formatting['dimensions']['em']):
       print('line will overflow the page. not including in PDF!!!',line)
-      return x,y
+      return x,y,0
     if line.startswith('###') and (len(line) <= 3 or line[3] != '#'):
         line = '**'+line[4:]+'**'
     latex_sections = get_latex_sections(line)
@@ -345,7 +381,7 @@ def render_text_line(line, x, y, offsets, headlines, text_color, column_divider=
           heights.append(formatting['dimensions']['em'])
         if tag[2] == 'latex':
           formula = line[tag[0]:tag[1]]
-          x, new_y = render_latex(formula, x, y, text_color)
+          x, new_y, latex_width = render_latex(formula, x, y, text_color)
           heights.append(new_y-origin_y)
         else: # internal link
           #print('line', line)
@@ -360,8 +396,55 @@ def render_text_line(line, x, y, offsets, headlines, text_color, column_divider=
         heights.append(formatting['dimensions']['em'])
         heights.append(new_y-origin_y)
       y = origin_y + max(heights)
+      width = x-origin_x
       #print('y', origin_y, y)
-    return origin_x, y
+    return origin_x, y, width
+
+def get_text_line_width(line, x, y, offsets, headlines, text_color, column_divider=False):
+    print(offsets)
+    width = offsets['w']
+    if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
+      pdf.set_font('font_standard', '', formatting['dimensions']['font_size_standard'])
+    else:
+      pdf.set_font_size(formatting['dimensions']['font_size_standard'])
+    if pdf.will_page_break(formatting['dimensions']['em']):
+      print('line will overflow the page. not including in PDF!!!',line)
+      return width
+    if line.startswith('###') and (len(line) <= 3 or line[3] != '#'):
+        line = '**'+line[4:]+'**'
+    latex_sections = get_latex_sections(line)
+    internal_links = get_internal_links(line)
+    merged = latex_sections+internal_links
+    merged = sorted(merged, key=lambda x: x[0])
+    if len(line) == 0:
+      y += int(0.5*formatting['dimensions']['em'])
+    elif len(line) > 3 and all([c == '-' for c in line]):
+      return width
+    else:
+      new_widths = []
+      pos = 0
+      for tag in merged:
+        if tag[0] > pos:
+          pre_tag = line[pos:tag[0]-1]
+          new_widths.append(pdf.get_string_width(markdown_to_text(pre_tag)))
+          print('pretag width',new_widths[-1],'('+pre_tag+')')
+        if tag[2] == 'latex':
+          formula = line[tag[0]:tag[1]]
+          x, new_y, latex_width = render_latex(formula, x, y, text_color, dummy_render=True)
+          new_widths.append(latex_width)
+          print('latex width',new_widths[-1],'('+formula+')')
+        else: # internal link
+          link = line[tag[0]:tag[1]+1]
+          splitted = link.split(')[#')
+          link_text = splitted[0][1:]
+          new_widths.append(pdf.get_string_width(link_text))
+          print('link width',new_widths[-1],'('+link_text+')')
+        pos = tag[1]+1
+      if pos < len(line):
+        new_widths.append(pdf.get_string_width(markdown_to_text(line[pos:])))
+        print('last part width',new_widths[-1],'('+line[pos:]+')')
+    print('sum',sum(new_widths))
+    return sum(new_widths)
 
 def render_table(table, x, y, offsets, headlines, text_color, column_divider=False):
   print('table:',table)
@@ -401,6 +484,7 @@ def render_part_of_line(part, x, y):
 
 def render_internal_link(link, x, y, headlines):
   #print(link)
+  x_origin = x
   link = link.replace('&nbsp;', ' ')
   splitted = link.split(')[#')
   link_text = splitted[0][1:]
@@ -418,8 +502,8 @@ def render_internal_link(link, x, y, headlines):
   x = pdf.get_x()
   return x, y
 
-def render_latex(formula, x, y, text_color):
-  return render_latex_matplotlib(formula, x, y, text_color)
+def render_latex(formula, x, y, text_color, dummy_render=False):
+  return render_latex_matplotlib(formula, x, y, text_color, dummy_render=dummy_render)
 
 def render_latex_latextools(formula, x, y):
     # seems impossible to import svg or pdf!
@@ -442,9 +526,9 @@ def render_latex_latextools(formula, x, y):
     #pdf.template(tmp_f, x=x, y=y, w=60, h=formatting['dimensions']['em'])
     x += width_mm
     y += height_mm-y_offset # TODO: also give the y_offset space above the line
-    return x,y
+    return x, y, width_mm
 
-def render_latex_matplotlib(formula, x, y, text_color):
+def render_latex_matplotlib(formula, x, y, text_color, dummy_render=False):
     formula = '$base~'+formula+'$'
     #print('formula', formula)
     # Latex!
@@ -500,32 +584,33 @@ def render_latex_matplotlib(formula, x, y, text_color):
     y_offset = baseline_offset_mm+arbitrary_image_margin_mm
     print('y_offset', y_offset)
 
-    # adding alpha channel, so we can have background images in pdf.
-    with Image.open(tmp_f) as img:
-      img_alpha = ImageOps.invert(ImageOps.grayscale(img))
-      #print(img_alpha)
-      # making it all black behind the alpha map, white elsewhere. Then it should be readable without alpha map if neccessary anytime, and we don't get any white or gray pixels mixed in.
-      white_area = np.array(img)==255
-      white_area = white_area.astype(np.uint8)*255
-      #print(white_area)
-      img = Image.fromarray(white_area)
-      img.putalpha(img_alpha)
-    img.save(tmp_f)
-
-    if text_color[0] != 0 or text_color[1] != 0 or text_color[2] != 0:
+    if not dummy_render:
+      # adding alpha channel, so we can have background images in pdf.
       with Image.open(tmp_f) as img:
-        img = img.convert("L")
-        img = ImageOps.colorize(img, black=text_color, white=[255,255,255])
+        img_alpha = ImageOps.invert(ImageOps.grayscale(img))
+        #print(img_alpha)
+        # making it all black behind the alpha map, white elsewhere. Then it should be readable without alpha map if neccessary anytime, and we don't get any white or gray pixels mixed in.
+        white_area = np.array(img)==255
+        white_area = white_area.astype(np.uint8)*255
+        #print(white_area)
+        img = Image.fromarray(white_area)
         img.putalpha(img_alpha)
       img.save(tmp_f)
+
+      if text_color[0] != 0 or text_color[1] != 0 or text_color[2] != 0:
+        with Image.open(tmp_f) as img:
+          img = img.convert("L")
+          img = ImageOps.colorize(img, black=text_color, white=[255,255,255])
+          img.putalpha(img_alpha)
+        img.save(tmp_f)
       
-    pdf.image(tmp_f, x=x, y=y-y_offset, w=width_mm, h=height_mm)
-    print('remove(',tmp_f,')')
-    os.remove(tmp_f)
+      pdf.image(tmp_f, x=x, y=y-y_offset, w=width_mm, h=height_mm)
+      print('remove(',tmp_f,')')
+      os.remove(tmp_f)
     #print(tmp_f)
     x += width_mm
     y += height_mm-y_offset # TODO: also give the y_offset space above the line
-    return x,y
+    return x,y,width_mm
 
 
 def get_latex_sections(line):
@@ -1036,6 +1121,7 @@ def logo_watermark(pdf_file, logo_path):
   writer.pagearray = reader.Root.Pages.Kids
 
   pdf = FPDF(orientation = 'P', unit = 'mm', format = (formatting['dimensions']['page_width'], formatting['dimensions']['page_height'])) # 16:9
+  pdf = FPDF(orientation = 'P', unit = 'mm', format = (formatting['dimensions']['page_width'], formatting['dimensions']['page_height'])) # 16:9
   pdf.add_page()
   logo_width=23
   logo_height=30
@@ -1056,6 +1142,10 @@ def get_git_commit(script_home):
   git_commit = res_out.decode()
   print("{}: git commit: {}".format(datetime.today().strftime('%Y-%m-%d %H:%M:%S'), git_commit))
   return git_commit
+
+def markdown_to_text(md_data):
+  parser = MarkdownIt(renderer_cls=RendererPlain)
+  return parser.render(md_data)
 
 if __name__ == "__main__":
   md_file = sys.argv[1]
@@ -1199,7 +1289,7 @@ if __name__ == "__main__":
       try:
         new_formatting = yaml.safe_load(current_yaml)
         formatting.update(new_formatting)
-        print('{}:{}: Setting formatting from Yaml syntax: \n  {}'.format(md_file_stripped, line_number, yaml.dump(formatting).replace('\n', '\n  ')))
+        print('{}:{}: Updating formatting from Yaml syntax: \n  {}'.format(md_file_stripped, line_number, current_yaml.replace('\n', '\n  ')))
       except Exception as e:
         #print(e)
         raise SyntaxError('Line '+str(line_number)+': Incorrect YAML formatting information: '+current_yaml+'\nMore information: '+str(e))

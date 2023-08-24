@@ -6,4 +6,6 @@ yaml
 PIL
 numpy
 subprocess
+markdown-it-py
+mdit_plain
 

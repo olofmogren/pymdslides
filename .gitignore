@@ -4,5 +4,6 @@ fonts
 .swp
 config.yaml
 rise.png
+rise.yaml
 .*
 
