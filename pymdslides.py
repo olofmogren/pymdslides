@@ -341,7 +341,7 @@ def render_text_line(line, x, y, offsets, headlines, text_color, column_divider=
     #print('line:',line)
     origin_x = x
     origin_y = y
-    print(offsets)
+    #print(offsets)
     width = offsets['w']
     pdf.set_xy(x,y)
     if pdf.will_page_break(formatting['dimensions']['em']):
@@ -401,7 +401,7 @@ def render_text_line(line, x, y, offsets, headlines, text_color, column_divider=
     return origin_x, y, width
 
 def get_text_line_width(line, x, y, offsets, headlines, text_color, column_divider=False):
-    print(offsets)
+    #print(offsets)
     width = offsets['w']
     if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
       pdf.set_font('font_standard', '', formatting['dimensions']['font_size_standard'])
@@ -427,23 +427,23 @@ def get_text_line_width(line, x, y, offsets, headlines, text_color, column_divid
         if tag[0] > pos:
           pre_tag = line[pos:tag[0]-1]
           new_widths.append(pdf.get_string_width(markdown_to_text(pre_tag)))
-          print('pretag width',new_widths[-1],'('+pre_tag+')')
+          #print('pretag width',new_widths[-1],'('+pre_tag+')')
         if tag[2] == 'latex':
           formula = line[tag[0]:tag[1]]
-          x, new_y, latex_width = render_latex(formula, x, y, text_color, dummy_render=True)
+          x, new_y, latex_width = render_latex(formula, x, y, text_color, dry_run=True)
           new_widths.append(latex_width)
-          print('latex width',new_widths[-1],'('+formula+')')
+          #print('latex width',new_widths[-1],'('+formula+')')
         else: # internal link
           link = line[tag[0]:tag[1]+1]
           splitted = link.split(')[#')
           link_text = splitted[0][1:]
           new_widths.append(pdf.get_string_width(link_text))
-          print('link width',new_widths[-1],'('+link_text+')')
+          #print('link width',new_widths[-1],'('+link_text+')')
         pos = tag[1]+1
       if pos < len(line):
         new_widths.append(pdf.get_string_width(markdown_to_text(line[pos:])))
-        print('last part width',new_widths[-1],'('+line[pos:]+')')
-    print('sum',sum(new_widths))
+        #print('last part width',new_widths[-1],'('+line[pos:]+')')
+    #print('sum',sum(new_widths))
     return sum(new_widths)
 
 def render_table(table, x, y, offsets, headlines, text_color, column_divider=False):
@@ -502,8 +502,8 @@ def render_internal_link(link, x, y, headlines):
   x = pdf.get_x()
   return x, y
 
-def render_latex(formula, x, y, text_color, dummy_render=False):
-  return render_latex_matplotlib(formula, x, y, text_color, dummy_render=dummy_render)
+def render_latex(formula, x, y, text_color, dry_run=False):
+  return render_latex_matplotlib(formula, x, y, text_color, dry_run=dry_run)
 
 def render_latex_latextools(formula, x, y):
     # seems impossible to import svg or pdf!
@@ -512,7 +512,7 @@ def render_latex_latextools(formula, x, y):
     # Latex!
     latex_eq = latextools.render_snippet(formula, commands=[latextools.cmd.all_math])
     #svg_eq = latex_eq.as_svg()
-    tmp_f = '/tmp/pymdslides_temp_file'
+    tmp_f = '/tmp/pymdslides_tmp_file'
     latex_eq.save(tmp_f+'pdf')
     pdf.rasterize(tmp_f+'.png')
     #svg_eq.save(tmp_f)
@@ -528,7 +528,7 @@ def render_latex_latextools(formula, x, y):
     y += height_mm-y_offset # TODO: also give the y_offset space above the line
     return x, y, width_mm
 
-def render_latex_matplotlib(formula, x, y, text_color, dummy_render=False):
+def render_latex_matplotlib(formula, x, y, text_color, dry_run=False):
     formula = '$base~'+formula+'$'
     #print('formula', formula)
     # Latex!
@@ -544,7 +544,7 @@ def render_latex_matplotlib(formula, x, y, text_color, dummy_render=False):
     #plt.xlim([-1.0, 1.0])
     #plt.ylim([-1.0, 1.0])
     image_format = 'PNG'
-    tmp_f = '/tmp/pymdslides_temp_file'
+    tmp_f = '/tmp/pymdslides_tmp_file'
     tmp_f += '-'+str(time.time())+'.'+image_format.lower()
     fig.savefig(tmp_f, dpi=560)
     with Image.open(tmp_f) as img:
@@ -584,7 +584,7 @@ def render_latex_matplotlib(formula, x, y, text_color, dummy_render=False):
     y_offset = baseline_offset_mm+arbitrary_image_margin_mm
     print('y_offset', y_offset)
 
-    if not dummy_render:
+    if not dry_run:
       # adding alpha channel, so we can have background images in pdf.
       with Image.open(tmp_f) as img:
         img_alpha = ImageOps.invert(ImageOps.grayscale(img))
@@ -705,11 +705,12 @@ def put_images_on_page(images, alt_texts, layout, has_text, packed_images, crop_
       #print('background location', locations)
     else:
       locations = get_images_locations(page_images, layout, has_text, packed_images, cred=False)
+      print('locations',locations)
     for image,location in zip(page_images,locations):
       image_to_display = image
       if is_vector_format(image):
         if raster_images:
-          tmp_f = '/tmp/pymdslides_temp_file'
+          tmp_f = '/tmp/pymdslides_tmp_file'
           tmp_f += '-'+str(time.time())+'.png'
           input_file = image.split('#')[0]
           page_no = '0'
@@ -726,20 +727,32 @@ def put_images_on_page(images, alt_texts, layout, has_text, packed_images, crop_
         if crop_images:
           #image_to_display_2 = get_cropped_image_file(image_to_display, location)
           #if image_to_display_2 != image_to_display and image_to_display != image:
-          #  # remove first temp file:
+          #  # remove first tmp file:
           #  print('remove(',image_to_display,')')
           #  os.remove(image_to_display)
           #image_to_display = image_to_display_2
           viewpoint = location
           location = get_cropped_location(image_to_display, location)
           with pdf.rect_clip(x=viewpoint['x0'], y=viewpoint['y0'], w=viewpoint['w'], h=viewpoint['h']):
+            #print('putting cropped image',image_to_display)
             pdf.image(image_to_display, x=location['x0'], y = location['y0'], w = location['w'], h = location['h'], type = '', link = '')
         else:
           #image_to_display = image
           location = get_uncropped_location(image_to_display, location)
+          if image_to_display[-4:] == '.jpg' or image_to_display[-5:] == '.jpeg':
+            tmp_f = '/tmp/pymdslides_tmp_file'
+            tmp_f += '-'+str(time.time())+'.jpg'
+            while os.path.exists(tmp_f):
+              tmp_f = '/tmp/pymdslides_tmp_file'
+              tmp_f += '-'+str(time.time())+'.jpg'
+            #print('workaround jpg image',image_to_display,'copied to',tmp_f)
+            shutil.copyfile(image_to_display, tmp_f)
+            image_to_display = tmp_f
+
+          #print('putting uncropped image',image_to_display)
           pdf.image(image_to_display, x=location['x0'], y = location['y0'], w = location['w'], h = location['h'], type = '', link = '')
         if image_to_display != image:
-          # tempfile
+          # tmpfile
           print('remove(',image_to_display,')')
           os.remove(image_to_display)
 
@@ -809,7 +822,7 @@ def get_cropped_location(image, location):
 
 def get_cropped_image_file(image, location):
   # fix crop:
-  tmp_f = '/tmp/pymdslides_temp_file'
+  tmp_f = '/tmp/pymdslides_tmp_file'
   with Image.open(image) as img:
     if img.width < 10 or img.height < 10:
       img = img.resize((img.width*10, img.height*10))
@@ -982,7 +995,7 @@ def put_vector_images_on_pdf_with_crop(pdf_file, vector_images, crop_images):
         image_pageno = 0
         if len(splits) > 1:
           image_pageno = int(splits[1])
-        image_file_pdf = '/tmp/pymdslides_temp_file'
+        image_file_pdf = '/tmp/pymdslides_tmp_file'
         image_file_pdf += '-'+str(time.time())+'.pdf'
         if image_file[-3:] == 'svg':
           cairosvg.svg2pdf(url=image_file, write_to=image_file_pdf)
@@ -1067,7 +1080,7 @@ def put_vector_images_on_pdf(pdf_file, vector_images, crop_images):
         image_pageno = 0
         if len(splits) > 1:
           image_pageno = int(splits[1])
-        image_file_pdf = '/tmp/pymdslides_temp_file'
+        image_file_pdf = '/tmp/pymdslides_tmp_file'
         image_file_pdf += '-'+str(time.time())+'.pdf'
         if image_file[-3:] == 'svg':
           cairosvg.svg2pdf(url=image_file, write_to=image_file_pdf)

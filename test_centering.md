@@ -1,3 +1,7 @@
+---
+layout: image_right_half
+---
+
 # Slide1
 ## Subtitle
 
@@ -35,5 +39,21 @@ And **a bold thing**, too.
 Testing [linking](to_some_target), too.
 Testing linking, too.
 A text, following with a $\frac{formula}{divisor}$
+
+# Images side-by-side
+
+---
+hidden: false
+layout: image_fill
+text_color:
+- 255
+- 100
+- 100
+---
+
+![](testing_image.png)
+![](neurons-in-space-explosion-detailed.jpg)
+
+&nbsp;
 
 
