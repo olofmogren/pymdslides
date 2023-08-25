@@ -30,6 +30,8 @@ default_text_color= [0,0,0]
 default_layout = 'center'
 default_crop = True
 default_tiny_footer_color= [128,128,128]
+default_l4_box_border_color = 200
+default_l4_box_fill_color = [230,240,255]
 default_dimensions = {
         'page_width': 480,
         'page_height': 270,
@@ -242,8 +244,8 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
     box_offsets_list[i]['y0'] = box_offsets_list[i]['y0']-y_offset
 
   for i,(lines,box_offsets) in enumerate(zip(l4_boxes,box_offsets_list)):
-    pdf.set_draw_color(200)
-    pdf.set_fill_color((230,240,255))
+    pdf.set_draw_color(formatting.get('l4_box_border_color', default_l4_box_border_color))
+    pdf.set_fill_color(formatting.get('l4_box_fill_color', default_l4_box_fill_color))
     with pdf.local_context(fill_opacity=0.75, stroke_opacity=0.75):
       pdf.rect(box_offsets['x0'], box_offsets['y0'], box_offsets['w'], box_offsets['h'], round_corners=True, style="DF", corner_radius=10)
     #print('pdf.rect(',box_offsets['x0'], box_offsets['y0'], box_offsets['w'], box_offsets['h'], 'round_corners=True', 'style="D"',')')
@@ -328,7 +330,7 @@ def position_and_render_text_line(line, x, y, offsets, headlines, text_color, fo
   if formatting['layout'] == 'center':
     # CENTERING LINE:
     width = get_text_line_width(line, x, y, offsets, headlines, text_color, column_divider)
-    print('centering',offsets)
+    #print('centering',offsets)
     print('width', width)
     centering_offset = round((offsets['w']-width)/2)
     print('centering_offset', centering_offset)
@@ -402,6 +404,7 @@ def render_text_line(line, x, y, offsets, headlines, text_color, column_divider=
 
 def get_text_line_width(line, x, y, offsets, headlines, text_color, column_divider=False):
     #print(offsets)
+    #print('line', line, len(line))
     width = offsets['w']
     if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
       pdf.set_font('font_standard', '', formatting['dimensions']['font_size_standard'])
@@ -417,7 +420,7 @@ def get_text_line_width(line, x, y, offsets, headlines, text_color, column_divid
     merged = latex_sections+internal_links
     merged = sorted(merged, key=lambda x: x[0])
     if len(line) == 0:
-      y += int(0.5*formatting['dimensions']['em'])
+      return width
     elif len(line) > 3 and all([c == '-' for c in line]):
       return width
     else:
