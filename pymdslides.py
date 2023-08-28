@@ -3,7 +3,7 @@
 import os
 
 from fpdf import FPDF
-import sys,json,math,time,re
+import sys,math,time,re
 from PIL import Image, ImageOps
 import matplotlib
 import matplotlib.pyplot as plt
@@ -1304,8 +1304,11 @@ if __name__ == "__main__":
       current_yaml = current_yaml[3:-3] # remove beginning and ending three dashes (syntax)
       try:
         new_formatting = yaml.safe_load(current_yaml)
-        formatting.update(new_formatting)
-        print('{}:{}: Updating formatting from Yaml syntax: \n  {}'.format(md_file_stripped, line_number, current_yaml.replace('\n', '\n  ')))
+        if new_formatting is not None:
+          formatting.update(new_formatting)
+          print('{}:{}: Updating formatting from Yaml syntax: \n  {}'.format(md_file_stripped, line_number, current_yaml.replace('\n', '\n  ')))
+        else:
+          print('{}:{}: Ignoring Yaml formatting configuration: \n  {}'.format(md_file_stripped, line_number, current_yaml.replace('\n', '\n  ')))
       except Exception as e:
         #print(e)
         raise SyntaxError('Line '+str(line_number)+': Incorrect YAML formatting information: '+current_yaml+'\nMore information: '+str(e))
