@@ -13,6 +13,7 @@ The config file, and the document preample, and each section preamble can all ta
 ### Configuration allowed everywhere:
 
 * layout: center|image_center|image_left_half|image_left_small|image_right_half|image_right_small|image_fill
+* title_vertical_center: true|false
 * crop_images: true|false
 * packed_images: true|false
 * text_color:
