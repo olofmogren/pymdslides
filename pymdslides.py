@@ -145,7 +145,7 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
   y = offsets['y0']
 
   # if title is alone, put it in middle of page
-  if no_text(lines) and formatting['layout'] not in ['center', 'image_center', 'image_left_small', 'image_right_small']: # and formatting['layout'] in ['image_full', 'image_left_half', 'image_left_small', 'image_right_half', 'image_right_full']:
+  if no_text(lines) and formatting['layout'] not in ['image_center']: # and formatting['layout'] in ['image_full', 'image_left_half', 'image_left_small', 'image_right_half', 'image_right_full']:
     y = formatting['dimensions']['page_height']//2-formatting['dimensions']['em_title']//2
   if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
     pdf.set_font('font_title', '', formatting['dimensions']['font_size_title'])

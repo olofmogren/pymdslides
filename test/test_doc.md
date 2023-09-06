@@ -11,7 +11,7 @@ crop_images: false
 * And the final bullet
 
 ![Neurons in space](neurons-in-space-explosion-detailed.jpg)
-![Image alt text](testing_image.png)
+![Image alt text](testing_image.jpg)
 ![Neurons in space](neurons-in-space-explosion-detailed.jpg)
 
 # Image left
@@ -26,7 +26,7 @@ packed_images: true
 * And the final bullet
 
 ![Mon Amie](monamie.jpg)
-![Image alt text](testing_image.png)
+![Image alt text](testing_image.jpg)
 
 # Image left small
 
@@ -40,7 +40,7 @@ crop_images: true
 * Another bullet
 * And the final bullet
 
-![Image alt text](testing_image.png)
+![Image alt text](testing_image.jpg)
 
 # Image right
 
@@ -53,7 +53,7 @@ packed_images: true
 * Another bullet
 * And the final bullet
 
-![Image alt text](testing_image.png)
+![Image alt text](testing_image.jpg)
 
 # Image right small
 
@@ -65,7 +65,7 @@ layout: image_right_small
 * Another bullet
 * And the final bullet
 
-![Image alt text](testing_image.png)
+![Image alt text](testing_image.jpg)
 
 # Center again, not cropping
 
@@ -78,7 +78,7 @@ crop_images: false
 * Another bullet
 * And the final bullet
 
-![Image alt text](testing_image.png)
+![Image alt text](testing_image.jpg)
 
 
 # Image center
@@ -92,7 +92,7 @@ crop_images: true
 * Another bullet
 * And the final bullet
 
-![Image alt text](testing_image.png)
+![Image alt text](testing_image.jpg)
 
 # Image fill
 
@@ -108,7 +108,7 @@ text_color:
 * Another bullet: $a = \frac{b}{c}$
 * And the final bullet
 
-![Image alt text](testing_image.png)
+![Image alt text](testing_image.jpg)
 
 # Black slide
 
@@ -193,7 +193,7 @@ layout: center
 ---
 
 ![Neurons in space](neurons-in-space-explosion-detailed.jpg)
-![Image alt text](testing_image.png)
+![Image alt text](testing_image.jpg)
 ![Neurons in space](neurons-in-space-explosion-detailed.jpg)
 
 * First bullet
@@ -221,7 +221,7 @@ layout: image_right_half
 ---
 layout: image_right_half
 ---
-![Image alt text](testing_image.png)
+![Image alt text](testing_image.jpg)
 
 &nbsp;
 
@@ -261,7 +261,7 @@ text_color:
 - 100
 ---
 
-![](testing_image.png)
+![](testing_image.jpg)
 ![](neurons-in-space-explosion-detailed.jpg)
 
 &nbsp;
