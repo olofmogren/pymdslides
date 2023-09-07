@@ -1,5 +1,16 @@
 #!/usr/bin/python
 
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <https://www.gnu.org/licenses/>. 
+
 import os
 
 from fpdf import FPDF
@@ -363,6 +374,7 @@ def render_text_line(line, x, y, offsets, headlines, text_color, column_divider=
       y += int(0.5*formatting['dimensions']['em'])
     elif len(line) > 3 and all([c == '-' for c in line]):
       pdf.set_line_width(0.5)
+      # TODO: configuration of column divider line color
       pdf.set_draw_color(160,160,160)
       if column_divider:
         x = offsets['x0']-formatting['dimensions']['internal_margin']//2
