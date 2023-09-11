@@ -112,7 +112,10 @@ def dump_page_content_to_pdf(pdf, content, formatting, headlines, raster_images,
           if line.startswith('* '):
             # pretty bullet symbols
             line = '• '+line[2:]
-        lines.append(line)
+        if line == '__':
+          print('{}:{}: ignoring empty line "{}"'.format(md_file_stripped, line_number, line))
+        else:
+          lines.append(line)
     if l4_subtitle is not None:
       if l4_subtitle != '':
         l4_lines = ['**'+l4_subtitle+'**']+strip_lines(l4_lines)
@@ -493,6 +496,7 @@ def render_part_of_line(part, x, y):
   if not part.strip():
     pdf.text(txt=part, x=x, y=y)#, w=offsets['w'], align=align)
   else:
+    #print(part)
     pdf.cell(txt=part, markdown=True)
   x = pdf.get_x()
   return x, y
@@ -1305,6 +1309,8 @@ if __name__ == "__main__":
         formatting = global_formatting.copy()
       content = [line]
       #current_headline = line[2:]
+    elif line.startswith('[//]: # (') and line.endswith(')'):
+      print('{}:{}: Ignoring markdown comment: {}'.format(md_file_stripped, line_number, line[9:-1]))
     elif line == '---':
       # this line begins yaml content. Parsing later.
       current_yaml = line
