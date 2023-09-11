@@ -29,6 +29,7 @@ dimensions:
   tiny_footer_em: 6
 layout: center
 # layout can be center|image_center|image_left_half|image_left_small|image_right_half|image_right_small|image_fill
+title_vertical_center: true|false
 tiny_footer: Made with PYMDSLIDES
 tiny_footer_color:
   - 128
