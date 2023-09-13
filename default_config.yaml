@@ -7,7 +7,12 @@ text_color:
   - 0
   - 0
   - 0
-  # colors are coded with RGB, 0-255.
+  # colors are coded with RGB, 0-255, or a string: white|grey|black
+background_color:
+  - 0
+  - 0
+  - 0
+  # colors are coded with RGB, 0-255, or a string: white|grey|black
 dimensions:
   em: 18
   em_title: 26
@@ -25,7 +30,6 @@ dimensions:
     y1: 40
   page_width: 480
   pixel_per_mm: 0.15
-  # colors are coded with RGB, 0-255.
   tiny_footer_em: 6
 layout: center
 # layout can be center|image_center|image_left_half|image_left_small|image_right_half|image_right_small|image_fill
@@ -35,7 +39,7 @@ tiny_footer_color:
   - 128
   - 128
   - 128
-  # colors are coded with RGB, 0-255.
+  # colors are coded with RGB, 0-255, or a string: white|grey|black
 
 fonts:
     font_file_standard: 'font_file_standard.ttf'

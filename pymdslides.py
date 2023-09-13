@@ -64,6 +64,7 @@ def dump_page_content_to_pdf(pdf, content, formatting, headlines, raster_images,
   pdf.add_page()
   #pdf.text(txt=content, markdown=True)
   # this seems to do nothing. checking also in render_text_line.
+  formatting = preprocess_formatting(formatting)
   with pdf.unbreakable():
     title = ''
     subtitle = ''
@@ -269,6 +270,16 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
       x, y = position_and_render_text_line(line, x, y, box_offsets, headlines, text_color, formatting, column_divider=False)
   return vector_images
 
+def preprocess_formatting(formatting):
+  for color in ['background_color', 'text_color', 'tiny_footer_color']:
+    if color in formatting:
+      if formatting[color] == 'white':
+        formatting[color] = [255,255,255]
+      elif formatting[color] == 'grey':
+        formatting[color] = [100,100,100]
+      elif formatting[color] == 'black':
+        formatting[color] = [0,0,0]
+  return formatting
 def no_text(lines):
   for l in lines:
     l = l.strip()
