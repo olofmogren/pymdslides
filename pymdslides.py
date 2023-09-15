@@ -279,6 +279,22 @@ def preprocess_formatting(formatting):
         formatting[color] = [100,100,100]
       elif formatting[color] == 'black':
         formatting[color] = [0,0,0]
+      elif formatting[color] == 'orange':
+        formatting[color] = [255,180,0]
+      elif formatting[color] == 'red':
+        formatting[color] = [255,0,0]
+      elif formatting[color] == 'green':
+        formatting[color] = [0,255,0]
+      elif formatting[color] == 'blue':
+        formatting[color] = [0,0,255]
+      elif formatting[color] == 'yellow':
+        formatting[color] = [255,255,0]
+      elif formatting[color] == 'darkred':
+        formatting[color] = [100,0,0]
+      elif formatting[color] == 'darkgreen':
+        formatting[color] = [0,100,0]
+      elif formatting[color] == 'darkblue':
+        formatting[color] = [0,0,100]
   return formatting
 def no_text(lines):
   for l in lines:
@@ -519,14 +535,15 @@ def render_internal_link(link, x, y, headlines):
   splitted = link.split(')[#')
   link_text = splitted[0][1:]
   target = splitted[1][:-1]
-  #print('link', '"'+link_text+'","'+target+'"')
+  print('link', '"'+link_text+'","'+target+'"')
   if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
     pdf.set_font('font_standard', 'u', formatting['dimensions']['font_size_standard'])
   else:
     pdf.set_font_size(formatting['dimensions']['font_size_standard'])
   pdf.set_xy(x,y)
   page_number = headlines.index(target)+1
-  #print('page_number', page_number, 'target', target)
+  #print(headlines)
+  print('page_number', page_number, 'target', target)
   fpdf_link = pdf.add_link(page=page_number)
   pdf.cell(txt=link_text, link=fpdf_link, markdown=True)
   x = pdf.get_x()
@@ -1224,13 +1241,28 @@ if __name__ == "__main__":
   preamble=True
   headlines = []
   headlines_h2 = {}
+  current_yaml = ''
   for line_number,line in enumerate(md_contents.split('\n')):
-    if line.startswith('#') and (len(line) <= 1 or line[1] != '#'):
+    if current_yaml:
+      # this line contains a continuation of yaml content. Needs to be ignored in the loop for headlines.
+      current_yaml += '\n'+line
+      #print('current_yaml',current_yaml)
+    elif line.startswith('#') and (len(line) <= 1 or line[1] != '#'):
       if not document_title:
         document_title = line[3:].strip()
       headlines.append(line[2:].strip())
-    if line.startswith('##') and (len(line) <= 2 or line[2] != '#'):
+    elif line.startswith('##') and (len(line) <= 2 or line[2] != '#'):
       headlines_h2[len(headlines)-1] = line[3:].strip()
+    elif line == '---':
+      # this line begins yaml content. Parsing later.
+      current_yaml = line
+      #print('current_yaml',current_yaml)
+    if len(current_yaml) > 3 and current_yaml[-3:] == '---':
+      # this line ends yaml content. Parsing later.
+      # TODO: dirty workaround. Other ways to hide page.
+      if 'hidden: true' in current_yaml:
+        headlines = headlines[:-1]
+      current_yaml = ''
   for i in range(len(headlines)):
     if headlines[i] == '' and i in headlines_h2:
       headlines[i] = headlines_h2[i]
