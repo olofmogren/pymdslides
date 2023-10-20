@@ -1212,10 +1212,10 @@ def markdown_to_text(md_data):
 def recursive_dict_update(d1, d2):
   for k in d2:
     if k in d1 and isinstance(d1[k], dict) and isinstance(d2[k], dict):
-      print('dict',k,d1[k])
+      #print('dict',k,d1[k])
       d1[k] = recursive_dict_update(d1[k], d2[k])
     else:
-      print('key not in d1 or not dict. replacing.',k,d2[k])
+      #print('key not in d1 or not dict. replacing.',k,d2[k])
       d1[k] = d2[k]
   return d1
 
