@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -1207,6 +1208,16 @@ def markdown_to_text(md_data):
   parser = MarkdownIt(renderer_cls=RendererPlain)
   return parser.render(md_data)
 
+def recursive_dict_update(d1, d2):
+  for k in d2:
+    if k in d1 and isinstance(d1[k], dict) and isinstance(d2[k], dict):
+      print('dict',k,d1[k])
+      d1[k] = recursive_dict_update(d1[k], d2[k])
+    else:
+      print('key not in d1 or not dict. replacing.',k,d2[k])
+      d1[k] = d2[k]
+  return d1
+
 if __name__ == "__main__":
   md_file = sys.argv[1]
   print('md_file:',md_file)
@@ -1229,12 +1240,16 @@ if __name__ == "__main__":
   content = []
   # default formatting:
   formatting = {'layout': default_layout, 'crop_images': default_crop, 'dimensions': default_dimensions}
+  #print('initial formatting', formatting)
   config_file = os.path.join(script_home, 'config.yaml')
   if os.path.exists(config_file):
     print('Reading default config in {}.'.format(config_file))
     with open(config_file, 'r') as f:
       default_config = yaml.safe_load(f.read())
-    formatting.update(default_config)
+    #print('default config', default_config)
+    #formatting.update(default_config)
+    formatting = recursive_dict_update(formatting, default_config)
+    #print('formatting', formatting)
     #print(formatting)
 
   global_formatting = {}
@@ -1366,7 +1381,9 @@ if __name__ == "__main__":
       try:
         new_formatting = yaml.safe_load(current_yaml)
         if new_formatting is not None:
-          formatting.update(new_formatting)
+          #formatting.update(new_formatting)
+          formatting = recursive_dict_update(formatting, new_formatting)
+          #print('formatting', formatting)
           print('{}:{}: Updating formatting from Yaml syntax: \n  {}'.format(md_file_stripped, line_number, current_yaml.replace('\n', '\n  ')))
         else:
           print('{}:{}: Ignoring Yaml formatting configuration: \n  {}'.format(md_file_stripped, line_number, current_yaml.replace('\n', '\n  ')))
@@ -1415,4 +1432,5 @@ if __name__ == "__main__":
       logo_path = formatting['logo_path']
   if logo_path and os.path.exists(logo_path):
     logo_watermark(pdf_file, logo_path)
+
 
