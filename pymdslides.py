@@ -1210,8 +1210,6 @@ def markdown_to_text(md_data):
   return parser.render(md_data)
 
 def recursive_dict_update(d1, d2):
-  #d_old = d1
-  #d1 = d_old.deep_copy()
   for k in d2:
     if k in d1 and isinstance(d1[k], dict) and isinstance(d2[k], dict):
       print('dict',k,d1[k])
