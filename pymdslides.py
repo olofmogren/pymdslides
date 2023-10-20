@@ -35,6 +35,7 @@ import copy
 from markdown_it import MarkdownIt
 from mdit_plain.renderer import RendererPlain
 
+import copy
 
 layouts = ['image_left_half', 'image_left_small', 'image_right_half', 'image_right_small', 'center', 'image_center', 'image_fill']
 
@@ -1209,6 +1210,8 @@ def markdown_to_text(md_data):
   return parser.render(md_data)
 
 def recursive_dict_update(d1, d2):
+  #d_old = d1
+  #d1 = d_old.deep_copy()
   for k in d2:
     if k in d1 and isinstance(d1[k], dict) and isinstance(d2[k], dict):
       print('dict',k,d1[k])
@@ -1304,8 +1307,9 @@ if __name__ == "__main__":
       #print('current_yaml',current_yaml)
     elif line.startswith('# '):
       if preamble:
-          # formatting from preamble is global for whole document:
-        global_formatting = formatting.copy()
+        # formatting from preamble is global for whole document:
+        #print('preamble. setting global formatting')
+        global_formatting = copy.deepcopy(formatting)
         content = []
         preamble = False
         pdf = FPDF(orientation = 'P', unit = 'mm', format = (formatting['dimensions']['page_width'], formatting['dimensions']['page_height'])) # 16:9
@@ -1364,7 +1368,9 @@ if __name__ == "__main__":
         if len(vector_images_page) > 0:
           vector_images[pdf.pages_count-1] = vector_images_page
         # reset page-specific formatting:
-        formatting = global_formatting.copy()
+        #print('resetting page-specific formatting')
+        formatting = copy.deepcopy(global_formatting)
+        #print(yaml.dump(formatting))
       content = [line]
       #current_headline = line[2:]
     elif line.startswith('[//]: # (') and line.endswith(')'):
@@ -1385,6 +1391,7 @@ if __name__ == "__main__":
           formatting = recursive_dict_update(formatting, new_formatting)
           #print('formatting', formatting)
           print('{}:{}: Updating formatting from Yaml syntax: \n  {}'.format(md_file_stripped, line_number, current_yaml.replace('\n', '\n  ')))
+          #print(yaml.dump(formatting))
         else:
           print('{}:{}: Ignoring Yaml formatting configuration: \n  {}'.format(md_file_stripped, line_number, current_yaml.replace('\n', '\n  ')))
       except Exception as e:
