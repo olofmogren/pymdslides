@@ -754,7 +754,7 @@ def put_images_on_page(images, alt_texts, layout, has_text, packed_images, crop_
       #print('background location', locations)
     else:
       locations = get_images_locations(page_images, layout, has_text, packed_images, cred=False)
-      print('locations',locations)
+      #print('locations',locations)
     for image,location in zip(page_images,locations):
       image_to_display = image
       if is_vector_format(image):
@@ -952,22 +952,30 @@ def get_images_locations(images, layout, has_text, packed_images=False, cred=Fal
     image_area['w'] = image_area['x1']-image_area['x0']
     image_area['h'] = image_area['y1']-image_area['y0']
 
-  print('image area size:', image_area['w'], image_area['h'], 'image grid:', grid_width, grid_height)
-  image_size = {'w': int(image_area['w']/grid_width), 'h': int(image_area['h']/grid_height)}
+  #print('image area size:', image_area['w'], image_area['h'], 'image grid:', grid_width, grid_height, 'margin',formatting['dimensions']['internal_margin'])
+  image_size = {'w': int(image_area['w']/grid_width),
+                'h': int(image_area['h']/grid_height)}
+  if not packed_images and not cred:
+    image_size = {'w': int((image_area['w']-(grid_width-1)*formatting['dimensions']['internal_margin'])/grid_width),
+                  'h': int((image_area['h']-(grid_height-1)*formatting['dimensions']['internal_margin'])/grid_height)}
   
-  print('image_size', image_size)
+  #print('image_size', image_size)
   for i,image in enumerate(images):
     pos_x = i % grid_width
     pos_y = i // grid_width
     marg_x = 0
-    if pos_x >= 1 and not packed_images and not cred:
+    if not packed_images and not cred:
       marg_x = formatting['dimensions']['internal_margin']
     marg_y = 0
-    if pos_y >= 1 and not packed_images and not cred:
+    if not packed_images and not cred:
       marg_y = formatting['dimensions']['internal_margin']
     #print('image-grid:', pos_x, pos_y, marg_x, marg_y)
-    #location  = {'x0': image_area['x0']+pos_x*image_size['w'], 'y0': image_area['y0']+pos_y*image_size['h'], 'w': image_size['w'], 'h': image_size['h']}
-    location  = {'x0': image_area['x0']+pos_x*image_size['w']+marg_x, 'y0': image_area['y0']+pos_y*image_size['h']+marg_y, 'w': image_size['w']-marg_x, 'h': image_size['h']-marg_y}
+    #location  = {'x0': image_area['x0']+pos_x*image_size['w']+marg_x, 'y0': image_area['y0']+pos_y*image_size['h']+marg_y, 'w': image_size['w']-marg_x, 'h': image_size['h']-marg_y}
+    location  = {'x0': image_area['x0']+pos_x*(image_size['w']+marg_x),
+                 'y0': image_area['y0']+pos_y*(image_size['h']+marg_y),
+                 'w': image_size['w'],
+                 'h': image_size['h']}
+    #print('location',location)
     locations.append(location)
   return locations
 
