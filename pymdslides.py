@@ -1228,7 +1228,7 @@ def recursive_dict_update(d1, d2):
   return d1
 
 def preprocess_md_page(md_contents_lines, last_last_headline, last_headline, incremental_bullets):
-  print('preprocess_md_page', last_last_headline, last_headline, incremental_bullets)
+  #print('preprocess_md_page', last_last_headline, last_headline, incremental_bullets)
   #print('\n---'.join(md_contents_lines))
   preprocessed_lines = []
   bullet_no = 0
@@ -1238,12 +1238,12 @@ def preprocess_md_page(md_contents_lines, last_last_headline, last_headline, inc
       stripped_line = line.strip()
       if any([stripped_line.startswith(x) for x in ['*', '1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', '9.']]):
         if bullet_no > 0:
-          print('repeat what\'s been processed so far.',last_page_beginning_internal)
+          #print('repeat what\'s been processed so far.',last_page_beginning_internal)
           next_last_page_beginning_internal = len(preprocessed_lines)
           preprocessed_lines = preprocessed_lines+preprocessed_lines[last_page_beginning_internal:]
           last_page_beginning_internal = next_last_page_beginning_internal
         bullet_no += 1
-    print('line',line)
+    #print('line',line)
     preprocessed_lines.append(line)
   return preprocessed_lines
 
