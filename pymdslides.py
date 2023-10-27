@@ -1227,6 +1227,26 @@ def recursive_dict_update(d1, d2):
       d1[k] = d2[k]
   return d1
 
+def preprocess_md_page(md_contents_lines, last_last_headline, last_headline, incremental_bullets):
+  print('preprocess_md_page', last_last_headline, last_headline, incremental_bullets)
+  #print('\n---'.join(md_contents_lines))
+  preprocessed_lines = []
+  bullet_no = 0
+  last_page_beginning_internal = 0
+  for i,line in enumerate(md_contents_lines[last_last_headline:last_headline]):
+    if incremental_bullets:
+      stripped_line = line.strip()
+      if any([stripped_line.startswith(x) for x in ['*', '1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', '9.']]):
+        if bullet_no > 0:
+          print('repeat what\'s been processed so far.',last_page_beginning_internal)
+          next_last_page_beginning_internal = len(preprocessed_lines)
+          preprocessed_lines = preprocessed_lines+preprocessed_lines[last_page_beginning_internal:]
+          last_page_beginning_internal = next_last_page_beginning_internal
+        bullet_no += 1
+    print('line',line)
+    preprocessed_lines.append(line)
+  return preprocessed_lines
+
 if __name__ == "__main__":
   md_file = sys.argv[1]
   print('md_file:',md_file)
@@ -1266,15 +1286,28 @@ if __name__ == "__main__":
   headlines = []
   headlines_h2 = {}
   current_yaml = ''
-  for line_number,line in enumerate(md_contents.split('\n')):
+  incremental_bullets = formatting.get('incremental_bullets', False)
+  preprocessed_md_contents = []
+  last_headline,last_last_headline = 0,0
+  md_contents_lines = md_contents.split('\n')
+  for line_number,line in enumerate(md_contents_lines):
     if current_yaml:
       # this line contains a continuation of yaml content. Needs to be ignored in the loop for headlines.
       current_yaml += '\n'+line
+      if 'incremental_bullets' in line:
+        b = yaml.safe_load(line)
+        incremental_bullets = b['incremental_bullets']
+        print('found page specific configuration about incremental bullets',incremental_bullets)
       #print('current_yaml',current_yaml)
     elif line.startswith('#') and (len(line) <= 1 or line[1] != '#'):
       if not document_title:
         document_title = line[3:].strip()
       headlines.append(line[2:].strip())
+      last_last_headline = last_headline
+      last_headline = line_number
+      #print('last headlines',last_last_headline, last_headline)
+      preprocessed_md_contents += preprocess_md_page(md_contents_lines, last_last_headline, last_headline, incremental_bullets)
+      print(preprocess_md_page(md_contents_lines, last_last_headline, last_headline, incremental_bullets))
     elif line.startswith('##') and (len(line) <= 2 or line[2] != '#'):
       headlines_h2[len(headlines)-1] = line[3:].strip()
     elif line == '---':
@@ -1287,12 +1320,17 @@ if __name__ == "__main__":
       if 'hidden: true' in current_yaml:
         headlines = headlines[:-1]
       current_yaml = ''
+  #print('last headlines',last_last_headline, len(md_contents_lines)+1)
+  preprocessed_md_contents += preprocess_md_page(md_contents_lines, last_headline, len(md_contents_lines)+1, incremental_bullets)
+  print(preprocess_md_page(md_contents_lines, last_headline, len(md_contents_lines)+1, incremental_bullets))
+  
   for i in range(len(headlines)):
     if headlines[i] == '' and i in headlines_h2:
       headlines[i] = headlines_h2[i]
   current_yaml = ''
   page_number = 0
-  for line_number,line in enumerate(md_contents.split('\n')):
+  print('\n'.join(preprocessed_md_contents))
+  for line_number,line in enumerate(preprocessed_md_contents):
     #print(line)
     # supporting single asterixes for italics in markdown.
     line = re.sub(r'(?<!\*)\*(?![\*\s])', '__', line)
