@@ -1227,29 +1227,76 @@ def recursive_dict_update(d1, d2):
       d1[k] = d2[k]
   return d1
 
-def preprocess_md_page(md_contents_lines, last_last_headline, last_headline, incremental_bullets):
-  #print('preprocess_md_page', last_last_headline, last_headline, incremental_bullets)
-  #print('\n---'.join(md_contents_lines))
-  preprocessed_lines = []
-  original_line_numbers = []
-  bullet_no = 0
-  last_page_beginning_internal = 0
-  for i,line in enumerate(md_contents_lines[last_last_headline:last_headline]):
-    if incremental_bullets:
+def cleanup_md_line(line):
+  line = re.sub(r'(?<!\*)\*(?![\*\s])', '__', line)
+  if '$' in line:
+    splits = line.split('$')
+    corrected_splits = []
+    for i,split in enumerate(splits):
+      if i%2==1:
+        #formula:
+        if '__' in split:
+          split = split.replace('__', '*')
+      corrected_splits.append(split)
+    line = '$'.join(corrected_splits)
+  return line
+
+def preprocess_md_page(content, line_number, config):
+  page = {'headline': '', 'headline_h2': '', 'content': [], 'line_numbers': [], 'images': [], 'config': copy.deepcopy(config)}
+  for i,line in enumerate(content):
+    content[i] = cleanup_md_line(line)
+    if line.startswith('[//]: # (') and line.endswith(')'):
+      print('{}:{}: Ignoring markdown comment: {}'.format(md_file_stripped, line_number, line[9:-1]))
+      content[i] = '' # needed to not mess up line numbers.
+    #print(content[i])
+    if line.strip().startswith('# '):
+      page['headline'] = line[2:]
+    elif line.strip().startswith('## '):
+      page['headline_l2'] = line[3:]
+
+  image_lines = []
+  image_line_numbers = []
+  content_lines = []
+  content_line_numbers = []
+  page_lengths = []
+
+  # TODO: extract images, even if line does not start with image.
+
+  for i,line in enumerate(content):
+    stripped_line = line.strip()
+    if stripped_line.startswith('!['):
+      image_lines.append(line)
+      image_line_numbers.append(line_number+i)
+    else:
+      content_lines.append(line)
+      content_line_numbers.append(line_number+i)
+  page['images'] = image_lines
+  page['content'] = content_lines
+  page['line_numbers'] = content_line_numbers
+
+  #print('images', page['images'])
+  #print('content', page['content'])
+  #print('line_numbers', page['line_numbers'])
+
+  if 'incremental_bullets' not in config or not config['incremental_bullets']:
+    page_lengths = [len(content_lines)]
+  else:
+    for content_line_number,line in enumerate(content_lines):
       stripped_line = line.strip()
       if any([stripped_line.startswith(x) for x in ['*', '1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', '9.']]):
-        if bullet_no > 0:
-          #print('repeat what\'s been processed so far.',last_page_beginning_internal)
-          next_last_page_beginning_internal = len(preprocessed_lines)
-          preprocessed_lines = preprocessed_lines+preprocessed_lines[last_page_beginning_internal:]
-          original_line_numbers  = original_line_numbers+original_line_numbers[last_page_beginning_internal:]
-          last_page_beginning_internal = next_last_page_beginning_internal
-        bullet_no += 1
-    #print('line',line)
-    preprocessed_lines.append(line)
-    original_line_numbers.append(last_last_headline+i)
-  return preprocessed_lines,original_line_numbers
 
+        page_lengths.append(content_line_number+1)
+
+  #print('page_lengths',page_lengths)
+  pages = []
+  for page_length in page_lengths:
+    p = copy.deepcopy(page)
+    p['content'] = p['content'][:page_length]
+    p['line_numbers'] = p['line_numbers'][:page_length]
+    #print('p',p)
+    pages.append(p)
+  return pages
+  
 if __name__ == "__main__":
   md_file = sys.argv[1]
   print('md_file:',md_file)
@@ -1278,88 +1325,27 @@ if __name__ == "__main__":
     print('Reading default config in {}.'.format(config_file))
     with open(config_file, 'r') as f:
       default_config = yaml.safe_load(f.read())
-    #print('default config', default_config)
-    #formatting.update(default_config)
     formatting = recursive_dict_update(formatting, default_config)
-    #print('formatting', formatting)
-    #print(formatting)
+
+  # PREPROCESSING LOOP. TAKE CARE OF CONFIGURATION AND INCREMENTAL BULLETS.
+  # will produce a list preprocessed_md of one dict per page.
+  # d = {headline: str, headline_h2: str, lines: [str], line_numbers: [int], config: str}
+  #
+  # will also produce one list headlines and one list headlines_h2
+  
 
   global_formatting = {}
-  preamble=True
-  headlines = []
-  headlines_h2 = {}
-  current_yaml = ''
-  incremental_bullets = formatting.get('incremental_bullets', False)
-  preprocessed_md_contents = []
-  original_line_numbers = []
-  last_headline,last_last_headline = 0,0
   md_contents_lines = md_contents.split('\n')
-  for line_number,line in enumerate(md_contents_lines):
-    if current_yaml:
-      # this line contains a continuation of yaml content. Needs to be ignored in the loop for headlines.
-      current_yaml += '\n'+line
-      if 'incremental_bullets' in line:
-        b = yaml.safe_load(line)
-        incremental_bullets = b['incremental_bullets']
-        if preamble:
-          formatting.update(b)
-          print('found document global configuration about incremental bullets',incremental_bullets)
-        else:
-          print('found page specific configuration about incremental bullets',incremental_bullets)
-      #print('current_yaml',current_yaml)
-    elif line.startswith('#') and (len(line) <= 1 or line[1] != '#'):
-      if not document_title:
-        document_title = line[3:].strip()
-      preamble = False
-      headlines.append(line[2:].strip())
-      last_last_headline = last_headline
-      last_headline = line_number
-      #print('last headlines',last_last_headline, last_headline)
-      preprocessed_page,original_line_numbers_page = preprocess_md_page(md_contents_lines, last_last_headline, last_headline, incremental_bullets)
-      preprocessed_md_contents += preprocessed_page
-      original_line_numbers += original_line_numbers_page 
-      #print(preprocess_md_page(md_contents_lines, last_last_headline, last_headline, incremental_bullets))
-    elif line.startswith('##') and (len(line) <= 2 or line[2] != '#'):
-      headlines_h2[len(headlines)-1] = line[3:].strip()
-    elif line == '---':
-      # this line begins yaml content. Parsing later.
-      current_yaml = line
-      #print('current_yaml',current_yaml)
-    if len(current_yaml) > 3 and current_yaml[-3:] == '---':
-      # this line ends yaml content. Parsing later.
-      # TODO: dirty workaround. Other ways to hide page.
-      if 'hidden: true' in current_yaml:
-        headlines = headlines[:-1]
-      current_yaml = ''
-  #print('last headlines',last_last_headline, len(md_contents_lines)+1)
-  preprocessed_page,original_line_numbers_page = preprocess_md_page(md_contents_lines, last_headline, len(md_contents_lines)+1, incremental_bullets)
-  preprocessed_md_contents += preprocessed_page
-  original_line_numbers += original_line_numbers_page 
-  #print(preprocess_md_page(md_contents_lines, last_headline, len(md_contents_lines)+1, incremental_bullets))
-  
+
   preamble=True
-  for i in range(len(headlines)):
-    if headlines[i] == '' and i in headlines_h2:
-      headlines[i] = headlines_h2[i]
   current_yaml = ''
   page_number = 0
-  print('\n'.join(preprocessed_md_contents))
-  for line_number,line in enumerate(preprocessed_md_contents):
-    #print(line)
-    # supporting single asterixes for italics in markdown.
-    print(line)
-    line = re.sub(r'(?<!\*)\*(?![\*\s])', '__', line)
-    if '$' in line:
-      splits = line.split('$')
-      corrected_splits = []
-      for i,split in enumerate(splits):
-        if i%2==1:
-          #formula:
-          if '__' in split:
-            split = split.replace('__', '*')
-        corrected_splits.append(split)
-      line = '$'.join(corrected_splits)
 
+  preprocessed_md = []
+
+  previous_headline = -1
+  
+  for line_number,line in enumerate(md_contents_lines):
     if current_yaml:
       # this line contains a continuation of yaml content. Parsing later.
       current_yaml += '\n'+line
@@ -1369,71 +1355,18 @@ if __name__ == "__main__":
         # formatting from preamble is global for whole document:
         #print('preamble. setting global formatting')
         global_formatting = copy.deepcopy(formatting)
-        content = []
+        content = [line]
         preamble = False
-        pdf = FPDF(orientation = 'P', unit = 'mm', format = (formatting['dimensions']['page_width'], formatting['dimensions']['page_height'])) # 16:9
-        pdf.set_font('Helvetica', '', formatting['dimensions']['font_size_standard'])
-        if 'fonts' in formatting:
-          if formatting['fonts']['font_file_standard']:
-            fname = formatting['fonts']['font_file_standard']
-            if os.path.exists(os.path.join(script_home, fname)):
-              fname = os.path.join(script_home, fname)
-            pdf.add_font('font_standard', '', fname)
-            pdf.set_font('font_standard', '', formatting['dimensions']['font_size_standard'])
-          if formatting['fonts']['font_file_standard_italic']:
-            fname = formatting['fonts']['font_file_standard_italic']
-            if os.path.exists(os.path.join(script_home, fname)):
-              fname = os.path.join(script_home, fname)
-            pdf.add_font('font_standard', 'i', fname)
-          if formatting['fonts']['font_file_standard_bold']:
-            fname = formatting['fonts']['font_file_standard_bold']
-            if os.path.exists(os.path.join(script_home, fname)):
-              fname = os.path.join(script_home, fname)
-            pdf.add_font('font_standard', 'b', fname)
-          if formatting['fonts']['font_file_standard_bolditalic']:
-            fname = formatting['fonts']['font_file_standard_bolditalic']
-            if os.path.exists(os.path.join(script_home, fname)):
-              fname = os.path.join(script_home, fname)
-            pdf.add_font('font_standard', 'bi', fname)
-          if formatting['fonts']['font_file_footer']:
-            fname = formatting['fonts']['font_file_footer']
-            if os.path.exists(os.path.join(script_home, fname)):
-              fname = os.path.join(script_home, fname)
-            pdf.add_font('font_footer', '', fname)
-          if formatting['fonts']['font_file_title']:
-            fname = formatting['fonts']['font_file_title']
-            if os.path.exists(os.path.join(script_home, fname)):
-              fname = os.path.join(script_home, fname)
-            pdf.add_font('font_title', '', fname)
-        pdf.set_text_color(0,0,0)
-
-        #pdf.set_image_filter("FlatDecode")
-        pdf.oversized_images = "DOWNSCALE"
-        print('{}:{}: pdf.oversized_images_ratio {}'.format(md_file_stripped, original_line_numbers[line_number], pdf.oversized_images_ratio))
       else:
-        print('{}:{}: generating page (#) {}'.format(md_file_stripped, original_line_numbers[line_number], page_number))
-        if 'visibility' in formatting and formatting['visibility'] == 'hidden':
-          print('------------------------------------\n"{}:{}: visibility":"hidden" is deprecated. use "hidden": true instead.'.format(md_file_stripped, original_line_numbers[line_number]))
-          print('------------------------------------\n{}:{}: This page is hidden. Will not generate pdf page.'.format(md_file_stripped, original_line_numbers[line_number]))
-          vector_images_page = []
-
-        elif 'hidden' in formatting and formatting['hidden']:
-          print('------------------------------------\n{}:{}: This page is hidden. Will not generate pdf page.'.format(md_file_stripped, original_line_numbers[line_number]))
-          vector_images_page = []
-        else:
-          vector_images_page = dump_page_content_to_pdf(pdf, content, formatting, headlines, raster_images, md_file_stripped, original_line_numbers[line_number])
-          page_number += 1
-          print('------------------------------------')
-        if len(vector_images_page) > 0:
-          vector_images[pdf.pages_count-1] = vector_images_page
-        # reset page-specific formatting:
-        #print('resetting page-specific formatting')
-        formatting = copy.deepcopy(global_formatting)
         #print(yaml.dump(formatting))
-      content = [line]
+        preprocessed = preprocess_md_page(content, previous_headline, formatting)
+        #print('preprocessed',preprocessed)
+        preprocessed_md += preprocessed
+        formatting = copy.deepcopy(global_formatting)
+        content = [line]
+      print('headline',line)
+      previous_headline = line_number
       #current_headline = line[2:]
-    elif line.startswith('[//]: # (') and line.endswith(')'):
-      print('{}:{}: Ignoring markdown comment: {}'.format(md_file_stripped, original_line_numbers[line_number], line[9:-1]))
     elif line == '---':
       # this line begins yaml content. Parsing later.
       current_yaml = line
@@ -1449,29 +1382,94 @@ if __name__ == "__main__":
           #formatting.update(new_formatting)
           formatting = recursive_dict_update(formatting, new_formatting)
           #print('formatting', formatting)
-          print('{}:{}: Updating formatting from Yaml syntax: \n  {}'.format(md_file_stripped, original_line_numbers[line_number], current_yaml.replace('\n', '\n  ')))
+          print('{}:{}: Updating formatting from Yaml syntax: \n  {}'.format(md_file_stripped, line_number, current_yaml.replace('\n', '\n  ')))
           #print(yaml.dump(formatting))
         else:
-          print('{}:{}: Ignoring Yaml formatting configuration: \n  {}'.format(md_file_stripped, original_line_numbers[line_number], current_yaml.replace('\n', '\n  ')))
+          print('{}:{}: Ignoring Yaml formatting configuration: \n  {}'.format(md_file_stripped, line_number, current_yaml.replace('\n', '\n  ')))
       except Exception as e:
         #print(e)
-        raise SyntaxError('Line '+str(original_line_numbers[line_number])+': Incorrect YAML formatting information: '+current_yaml+'\nMore information: '+str(e))
+        raise SyntaxError('Line '+str(line_number)+': Incorrect YAML formatting information: '+current_yaml+'\nMore information: '+str(e))
       current_yaml = '' # reset yaml. Next line is not a continuation of a yaml configuration.
 
+  # last page:
+  preprocessed = preprocess_md_page(content, previous_headline, formatting)
+  #print('preprocessed',preprocessed)
+  preprocessed_md += preprocessed
 
-  print('{}:{}: generating page (last)'.format(md_file_stripped, original_line_numbers[line_number]))
-  if 'visibility' in formatting and formatting['visibility'] == 'hidden':
-    print('------------------------------------\n"{}:{}: visibility":"hidden" is deprecated. use "hidden": true instead.'.format(md_file_stripped, original_line_numbers[line_number]))
-    print('------------------------------------\n{}:{}: This page is hidden. Will not generate pdf page.'.format(md_file_stripped, original_line_numbers[line_number]))
-    vector_images_page = []
-  elif 'hidden' in formatting and formatting['hidden']:
-    print('------------------------------------\n{}:{}: This page is hidden. Will not generate pdf page.'.format(md_file_stripped, original_line_numbers[line_number]))
-  else:
-    vector_images_page = dump_page_content_to_pdf(pdf, content, formatting, headlines, raster_images, md_file_stripped, original_line_numbers[line_number])
+  headlines = []
+  headlines_h2 = []
+  for page in preprocessed_md:
+    if 'hidden' in page['config'] and page['config']['hidden']:
+      continue
+    headlines.append(page['headline'])
+    headlines_h2.append(page['headline_h2'])
+    if headlines[-1] == '':
+      headlines[-1] = headlines_h2[-1]
+  print('headlines',headlines)
+
+  # INITIALIZE FPDF:
+
+  pdf = FPDF(orientation = 'P', unit = 'mm', format = (formatting['dimensions']['page_width'], formatting['dimensions']['page_height'])) # 16:9
+  pdf.set_font('Helvetica', '', formatting['dimensions']['font_size_standard'])
+  if 'fonts' in formatting:
+    if formatting['fonts']['font_file_standard']:
+      fname = formatting['fonts']['font_file_standard']
+      if os.path.exists(os.path.join(script_home, fname)):
+        fname = os.path.join(script_home, fname)
+      pdf.add_font('font_standard', '', fname)
+      pdf.set_font('font_standard', '', formatting['dimensions']['font_size_standard'])
+    if formatting['fonts']['font_file_standard_italic']:
+      fname = formatting['fonts']['font_file_standard_italic']
+      if os.path.exists(os.path.join(script_home, fname)):
+        fname = os.path.join(script_home, fname)
+      pdf.add_font('font_standard', 'i', fname)
+    if formatting['fonts']['font_file_standard_bold']:
+      fname = formatting['fonts']['font_file_standard_bold']
+      if os.path.exists(os.path.join(script_home, fname)):
+        fname = os.path.join(script_home, fname)
+      pdf.add_font('font_standard', 'b', fname)
+    if formatting['fonts']['font_file_standard_bolditalic']:
+      fname = formatting['fonts']['font_file_standard_bolditalic']
+      if os.path.exists(os.path.join(script_home, fname)):
+        fname = os.path.join(script_home, fname)
+      pdf.add_font('font_standard', 'bi', fname)
+    if formatting['fonts']['font_file_footer']:
+      fname = formatting['fonts']['font_file_footer']
+      if os.path.exists(os.path.join(script_home, fname)):
+        fname = os.path.join(script_home, fname)
+      pdf.add_font('font_footer', '', fname)
+    if formatting['fonts']['font_file_title']:
+      fname = formatting['fonts']['font_file_title']
+      if os.path.exists(os.path.join(script_home, fname)):
+        fname = os.path.join(script_home, fname)
+      pdf.add_font('font_title', '', fname)
+  pdf.set_text_color(0,0,0)
+
+  #pdf.set_image_filter("FlatDecode")
+  pdf.oversized_images = "DOWNSCALE"
+  print('{}: pdf.oversized_images_ratio {}'.format(md_file_stripped, pdf.oversized_images_ratio))
+
+  # MAIN PROCESSING LOOP.
+
+  #print('\n'.join(preprocessed_md_contents))
+  for page_number, page in enumerate(preprocessed_md):
+    if 'hidden' in page['config'] and page['config']['hidden']:
+      print('------------------------------------\n{}:{}: This page is hidden. Will not generate pdf page.'.format(md_file_stripped, page['line_numbers'][0]))
+      continue
+    print(page['headline'])
+    print(yaml.dump(page['config']))
+    # supporting single asterixes for italics in markdown.
+
+    print('{}:{}: generating page (#) {}'.format(md_file_stripped, page['line_numbers'][-1], page_number))
+    # TODO: separate images and content below.
+    vector_images_page = dump_page_content_to_pdf(pdf, page['images']+page['content'], page['config'], headlines, raster_images, md_file_stripped, page['line_numbers'][0])
+    page_number += 1
     print('------------------------------------')
-  if len(vector_images_page) > 0:
-     vector_images[pdf.pages_count-1] = vector_images_page
+    if len(vector_images_page) > 0:
+      vector_images[pdf.pages_count-1] = vector_images_page
 
+
+  # POST PROCESSING. LOGGING GIT COMMIT.
 
   git_commit = get_git_commit(script_home)
 
@@ -1482,6 +1480,8 @@ if __name__ == "__main__":
 
   print('writing pdf file:',pdf_file)
   pdf.output(pdf_file)
+
+  # VECTOR IMAGES:
 
   if len(vector_images) > 0:
     print('vector_images',len(vector_images))
