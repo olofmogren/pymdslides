@@ -482,7 +482,7 @@ def get_text_line_width(line, x, y, offsets, headlines, text_color, column_divid
           #print('latex width',new_widths[-1],'('+formula+')')
         else: # internal link
           link = line[tag[0]:tag[1]+1]
-          splitted = link.split(')[#')
+          splitted = link.split('](#')
           link_text = splitted[0][1:]
           new_widths.append(pdf.get_string_width(link_text))
           #print('link width',new_widths[-1],'('+link_text+')')
@@ -534,14 +534,15 @@ def render_internal_link(link, x, y, headlines):
   #print(link)
   x_origin = x
   link = link.replace('&nbsp;', ' ')
-  splitted = link.split(')[#')
+  splitted = link.split('](#')
   link_text = splitted[0][1:]
   target = splitted[1][:-1]
   print('link', '"'+link_text+'","'+target+'"')
   if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
     pdf.set_font('font_standard', 'u', formatting['dimensions']['font_size_standard'])
   else:
-    pdf.set_font_size(formatting['dimensions']['font_size_standard'])
+    pdf.set_font('helvetica', 'u', formatting['dimensions']['font_size_standard'])
+    #pdf.set_font_size(formatting['dimensions']['font_size_standard'])
   pdf.set_xy(x,y)
   page_number = headlines.index(target)+1
   #print(headlines)
@@ -675,15 +676,15 @@ def get_latex_sections(line):
 
 def get_internal_links(line):
   internal_links = []
-  if ')[#' in line:
-    locations = find_all(line, ')[#')
+  if '](#' in line:
+    locations = find_all(line, '](#')
     #print('line', line)
     #@locations = [l for l in locations] # I HAVE NO IDEA WHY THIS IS NEEDED!
     #print(locations)
     for l in locations:
       #print(l)
-      beginning = line.rfind('(', 0, l)
-      end = line.find(']', l)
+      beginning = line.rfind('[', 0, l)
+      end = line.find(')', l)
       #print('beginning, end', beginning, end)
       if beginning != -1 and end != -1:
         internal_links.append((beginning,end,'link'))
@@ -1362,6 +1363,7 @@ if __name__ == "__main__":
         preprocessed = preprocess_md_page(content, previous_headline, formatting)
         #print('preprocessed',preprocessed)
         preprocessed_md += preprocessed
+        # reset to global config.
         formatting = copy.deepcopy(global_formatting)
         content = [line]
       print('headline',line)
@@ -1456,8 +1458,8 @@ if __name__ == "__main__":
     if 'hidden' in page['config'] and page['config']['hidden']:
       print('------------------------------------\n{}:{}: This page is hidden. Will not generate pdf page.'.format(md_file_stripped, page['line_numbers'][0]))
       continue
-    print(page['headline'])
-    print(yaml.dump(page['config']))
+    #print(page['headline'])
+    #print(yaml.dump(page['config']))
     # supporting single asterixes for italics in markdown.
 
     print('{}:{}: generating page (#) {}'.format(md_file_stripped, page['line_numbers'][-1], page_number))

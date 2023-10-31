@@ -141,7 +141,7 @@ text_color:
 A bit *of italic*
 $a = \frac{b}{c}$
 And **a bold thing**, too.
-Testing [linking](to_some_target), too.
+Testing [linking (mogren.one)](http://mogren.one/), too.
 A text, following with a $\frac{formula}{divisor}$
 
 # Some more strangeness
@@ -159,7 +159,7 @@ text_color:
 ---
 
 $a = \left(\frac{\frac{\sum_i^N X_i^2}{y}}{c}\right)$
-* (Link to page 1)[#Slide1]
+* [Link to page 1](#Slide1)
 
 # Another formula
 
@@ -273,5 +273,5 @@ layout: center
 ---
 
 &nbsp;
-(Thank you!)[#Latex and formatting]
+[Thank you!](#Latex and formatting)
 
