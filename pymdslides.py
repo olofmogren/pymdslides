@@ -273,7 +273,7 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
   return vector_images
 
 def preprocess_formatting(formatting):
-  for color in ['background_color', 'text_color', 'tiny_footer_color']:
+  for color in ['background_color', 'text_color', 'tiny_footer_color', 'l4_box_fill_color']:
     if color in formatting:
       if formatting[color] == 'white':
         formatting[color] = [255,255,255]

@@ -36,6 +36,10 @@ The config file, and the document preample, and each section preamble can all ta
 * logo_path: logo_path.png
 * columns: integer_value, the number of columns for content
 * incremental_bullets: true|**false**
+* l4_box_fill_color:
+  - 230
+  - 240
+  - 255
 
 ### Document-wide configuration
 
