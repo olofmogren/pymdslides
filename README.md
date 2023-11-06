@@ -12,10 +12,10 @@ The config file, and the document preample, and each section preamble can all ta
 
 ### Configuration allowed everywhere:
 
-* layout: center|image_center|image_left_half|image_left_small|image_right_half|image_right_small|image_fill
-* title_vertical_center: true|false
-* crop_images: true|false
-* packed_images: true|false
+* layout: center|**image_center**|image_left_half|image_left_small|image_right_half|image_right_small|image_fill
+* title_vertical_center: true|**false**
+* crop_images: **true**|false
+* packed_images: **true**|false
 * text_color:
   - 0
   - 0
@@ -35,6 +35,7 @@ The config file, and the document preample, and each section preamble can all ta
   -- colors are coded with RGB, 0-255.
 * logo_path: logo_path.png
 * columns: integer_value, the number of columns for content
+* incremental_bullets: true|**false**
 
 ### Document-wide configuration
 
@@ -55,7 +56,6 @@ The config file, and the document preample, and each section preamble can all ta
         - y1: 40
     - page_width: 480
     - pixel_per_mm: 0.15
-      -- colors are coded with RGB, 0-255.
     - tiny_footer_em: 6
 
 ## Why another tool
