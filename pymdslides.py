@@ -172,7 +172,9 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
   if formatting['layout'] == 'center':
     width = pdf.get_string_width(title)
     centering_offset = round((offsets['w']-width)/2)
-    print('title_width',width,x,centering_offset)
+    print('title','"{}"'.format(title))
+    print('title width',width,'x',x,'centering_offset',centering_offset)
+    print('offsets', offsets)
     x = x+centering_offset
   pdf.set_xy(x,y)
   pdf.text(txt=title, x=x, y=y)#, w=offsets['w'])
@@ -191,7 +193,9 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
       x_subtitle = x
       width = pdf.get_string_width(subtitle)
       centering_offset = round((offsets['w']-width)/2)
-      print('subtitle_width',width,x,centering_offset)
+      print('subtitle','"{}"'.format(subtitle))
+      print('subtitle_width',width,'x',x,'centering_offset',centering_offset)
+      print('offsets', offsets)
       x_subtitle = x_subtitle+centering_offset
     pdf.set_xy(x_subtitle,y_subtitle)
     pdf.text(txt=subtitle, x=x_subtitle, y=y_subtitle)#, w=offsets['w'])
@@ -374,9 +378,10 @@ def position_and_render_text_line(line, x, y, offsets, headlines, text_color, fo
     # CENTERING LINE:
     width = get_text_line_width(line, x, y, offsets, headlines, text_color, column_divider)
     #print('centering',offsets)
-    print('width', width)
     centering_offset = round((offsets['w']-width)/2)
-    print('centering_offset', centering_offset)
+    print('line','"{}"'.format(line))
+    print('line width',width,'x',x,'centering_offset',centering_offset)
+    print('offsets', offsets)
     x = x+centering_offset
   x, y, width = render_text_line(line, x, y, offsets, headlines, text_color, column_divider)
   x = origin_x
@@ -550,6 +555,9 @@ def render_internal_link(link, x, y, headlines):
   fpdf_link = pdf.add_link(page=page_number)
   pdf.cell(txt=link_text, link=fpdf_link, markdown=True)
   x = pdf.get_x()
+  # workaround. x has a distance, similar to a space after the link.
+  space_width = pdf.get_string_width(' ')
+  x = round(x-0.7*space_width)
   return x, y
 
 def render_latex(formula, x, y, text_color, dry_run=False):

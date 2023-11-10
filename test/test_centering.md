@@ -16,7 +16,7 @@ crop_images: false
 * And the final bullet
 
 ![Neurons in space](neurons-in-space-explosion-detailed.jpg)
-![Image alt text](testing_image.png)
+![Image alt text](testing_image.jpg)
 ![Neurons in space](neurons-in-space-explosion-detailed.jpg)
 
 # Latex and formatting
@@ -37,21 +37,21 @@ A bit *of italic*
 $a = \frac{b}{c}$
 And **a bold thing**, too.
 Testing [linking](to_some_target), too.
-Testing linking, too.
+Testing [internal linking](#Images side-by-side), too.
 A text, following with a $\frac{formula}{divisor}$
 
 # Images side-by-side
 
 ---
 hidden: false
-layout: image_fill
+layout: center
 text_color:
 - 255
 - 100
 - 100
 ---
 
-![](testing_image.png)
+![](testing_image.jpg)
 ![](neurons-in-space-explosion-detailed.jpg)
 
 &nbsp;
