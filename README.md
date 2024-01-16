@@ -62,6 +62,12 @@ The config file, and the document preample, and each section preamble can all ta
     - pixel_per_mm: 0.15
     - tiny_footer_em: 6
 
+### Colors
+
+All colors can also take color shorthands in place of the RGB list mentioned above:
+
+* white|grey|black|orange|red|green|blue|yellow|darkred|darkgreen|darkblue
+
 ## Why another tool
 
 Because it's fun. And because it helps me make slides in somewhat clean markdown that looks the way I need them to. **Why not Beamer with Markdown?** - Because, even though it was easy to create clean Markdown files for simple presentations, when you wanted images or other layout, the Markdown is soon cluttered with layout formatting, and sections of Latex syntax.
