@@ -1,9 +1,12 @@
 .venv
 __pycache__
-fonts
 .swp
 config.yaml
 rise.png
 rise.yaml
 .*
+fonts/Avenir*
+fonts/Code*
+fonts/Lato*
+fonts/Roboto*
 
