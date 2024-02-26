@@ -1,0 +1,5 @@
+#!/usr/bin/bash
+INSTPATH={{ INSERT INSTALLATION DIRECTORY HERE }}
+source $INSTPATH/.venv/bin/activate
+python $INSTPATH/pymdslides.py $@ 
+

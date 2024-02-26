@@ -9,9 +9,9 @@ text_color:
   - 0
   # colors are coded with RGB, 0-255, or a string: white|grey|black
 background_color:
-  - 0
-  - 0
-  - 0
+  - 255
+  - 255
+  - 255
   # colors are coded with RGB, 0-255, or a string: white|grey|black
 dimensions:
   em: 18
@@ -33,7 +33,8 @@ dimensions:
   tiny_footer_em: 6
 layout: center
 # layout can be center|image_center|image_left_half|image_left_small|image_right_half|image_right_small|image_fill
-title_vertical_center: true|false
+title_vertical_center: false
+# title_vertical_center can be true|false
 tiny_footer: Made with PYMDSLIDES
 tiny_footer_color:
   - 128
@@ -42,11 +43,11 @@ tiny_footer_color:
   # colors are coded with RGB, 0-255, or a string: white|grey|black
 
 fonts:
-    font_file_standard: 'font_file_standard.ttf'
-    font_file_standard_italic: 'font_file_standard_italic.ttf'
-    font_file_standard_bold: 'font_file_standard_bold.ttf'
-    font_file_standard_bolditalic: 'font_file_standard_bolditalic.ttf'
-    font_file_title: 'font_file_title.ttf'
-    font_file_footer: 'font_file_footer.ttf'
+    font_file_standard: 'fonts/font_file_standard.ttf'
+    font_file_standard_italic: 'fonts/font_file_standard_italic.ttf'
+    font_file_standard_bold: 'fonts/font_file_standard_bold.ttf'
+    font_file_standard_bolditalic: 'fonts/font_file_standard_bolditalic.ttf'
+    font_file_title: 'fonts/font_file_title.ttf'
+    font_file_footer: 'fonts/font_file_footer.ttf'
 logo_path: 'logo.png'
 

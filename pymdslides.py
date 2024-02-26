@@ -148,13 +148,14 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
   packed_images = True
   if 'background_image' in formatting:
     print('{}:{}: background_image {}'.format(md_file_stripped, line_number, formatting['background_image']))
-    vec_imgs = put_images_on_page([formatting['background_image']], [''], formatting['layout'], len(lines) > 0, packed_images, True, background=True, raster_images=raster_images)
+    vec_imgs = put_images_on_page(md_file_stripped, line_number, [formatting['background_image']], [''], formatting['layout'], len(lines) > 0, packed_images, True, background=True, raster_images=raster_images)
     vector_images += vec_imgs
 
   if 'packed_images' in formatting and formatting['packed_images'] == False:
     packed_images = False
   print('{}:{}: crop_images {}'.format(md_file_stripped, line_number, formatting['crop_images']))
-  vec_imgs = put_images_on_page(images, alt_texts, formatting['layout'], len(lines) > 0, packed_images, formatting['crop_images'], background=False, raster_images=raster_images)
+  vec_imgs = put_images_on_page(md_file_stripped, line_number, images, alt_texts, formatting['layout'], len(lines) > 0, packed_images, formatting['crop_images'], background=False, raster_images=raster_images)
+  # vector images are saved to put on the page using pdf_rw afterwards.
   vector_images += vec_imgs
   
   offsets = get_offsets(formatting['layout'])
@@ -232,6 +233,10 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
       current_table = []
     #print('column_offsets',column_offsets)
     x, y = position_and_render_text_line(line, x, y, column_offsets, headlines, text_color, formatting, column_divider=column_divider)
+  if(len(current_table)):
+    print('{}:{}: rendering table'.format(md_file_stripped, line_number))
+    x , y = render_table(current_table, x, y, column_offsets, headlines, text_color)
+    current_table = []
   if 'tiny_footer' in formatting:
     pdf.set_text_color(formatting.get('tiny_footer_color', default_tiny_footer_color))
     if 'fonts' in formatting and 'font_file_footer' in formatting['fonts']:
@@ -745,12 +750,23 @@ def get_offsets(layout):
   offsets['h'] = offsets['y1']-offsets['y0']
   return offsets
 
-def put_images_on_page(images, alt_texts, layout, has_text, packed_images, crop_images, background=False, raster_images=False):
+def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout, has_text, packed_images, crop_images, background=False, raster_images=False):
   vector_graphics = []
   #print('crop_images', crop_images)
   #print('put_images_on_page()', 'layout', layout)
   if len(images) == 0:
     return vector_graphics
+  # print("images", images,alt_texts)
+  images_to_remove = []
+  for i,(image,alt_text) in enumerate(zip(images,alt_texts)):
+    if image == "" or not os.path.isfile(image):
+      #print("{}:{}: Warning: Empty image tag, or image file does not exist. '{}'. Ignoring.".format(md_file_stripped, line_number, image, alt_text))
+      images_to_remove.append(i)
+  images_to_remove.reverse()
+  for index in images_to_remove:
+    print("{}:{}: Warning: Empty image tag, or image file does not exist. '{}'. Ignoring.".format(md_file_stripped, line_number, images[index], alt_texts[index]))
+    del images[index]
+    del alt_texts[index]
   page_images_alts = [(im,alt) for (im, alt) in zip(images, alt_texts) if not alt.startswith('credits:')]
   page_images = [im for (im,alt) in page_images_alts]
   credit_images_alts = [(im,alt) for (im, alt) in zip(images, alt_texts) if alt.startswith('credits:')]
@@ -817,6 +833,7 @@ def put_images_on_page(images, alt_texts, layout, has_text, packed_images, crop_
   # credit images:
   if len(credit_images):
     locations = get_images_locations(credit_images, layout, has_text, packed_images, cred=True)
+    # print("credit_images", credit_images)
     for image,location in zip(credit_images,locations):
       print('location', location)
       #if crop_images:
@@ -881,6 +898,7 @@ def get_cropped_location(image, location):
 def get_cropped_image_file(image, location):
   # fix crop:
   tmp_f = '/tmp/pymdslides_tmp_file'
+  #print("image:",image)
   with Image.open(image) as img:
     if img.width < 10 or img.height < 10:
       img = img.resize((img.width*10, img.height*10))
@@ -1422,6 +1440,7 @@ if __name__ == "__main__":
   pdf = FPDF(orientation = 'P', unit = 'mm', format = (formatting['dimensions']['page_width'], formatting['dimensions']['page_height'])) # 16:9
   pdf.set_font('Helvetica', '', formatting['dimensions']['font_size_standard'])
   if 'fonts' in formatting:
+    print(formatting['fonts'])
     if formatting['fonts']['font_file_standard']:
       fname = formatting['fonts']['font_file_standard']
       if os.path.exists(os.path.join(script_home, fname)):
