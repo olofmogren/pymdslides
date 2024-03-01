@@ -42,7 +42,7 @@ layouts = ['image_left_half', 'image_left_small', 'image_right_half', 'image_rig
 default_text_color= [0,0,0]
 default_layout = 'center'
 default_crop = True
-default_tiny_footer_color= [100,100,100]
+default_footer_color= [100,100,100]
 default_l4_box_border_color = 200
 default_l4_box_fill_color = [230,240,255]
 default_dimensions = {
@@ -57,8 +57,8 @@ default_dimensions = {
         'pixel_per_mm': .15, # magical numbers that make the text align with the equations. .15 corresponds to text size 34, .17 corresponds to text size 40
         'em': 18,
         'em_title': 26,
-        'tiny_footer_em': 6,
-        'margin_tiny_footer': 4,
+        'footer_em': 6,
+        'margin_footer': 4,
 }
 
 def dump_page_content_to_pdf(pdf, content, formatting, headlines, raster_images, md_file_stripped, line_number):
@@ -237,15 +237,15 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
     print('{}:{}: rendering table'.format(md_file_stripped, line_number))
     x , y = render_table(current_table, x, y, column_offsets, headlines, text_color)
     current_table = []
-  if 'tiny_footer' in formatting:
-    pdf.set_text_color(formatting.get('tiny_footer_color', default_tiny_footer_color))
+  if 'footer' in formatting:
+    pdf.set_text_color(formatting.get('footer_color', default_footer_color))
     if 'fonts' in formatting and 'font_file_footer' in formatting['fonts']:
       pdf.set_font('font_footer', '', formatting['dimensions']['font_size_footer'])
     else:
       pdf.set_font_size(formatting['dimensions']['font_size_footer'])
-    #x = formatting['dimensions']['page_width']//2-pdf.get_string_width(formatting['tiny_footer'])//2
-    x = formatting['dimensions']['margin_tiny_footer']
-    pdf.text(txt=formatting['tiny_footer'], x=x, y=formatting['dimensions']['page_height']-formatting['dimensions']['margin_tiny_footer']) #, w=offsets['w'], align='L')
+    #x = formatting['dimensions']['page_width']//2-pdf.get_string_width(formatting['footer'])//2
+    x = formatting['dimensions']['margin_footer']
+    pdf.text(txt=formatting['footer'], x=x, y=formatting['dimensions']['page_height']-formatting['dimensions']['margin_footer']) #, w=offsets['w'], align='L')
     pdf.set_text_color(text_color)
   elif(len(current_table)):
     print('{}: {}: rendering table'.format(md_file_stripped, line_number))
@@ -282,7 +282,7 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
   return vector_images
 
 def preprocess_formatting(formatting):
-  for color in ['background_color', 'text_color', 'tiny_footer_color', 'l4_box_fill_color']:
+  for color in ['background_color', 'text_color', 'footer_color', 'l4_box_fill_color']:
     if color in formatting:
       if formatting[color] == 'white':
         formatting[color] = [255,255,255]
@@ -1222,7 +1222,7 @@ def logo_watermark(pdf_file, logo_path):
   pdf.add_page()
   logo_width=23
   logo_height=30
-  pdf.image(logo_path, x=formatting['dimensions']['page_width']-logo_width-formatting['dimensions']['margin_tiny_footer'], y=formatting['dimensions']['page_height']-logo_height-formatting['dimensions']['margin_tiny_footer'] , w=logo_width, h=logo_height)
+  pdf.image(logo_path, x=formatting['dimensions']['page_width']-logo_width-formatting['dimensions']['margin_footer'], y=formatting['dimensions']['page_height']-logo_height-formatting['dimensions']['margin_footer'] , w=logo_width, h=logo_height)
   reader = PdfReader(fdata=bytes(pdf.output()))
   logo_page = reader.pages[0]
 

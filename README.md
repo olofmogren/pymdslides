@@ -27,8 +27,8 @@ The config file, and the document preample, and each section preamble can all ta
   - 255
   -- colors are coded with RGB, 0-255.
 * background_image: path_to_background_image_file.png
-* tiny_footer: Made with PYMDSLIDES
-* tiny_footer_color:
+* footer: Made with PYMDSLIDES
+* footer_color:
   - 128
   - 128
   - 128
@@ -51,7 +51,7 @@ The config file, and the document preample, and each section preamble can all ta
     - font_size_subtitle: 40
     - font_size_title: 72
     - internal_margin: 10
-    - margin_tiny_footer: 4
+    - margin_footer: 4
     - page_height: 270
     - page_margins:
         - x0: 30
@@ -60,7 +60,7 @@ The config file, and the document preample, and each section preamble can all ta
         - y1: 40
     - page_width: 480
     - pixel_per_mm: 0.15
-    - tiny_footer_em: 6
+    - footer_em: 6
 
 ### Colors
 
