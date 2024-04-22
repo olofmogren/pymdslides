@@ -1525,7 +1525,7 @@ if __name__ == "__main__":
       logo_path = os.path.join(script_home,formatting['logo_path'])
     else:
       logo_path = formatting['logo_path']
-  if logo_path and os.path.exists(logo_path):
+  if logo_path and os.path.exists(logo_path) and os.path.isfile(logo_path):
     logo_watermark(pdf_file, logo_path)
 
 
