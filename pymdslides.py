@@ -166,8 +166,10 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
   if 'title_vertical_center' in formatting and formatting['title_vertical_center']: # and formatting['layout'] in ['image_full', 'image_left_half', 'image_left_small', 'image_right_half', 'image_right_full']:
     y = formatting['dimensions']['page_height']//2-formatting['dimensions']['em_title']//2
   if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
+    print('Setting font title with size',formatting['dimensions']['font_size_title'])
     pdf.set_font('font_title', '', formatting['dimensions']['font_size_title'])
   else:
+    print('Setting font size title',formatting['dimensions']['font_size_title'])
     pdf.set_font_size(formatting['dimensions']['font_size_title'])
   # CENTERING TITLE:
   if formatting['layout'] == 'center':
@@ -284,6 +286,7 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
 def preprocess_formatting(formatting):
   for color in ['background_color', 'text_color', 'footer_color', 'l4_box_fill_color']:
     if color in formatting:
+      #print('color',formatting[color])
       if formatting[color] == 'white':
         formatting[color] = [255,255,255]
       elif formatting[color] == 'grey':
@@ -306,6 +309,16 @@ def preprocess_formatting(formatting):
         formatting[color] = [0,100,0]
       elif formatting[color] == 'darkblue':
         formatting[color] = [0,0,100]
+      elif formatting[color] is not None and formatting[color][0] == '#':
+        # html:
+        r_hex = formatting[color][1:3]
+        r = int(r_hex, 16)
+        g_hex = formatting[color][3:5]
+        g = int(g_hex, 16)
+        b_hex = formatting[color][5:7]
+        b = int(b_hex, 16)
+        #print('detected hex',formatting[color],'computed decimals',r,g,b)
+        formatting[color] = [r,g,b]
   return formatting
 def no_text(lines):
   for l in lines:
