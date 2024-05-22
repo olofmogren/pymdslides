@@ -21,8 +21,6 @@ The config file, and the document preample, and each section preamble can all ta
   - 0
   - 0
   -- colors are coded with RGB, 0-255.
-  -- also supported html hex syntax: "#ffffff" (quotes required), and shorthands:
-    - black, white, grey, red, green, blue, yellow, orange, darkred, darkgreen, darkblue
 * background_color:
   - 255
   - 255
@@ -42,6 +40,7 @@ The config file, and the document preample, and each section preamble can all ta
   - 230
   - 240
   - 255
+  -- colors are coded with RGB, 0-255.
 
 ### Document-wide configuration
 
