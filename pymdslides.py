@@ -14,7 +14,6 @@
 
 import os
 
-from fpdf import FPDF
 import sys,math,time,re
 from PIL import Image, ImageOps
 import matplotlib
@@ -34,6 +33,8 @@ import yaml
 import copy
 from markdown_it import MarkdownIt
 from mdit_plain.renderer import RendererPlain
+from backend_pdf import backend_pdf
+from fpdf import FPDF # still required for vector images on pdf backend.
 
 import copy
 
@@ -61,13 +62,13 @@ default_dimensions = {
         'margin_footer': 4,
 }
 
-def dump_page_content_to_pdf(pdf, content, formatting, headlines, raster_images, md_file_stripped, line_number):
+def dump_page_content(backend, content, formatting, headlines, raster_images, md_file_stripped, line_number):
   print('--------------------------------------')
-  pdf.add_page()
-  #pdf.text(txt=content, markdown=True)
+  backend.add_page()
+  #backend.text(txt=content, markdown=True)
   # this seems to do nothing. checking also in render_text_line.
   formatting = preprocess_formatting(formatting)
-  with pdf.unbreakable():
+  with backend.unbreakable():
     title = ''
     subtitle = ''
     lines = []
@@ -127,9 +128,9 @@ def dump_page_content_to_pdf(pdf, content, formatting, headlines, raster_images,
       l4_boxes.append(l4_lines)
       l4_subtitle = None
       l4_lines = []
-  return render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, formatting, headlines, raster_images, md_file_stripped, line_number)
+  return render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, formatting, headlines, raster_images, md_file_stripped, line_number)
 
-def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, formatting, headlines, raster_images, md_file_stripped, line_number):
+def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, formatting, headlines, raster_images, md_file_stripped, line_number):
   print('{}:{}: rendering page "{}"'.format(md_file_stripped, line_number, title))
   lines = strip_lines(lines)
   vector_images = []
@@ -141,9 +142,9 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
   if 'background_color' not in formatting:
     formatting['background_color'] = [255,255,255]
 
-  pdf.set_fill_color(formatting['background_color'])
-  pdf.rect(x=0, y=0, w=formatting['dimensions']['page_width'], h=formatting['dimensions']['page_height'], style='F')
-  pdf.set_text_color(text_color)
+  backend.set_fill_color(formatting['background_color'])
+  backend.rect(x=0, y=0, w=formatting['dimensions']['page_width'], h=formatting['dimensions']['page_height'], style='F')
+  backend.set_text_color(text_color)
 
   packed_images = True
   if 'background_image' in formatting:
@@ -167,20 +168,20 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
     y = formatting['dimensions']['page_height']//2-formatting['dimensions']['em_title']//2
   if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
     print('Setting font title with size',formatting['dimensions']['font_size_title'])
-    pdf.set_font('font_title', '', formatting['dimensions']['font_size_title'])
+    backend.set_font('font_title', '', formatting['dimensions']['font_size_title'])
   else:
     print('Setting font size title',formatting['dimensions']['font_size_title'])
-    pdf.set_font_size(formatting['dimensions']['font_size_title'])
+    backend.set_font_size(formatting['dimensions']['font_size_title'])
   # CENTERING TITLE:
   if formatting['layout'] == 'center':
-    width = pdf.get_string_width(title)
+    width = backend.get_string_width(title)
     centering_offset = round((offsets['w']-width)/2)
     print('title','"{}"'.format(title))
     print('title width',width,'x',x,'centering_offset',centering_offset)
     print('offsets', offsets)
     x = x+centering_offset
-  pdf.set_xy(x,y)
-  pdf.text(txt=title, x=x, y=y)#, w=offsets['w'])
+  backend.set_xy(x,y)
+  backend.text(txt=title, x=x, y=y)#, w=offsets['w'])
   x = offsets['x0']
   y += formatting['dimensions']['em_title']
 
@@ -188,20 +189,20 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
     x_subtitle = x+formatting['dimensions']['em']
     y_subtitle = y-formatting['dimensions']['em_title']//2
     if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
-      pdf.set_font('font_title', '', formatting['dimensions']['font_size_subtitle'])
+      backend.set_font('font_title', '', formatting['dimensions']['font_size_subtitle'])
     else:
-      pdf.set_font_size(formatting['dimensions']['font_size_subtitle'])
+      backend.set_font_size(formatting['dimensions']['font_size_subtitle'])
     # CENTERING SUBTITLE:
     if formatting['layout'] == 'center':
       x_subtitle = x
-      width = pdf.get_string_width(subtitle)
+      width = backend.get_string_width(subtitle)
       centering_offset = round((offsets['w']-width)/2)
       print('subtitle','"{}"'.format(subtitle))
       print('subtitle_width',width,'x',x,'centering_offset',centering_offset)
       print('offsets', offsets)
       x_subtitle = x_subtitle+centering_offset
-    pdf.set_xy(x_subtitle,y_subtitle)
-    pdf.text(txt=subtitle, x=x_subtitle, y=y_subtitle)#, w=offsets['w'])
+    backend.set_xy(x_subtitle,y_subtitle)
+    backend.text(txt=subtitle, x=x_subtitle, y=y_subtitle)#, w=offsets['w'])
   x = offsets['x0']
   y += formatting['dimensions']['em_title']
 
@@ -240,15 +241,15 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
     x , y = render_table(current_table, x, y, column_offsets, headlines, text_color)
     current_table = []
   if 'footer' in formatting:
-    pdf.set_text_color(formatting.get('footer_color', default_footer_color))
+    backend.set_text_color(formatting.get('footer_color', default_footer_color))
     if 'fonts' in formatting and 'font_file_footer' in formatting['fonts']:
-      pdf.set_font('font_footer', '', formatting['dimensions']['font_size_footer'])
+      backend.set_font('font_footer', '', formatting['dimensions']['font_size_footer'])
     else:
-      pdf.set_font_size(formatting['dimensions']['font_size_footer'])
-    #x = formatting['dimensions']['page_width']//2-pdf.get_string_width(formatting['footer'])//2
+      backend.set_font_size(formatting['dimensions']['font_size_footer'])
+    #x = formatting['dimensions']['page_width']//2-backend.get_string_width(formatting['footer'])//2
     x = formatting['dimensions']['margin_footer']
-    pdf.text(txt=formatting['footer'], x=x, y=formatting['dimensions']['page_height']-formatting['dimensions']['margin_footer']) #, w=offsets['w'], align='L')
-    pdf.set_text_color(text_color)
+    backend.text(txt=formatting['footer'], x=x, y=formatting['dimensions']['page_height']-formatting['dimensions']['margin_footer']) #, w=offsets['w'], align='L')
+    backend.set_text_color(text_color)
   elif(len(current_table)):
     print('{}: {}: rendering table'.format(md_file_stripped, line_number))
     x , y = render_table(current_table, x, y, column_offsets, headlines, text_color)
@@ -272,11 +273,11 @@ def render_page(pdf, title, subtitle, images, alt_texts, lines, l4_boxes, format
     box_offsets_list[i]['y0'] = box_offsets_list[i]['y0']-y_offset
 
   for i,(lines,box_offsets) in enumerate(zip(l4_boxes,box_offsets_list)):
-    pdf.set_draw_color(formatting.get('l4_box_border_color', default_l4_box_border_color))
-    pdf.set_fill_color(formatting.get('l4_box_fill_color', default_l4_box_fill_color))
-    with pdf.local_context(fill_opacity=0.75, stroke_opacity=0.75):
-      pdf.rect(box_offsets['x0'], box_offsets['y0'], box_offsets['w'], box_offsets['h'], round_corners=True, style="DF", corner_radius=10)
-    #print('pdf.rect(',box_offsets['x0'], box_offsets['y0'], box_offsets['w'], box_offsets['h'], 'round_corners=True', 'style="D"',')')
+    backend.set_draw_color(formatting.get('l4_box_border_color', default_l4_box_border_color))
+    backend.set_fill_color(formatting.get('l4_box_fill_color', default_l4_box_fill_color))
+    with backend.local_context(fill_opacity=0.75, stroke_opacity=0.75):
+      backend.rect(box_offsets['x0'], box_offsets['y0'], box_offsets['w'], box_offsets['h'], round_corners=True, style="DF", corner_radius=10)
+    #print('backend.rect(',box_offsets['x0'], box_offsets['y0'], box_offsets['w'], box_offsets['h'], 'round_corners=True', 'style="D"',')')
     x = box_offsets['x0']+formatting['dimensions']['internal_margin']
     y = box_offsets['y0']+formatting['dimensions']['internal_margin']
     for line in lines:
@@ -411,8 +412,8 @@ def render_text_line(line, x, y, offsets, headlines, text_color, column_divider=
     origin_y = y
     #print(offsets)
     width = offsets['w']
-    pdf.set_xy(x,y)
-    if pdf.will_page_break(formatting['dimensions']['em']):
+    backend.set_xy(x,y)
+    if backend.will_page_break(formatting['dimensions']['em']):
       print('line will overflow the page. not including in PDF!!!',line)
       return x,y,0
     if line.startswith('###') and (len(line) <= 3 or line[3] != '#'):
@@ -428,18 +429,18 @@ def render_text_line(line, x, y, offsets, headlines, text_color, column_divider=
       #print('empty line!')
       y += int(0.5*formatting['dimensions']['em'])
     elif len(line) > 3 and all([c == '-' for c in line]):
-      pdf.set_line_width(0.5)
+      backend.set_line_width(0.5)
       # TODO: configuration of column divider line color
-      pdf.set_draw_color(160,160,160)
+      backend.set_draw_color([160,160,160])
       if column_divider:
         x = offsets['x0']-formatting['dimensions']['internal_margin']//2
-        pdf.line(x1=x, y1=offsets['y0'], x2=x, y2=offsets['y1'])
+        backend.line(x1=x, y1=offsets['y0'], x2=x, y2=offsets['y1'])
       else:
-        pdf.line(x1=x, y1=y+int(0.5*formatting['dimensions']['em']), x2=x+offsets['w'], y2=y+int(0.5*formatting['dimensions']['em']))
+        backend.line(x1=x, y1=y+int(0.5*formatting['dimensions']['em']), x2=x+offsets['w'], y2=y+int(0.5*formatting['dimensions']['em']))
       y += formatting['dimensions']['em']
       if column_divider:
         y = origin_y
-      pdf.set_draw_color(text_color)
+      backend.set_draw_color(text_color)
     else:
       pos = 0
       for tag in merged:
@@ -474,10 +475,10 @@ def get_text_line_width(line, x, y, offsets, headlines, text_color, column_divid
     #print('line', line, len(line))
     width = offsets['w']
     if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
-      pdf.set_font('font_standard', '', formatting['dimensions']['font_size_standard'])
+      backend.set_font('font_standard', '', formatting['dimensions']['font_size_standard'])
     else:
-      pdf.set_font_size(formatting['dimensions']['font_size_standard'])
-    if pdf.will_page_break(formatting['dimensions']['em']):
+      backend.set_font_size(formatting['dimensions']['font_size_standard'])
+    if backend.will_page_break(formatting['dimensions']['em']):
       print('line will overflow the page. not including in PDF!!!',line)
       return width
     if line.startswith('###') and (len(line) <= 3 or line[3] != '#'):
@@ -496,7 +497,7 @@ def get_text_line_width(line, x, y, offsets, headlines, text_color, column_divid
       for tag in merged:
         if tag[0] > pos:
           pre_tag = line[pos:tag[0]-1]
-          new_widths.append(pdf.get_string_width(markdown_to_text(pre_tag)))
+          new_widths.append(backend.get_string_width(markdown_to_text(pre_tag)))
           #print('pretag width',new_widths[-1],'('+pre_tag+')')
         if tag[2] == 'latex':
           formula = line[tag[0]:tag[1]]
@@ -507,11 +508,11 @@ def get_text_line_width(line, x, y, offsets, headlines, text_color, column_divid
           link = line[tag[0]:tag[1]+1]
           splitted = link.split('](#')
           link_text = splitted[0][1:]
-          new_widths.append(pdf.get_string_width(link_text))
+          new_widths.append(backend.get_string_width(link_text))
           #print('link width',new_widths[-1],'('+link_text+')')
         pos = tag[1]+1
       if pos < len(line):
-        new_widths.append(pdf.get_string_width(markdown_to_text(line[pos:])))
+        new_widths.append(backend.get_string_width(markdown_to_text(line[pos:])))
         #print('last part width',new_widths[-1],'('+line[pos:]+')')
     #print('sum',sum(new_widths))
     return sum(new_widths)
@@ -521,15 +522,15 @@ def render_table(table, x, y, offsets, headlines, text_color, column_divider=Fal
   origin_x = x
   origin_y = y
   if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
-    pdf.set_font('font_standard', '', formatting['dimensions']['font_size_standard'])
+    backend.set_font('font_standard', '', formatting['dimensions']['font_size_standard'])
   else:
-    pdf.set_font_size(formatting['dimensions']['font_size_standard'])
+    backend.set_font_size(formatting['dimensions']['font_size_standard'])
   # due to a bug (in my code or in pfpdf), the table is centered on the page. uncentering:
   uncentered_x = x-(formatting['dimensions']['page_width']//2-offsets['w']//2)
-  pdf.set_xy(uncentered_x,y)
-  pdf.set_xy(0,y)
-  pdf.set_left_margin(offsets['x0'])
-  with pdf.table(width=offsets['w'], align='LEFT', markdown=True) as pdf_table:
+  backend.set_xy(uncentered_x,y)
+  backend.set_xy(0,y)
+  backend.set_left_margin(offsets['x0'])
+  with backend.table(width=offsets['w'], align='LEFT', markdown=True) as pdf_table:
     for tr in table:
       row = pdf_table.row()
       for td in tr:
@@ -540,17 +541,17 @@ def render_table(table, x, y, offsets, headlines, text_color, column_divider=Fal
 def render_part_of_line(part, x, y):
   #print('part', '"'+part+'"')
   if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
-    pdf.set_font('font_standard', '', formatting['dimensions']['font_size_standard'])
+    backend.set_font('font_standard', '', formatting['dimensions']['font_size_standard'])
   else:
-    pdf.set_font_size(formatting['dimensions']['font_size_standard'])
-  pdf.set_xy(x,y)
+    backend.set_font_size(formatting['dimensions']['font_size_standard'])
+  backend.set_xy(x,y)
   part = part.replace('&nbsp;', ' ')
   if not part.strip():
-    pdf.text(txt=part, x=x, y=y)#, w=offsets['w'], align=align)
+    backend.text(txt=part, x=x, y=y)#, w=offsets['w'], align=align)
   else:
     #print(part)
-    pdf.cell(txt=part, markdown=True)
-  x = pdf.get_x()
+    backend.cell(txt=part, markdown=True)
+  x = backend.get_x()
   return x, y
 
 def render_internal_link(link, x, y, headlines):
@@ -562,19 +563,19 @@ def render_internal_link(link, x, y, headlines):
   target = splitted[1][:-1]
   print('link', '"'+link_text+'","'+target+'"')
   if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
-    pdf.set_font('font_standard', 'u', formatting['dimensions']['font_size_standard'])
+    backend.set_font('font_standard', 'u', formatting['dimensions']['font_size_standard'])
   else:
-    pdf.set_font('helvetica', 'u', formatting['dimensions']['font_size_standard'])
-    #pdf.set_font_size(formatting['dimensions']['font_size_standard'])
-  pdf.set_xy(x,y)
+    backend.set_font('helvetica', 'u', formatting['dimensions']['font_size_standard'])
+    #backend.set_font_size(formatting['dimensions']['font_size_standard'])
+  backend.set_xy(x,y)
   page_number = headlines.index(target)+1
   #print(headlines)
   print('page_number', page_number, 'target', target)
-  fpdf_link = pdf.add_link(page=page_number)
-  pdf.cell(txt=link_text, link=fpdf_link, markdown=True)
-  x = pdf.get_x()
+  link_ref = backend.add_link(page=page_number)
+  backend.cell(txt=link_text, link=link_ref, markdown=True)
+  x = backend.get_x()
   # workaround. x has a distance, similar to a space after the link.
-  space_width = pdf.get_string_width(' ')
+  space_width = backend.get_string_width(' ')
   x = round(x-0.7*space_width)
   return x, y
 
@@ -582,15 +583,15 @@ def render_latex(formula, x, y, text_color, dry_run=False):
   return render_latex_matplotlib(formula, x, y, text_color, dry_run=dry_run)
 
 def render_latex_latextools(formula, x, y):
-    # seems impossible to import svg or pdf!
+    # seems impossible to import svg or backend!
     formula = '$'+formula+'$'
     #print('formula', formula)
     # Latex!
     latex_eq = latextools.render_snippet(formula, commands=[latextools.cmd.all_math])
     #svg_eq = latex_eq.as_svg()
     tmp_f = '/tmp/pymdslides_tmp_file'
-    latex_eq.save(tmp_f+'pdf')
-    pdf.rasterize(tmp_f+'.png')
+    latex_eq.save(tmp_f+'backend')
+    backend.rasterize(tmp_f+'.png')
     #svg_eq.save(tmp_f)
     #lines = []
     #with open(tmp_f, 'r') as f:
@@ -598,8 +599,8 @@ def render_latex_latextools(formula, x, y):
     #    lines.append(line.replace('0%', '0'))
     #with open(tmp_f, 'w') as f:
     #  f.write('\n'.join(lines))
-    pdf.image(tmp_f+'.png', x=x, y=y)
-    #pdf.template(tmp_f, x=x, y=y, w=60, h=formatting['dimensions']['em'])
+    backend.image(tmp_f+'.png', x=x, y=y)
+    #backend.template(tmp_f, x=x, y=y, w=60, h=formatting['dimensions']['em'])
     x += width_mm
     y += height_mm-y_offset # TODO: also give the y_offset space above the line
     return x, y, width_mm
@@ -650,7 +651,7 @@ def render_latex_matplotlib(formula, x, y, text_color, dry_run=False):
       #baseline_f = tmp_f+'baseline.png'
       #baseline_img.save(baseline_f)
       #print('baseline_offset', baseline_offset, 'formatting['dimensions']['em']', formatting['dimensions']['em'])
-    #pdf.image(logo_path, x=formatting['dimensions']['page_width']-30, y=formatting['dimensions']['page_height']-35, w=24, h=30)
+    #backend.image(logo_path, x=formatting['dimensions']['page_width']-30, y=formatting['dimensions']['page_height']-35, w=24, h=30)
     arbitrary_image_margin_mm = 1
     width_mm = int(im_width*formatting['dimensions']['pixel_per_mm'])
     height_mm = int(im_height*formatting['dimensions']['pixel_per_mm'])
@@ -661,7 +662,7 @@ def render_latex_matplotlib(formula, x, y, text_color, dry_run=False):
     print('y_offset', y_offset)
 
     if not dry_run:
-      # adding alpha channel, so we can have background images in pdf.
+      # adding alpha channel, so we can have background images in backend.
       with Image.open(tmp_f) as img:
         img_alpha = ImageOps.invert(ImageOps.grayscale(img))
         #print(img_alpha)
@@ -680,7 +681,7 @@ def render_latex_matplotlib(formula, x, y, text_color, dry_run=False):
           img.putalpha(img_alpha)
         img.save(tmp_f)
       
-      pdf.image(tmp_f, x=x, y=y-y_offset, w=width_mm, h=height_mm)
+      backend.image(tmp_f, x=x, y=y-y_offset, w=width_mm, h=height_mm)
       print('remove(',tmp_f,')')
       os.remove(tmp_f)
     #print(tmp_f)
@@ -809,7 +810,7 @@ def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout,
           image_to_display = tmp_f
         else:
           # this will be postponed as we need a workaround using pdfrw and cairosvg.
-          vector_graphics.append((pdf.pages_count-1, image, location))
+          vector_graphics.append((backend.pages_count-1, image, location))
       if not is_vector_format(image) or raster_images:
         if crop_images:
           #image_to_display_2 = get_cropped_image_file(image_to_display, location)
@@ -820,9 +821,9 @@ def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout,
           #image_to_display = image_to_display_2
           viewpoint = location
           location = get_cropped_location(image_to_display, location)
-          with pdf.rect_clip(x=viewpoint['x0'], y=viewpoint['y0'], w=viewpoint['w'], h=viewpoint['h']):
+          with backend.rect_clip(x=viewpoint['x0'], y=viewpoint['y0'], w=viewpoint['w'], h=viewpoint['h']):
             #print('putting cropped image',image_to_display)
-            pdf.image(image_to_display, x=location['x0'], y = location['y0'], w = location['w'], h = location['h'], type = '', link = '')
+            backend.image(image_to_display, x=location['x0'], y = location['y0'], w = location['w'], h = location['h'], type = '', link = '')
         else:
           #image_to_display = image
           location = get_uncropped_location(image_to_display, location)
@@ -837,7 +838,7 @@ def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout,
             image_to_display = tmp_f
 
           #print('putting uncropped image',image_to_display)
-          pdf.image(image_to_display, x=location['x0'], y = location['y0'], w = location['w'], h = location['h'], type = '', link = '')
+          backend.image(image_to_display, x=location['x0'], y = location['y0'], w = location['w'], h = location['h'], type = '', link = '')
         if image_to_display != image:
           # tmpfile
           print('remove(',image_to_display,')')
@@ -854,7 +855,7 @@ def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout,
       #else:
       #  image_to_display = image
       #  location = get_uncropped_location(image, location)
-      pdf.image(image_to_display, x=location['x0'], y = location['y0'], w = location['w'], h = location['h'], type = '', link = '')
+      backend.image(image_to_display, x=location['x0'], y = location['y0'], w = location['w'], h = location['h'], type = '', link = '')
       if image_to_display != image:
         print('remove(',image_to_display,')')
         os.remove(image_to_display)
@@ -1039,20 +1040,8 @@ def get_image_area(layout, has_text):
   #print('image_area',image_area)
   return image_area
 
-def draw_svg_image(pdf, svg_file):
-  svg = pdf.svg.SVGObject.from_file(svg_file)
-
-  # We pass align_viewbox=False because we want to perform positioning manually
-  # after the size transform has been computed.
-  width, height, paths = svg.transform_to_page_viewport(pdf, align_viewbox=False)
-  # note: transformation order is important! This centers the svg drawing at the
-  # origin, rotates it 90 degrees clockwise, and then repositions it to the
-  # middle of the output page.
-  paths.transform = paths.transform @ fpdf.drawing.Transform.translation(
-      -width / 2, -height / 2
-  ).rotate_d(90).translate(pdf.w / 2, pdf.h / 2)
-
-  pdf.draw_path(paths)
+def draw_svg_image(backend, svg_file):
+  backend.draw_svg_image(svg_file)
 
 def same_color(first, second):
   if len(first) != len(second):
@@ -1072,8 +1061,8 @@ def find_all(a_str, sub):
         start += len(sub) # use start += 1 to find overlapping matches
     return result
 
-def put_vector_images_on_pdf_with_crop(pdf_file, vector_images, crop_images):
-  reader = PdfReader(pdf_file)
+def put_vector_images_on_pdf_with_crop(output_file, vector_images, crop_images):
+  reader = PdfReader(output_file)
   area = RectXObj(reader.pages[0])
   #print('reader area', area.w, area.h)
   points_per_mm = area.w/formatting['dimensions']['page_width']
@@ -1093,12 +1082,12 @@ def put_vector_images_on_pdf_with_crop(pdf_file, vector_images, crop_images):
         if len(splits) > 1:
           image_pageno = int(splits[1])
         image_file_pdf = '/tmp/pymdslides_tmp_file'
-        image_file_pdf += '-'+str(time.time())+'.pdf'
+        image_file_pdf += '-'+str(time.time())+'.backend'
         if image_file[-3:] == 'svg':
           cairosvg.svg2pdf(url=image_file, write_to=image_file_pdf)
         if image_file[-3:] == 'eps':
           os.system('epstopdf '+image_file+' -o '+image_file_pdf)
-        elif image_file[-3:] == 'pdf':
+        elif image_file[-3:] == 'backend':
           image_file_pdf = image_file
         image_pdf = PdfReader(image_file_pdf)
         image_pdf_page = image_pdf.pages[image_pageno]
@@ -1153,12 +1142,12 @@ def put_vector_images_on_pdf_with_crop(pdf_file, vector_images, crop_images):
       # workaround. needed to retain the page size for some reason.
       PageMerge(writer.pagearray[i]).render()
 
-  print('pdfrw writing', pdf_file)
-  writer.write(pdf_file)
+  print('pdfrw writing', output_file)
+  writer.write(output_file)
 
 
-def put_vector_images_on_pdf(pdf_file, vector_images, crop_images):
-  reader = PdfReader(pdf_file)
+def put_vector_images_on_pdf(output_file, vector_images, crop_images):
+  reader = PdfReader(output_file)
   area = RectXObj(reader.pages[0])
   #print('reader area', area.w, area.h)
   points_per_mm = area.w/formatting['dimensions']['page_width']
@@ -1222,29 +1211,31 @@ def put_vector_images_on_pdf(pdf_file, vector_images, crop_images):
       # workaround. needed to retain the page size for some reason.
       PageMerge(writer.pagearray[i]).render()
 
-  print('pdfrw writing', pdf_file)
-  writer.write(pdf_file)
+  print('pdfrw writing', output_file)
+  writer.write(output_file)
 
-def logo_watermark(pdf_file, logo_path):
-  reader = PdfReader(pdf_file)
-  writer = PdfWriter()
-  writer.pagearray = reader.Root.Pages.Kids
+def logo_watermark(output_file, logo_path):
+  if output_file[-4:] == 'html':
+    backend.logo_watermark(logo_path)
+  else:
+    reader = PdfReader(output_file)
+    writer = PdfWriter()
+    writer.pagearray = reader.Root.Pages.Kids
 
-  pdf = FPDF(orientation = 'P', unit = 'mm', format = (formatting['dimensions']['page_width'], formatting['dimensions']['page_height'])) # 16:9
-  pdf = FPDF(orientation = 'P', unit = 'mm', format = (formatting['dimensions']['page_width'], formatting['dimensions']['page_height'])) # 16:9
-  pdf.add_page()
-  logo_width=23
-  logo_height=30
-  pdf.image(logo_path, x=formatting['dimensions']['page_width']-logo_width-formatting['dimensions']['margin_footer'], y=formatting['dimensions']['page_height']-logo_height-formatting['dimensions']['margin_footer'] , w=logo_width, h=logo_height)
-  reader = PdfReader(fdata=bytes(pdf.output()))
-  logo_page = reader.pages[0]
+    backend = FPDF(orientation = 'P', unit = 'mm', format = (formatting['dimensions']['page_width'], formatting['dimensions']['page_height'])) # 16:9
+    backend.add_page()
+    logo_width=23
+    logo_height=30
+    backend.image(logo_path, x=formatting['dimensions']['page_width']-logo_width-formatting['dimensions']['margin_footer'], y=formatting['dimensions']['page_height']-logo_height-formatting['dimensions']['margin_footer'] , w=logo_width, h=logo_height)
+    reader = PdfReader(fdata=bytes(backend.output()))
+    logo_page = reader.pages[0]
 
-  for i in range(len(writer.pagearray)):
-    #print('putting logo on ',i)
-    PageMerge(writer.pagearray[i]).add(logo_page, prepend=False).render()
+    for i in range(len(writer.pagearray)):
+      #print('putting logo on ',i)
+      PageMerge(writer.pagearray[i]).add(logo_page, prepend=False).render()
 
-  print('pdfrw writing', pdf_file)
-  writer.write(pdf_file)
+    print('pdfrw writing', output_file)
+    writer.write(output_file)
 
 def get_git_commit(script_home):
   p = Popen(["/usr/bin/git","log","--pretty=format:\"%H\"","-1"], cwd=script_home, stdout=PIPE, stderr=PIPE)
@@ -1340,7 +1331,7 @@ def preprocess_md_page(content, line_number, config):
 if __name__ == "__main__":
   md_file = sys.argv[1]
   print('md_file:',md_file)
-  pdf_file = '.'.join(md_file.split('.')[:-1])+'.pdf'
+  output_file = '.'.join(md_file.split('.')[:-1])+'.pdf'
   md_file_stripped = md_file.split('/')[-1]
 
   raster_images = False
@@ -1450,53 +1441,14 @@ if __name__ == "__main__":
 
   # INITIALIZE FPDF:
 
-  pdf = FPDF(orientation = 'P', unit = 'mm', format = (formatting['dimensions']['page_width'], formatting['dimensions']['page_height'])) # 16:9
-  pdf.set_font('Helvetica', '', formatting['dimensions']['font_size_standard'])
-  if 'fonts' in formatting:
-    print(formatting['fonts'])
-    if formatting['fonts']['font_file_standard']:
-      fname = formatting['fonts']['font_file_standard']
-      if os.path.exists(os.path.join(script_home, fname)):
-        fname = os.path.join(script_home, fname)
-      pdf.add_font('font_standard', '', fname)
-      pdf.set_font('font_standard', '', formatting['dimensions']['font_size_standard'])
-    if formatting['fonts']['font_file_standard_italic']:
-      fname = formatting['fonts']['font_file_standard_italic']
-      if os.path.exists(os.path.join(script_home, fname)):
-        fname = os.path.join(script_home, fname)
-      pdf.add_font('font_standard', 'i', fname)
-    if formatting['fonts']['font_file_standard_bold']:
-      fname = formatting['fonts']['font_file_standard_bold']
-      if os.path.exists(os.path.join(script_home, fname)):
-        fname = os.path.join(script_home, fname)
-      pdf.add_font('font_standard', 'b', fname)
-    if formatting['fonts']['font_file_standard_bolditalic']:
-      fname = formatting['fonts']['font_file_standard_bolditalic']
-      if os.path.exists(os.path.join(script_home, fname)):
-        fname = os.path.join(script_home, fname)
-      pdf.add_font('font_standard', 'bi', fname)
-    if formatting['fonts']['font_file_footer']:
-      fname = formatting['fonts']['font_file_footer']
-      if os.path.exists(os.path.join(script_home, fname)):
-        fname = os.path.join(script_home, fname)
-      pdf.add_font('font_footer', '', fname)
-    if formatting['fonts']['font_file_title']:
-      fname = formatting['fonts']['font_file_title']
-      if os.path.exists(os.path.join(script_home, fname)):
-        fname = os.path.join(script_home, fname)
-      pdf.add_font('font_title', '', fname)
-  pdf.set_text_color(0,0,0)
-
-  #pdf.set_image_filter("FlatDecode")
-  pdf.oversized_images = "DOWNSCALE"
-  print('{}: pdf.oversized_images_ratio {}'.format(md_file_stripped, pdf.oversized_images_ratio))
+  backend = backend_pdf(md_file_stripped, formatting, script_home)
 
   # MAIN PROCESSING LOOP.
 
   #print('\n'.join(preprocessed_md_contents))
   for page_number, page in enumerate(preprocessed_md):
     if 'hidden' in page['config'] and page['config']['hidden']:
-      print('------------------------------------\n{}:{}: This page is hidden. Will not generate pdf page.'.format(md_file_stripped, page['line_numbers'][0]))
+      print('------------------------------------\n{}:{}: This page is hidden. Will not generate page.'.format(md_file_stripped, page['line_numbers'][0]))
       continue
     #print(page['headline'])
     #print(yaml.dump(page['config']))
@@ -1504,41 +1456,42 @@ if __name__ == "__main__":
 
     print('{}:{}: generating page (#) {}'.format(md_file_stripped, page['line_numbers'][-1], page_number))
     # TODO: separate images and content below.
-    vector_images_page = dump_page_content_to_pdf(pdf, page['images']+page['content'], page['config'], headlines, raster_images, md_file_stripped, page['line_numbers'][0])
+    vector_images_page = dump_page_content(backend, page['images']+page['content'], page['config'], headlines, raster_images, md_file_stripped, page['line_numbers'][0])
     page_number += 1
     print('------------------------------------')
     if len(vector_images_page) > 0:
-      vector_images[pdf.pages_count-1] = vector_images_page
+      vector_images[backend.pages_count-1] = vector_images_page
 
 
   # POST PROCESSING. LOGGING GIT COMMIT.
 
   git_commit = get_git_commit(script_home)
 
-  pdf.set_title(document_title)
-  pdf.set_producer('pymdslides, git commit: '+git_commit+' https://github.com/olofmogren/pymdslides/')
-  pdf.set_creator('pymdslides, git commit: '+git_commit+' https://github.com/olofmogren/pymdslides/')
-  pdf.set_creation_date(datetime.now(datetime.utcnow().astimezone().tzinfo))
+  backend.set_title(document_title)
+  backend.set_producer('pymdslides, git commit: '+git_commit+' https://github.com/olofmogren/pymdslides/')
+  backend.set_creator('pymdslides, git commit: '+git_commit+' https://github.com/olofmogren/pymdslides/')
+  backend.set_creation_date(datetime.now(datetime.utcnow().astimezone().tzinfo))
 
-  print('writing pdf file:',pdf_file)
-  pdf.output(pdf_file)
+  print('writing file:',output_file)
+  backend.output(output_file)
 
-  # VECTOR IMAGES:
+  # VECTOR IMAGES FOR PDF BACKEND:
 
-  if len(vector_images) > 0:
-    print('vector_images',len(vector_images))
-    #modified_pdf_file = pdf_file+'-with-graphics.pdf'
-    #shutil.copyfile(pdf_file, modified_pdf_file)
-    #put_vector_images_on_pdf(modified_pdf_file, vector_images)
-    put_vector_images_on_pdf(pdf_file, vector_images, formatting['crop_images'])
+  if output_file[-3:] == 'pdf':
+    if len(vector_images) > 0:
+      print('vector_images',len(vector_images))
+      #modified_output_file = output_file+'-with-graphics.pdf'
+      #shutil.copyfile(output_file, modified_output_file)
+      #put_vector_images_on_pdf(modified_output_file, vector_images)
+      put_vector_images_on_pdf(output_file, vector_images, formatting['crop_images'])
 
-  logo_path = os.path.join(script_home,'logo.png')
-  if 'logo_path' in formatting:
-    if os.path.exists(os.path.join(script_home,formatting['logo_path'])):
-      logo_path = os.path.join(script_home,formatting['logo_path'])
-    else:
-      logo_path = formatting['logo_path']
-  if logo_path and os.path.exists(logo_path) and os.path.isfile(logo_path):
-    logo_watermark(pdf_file, logo_path)
+    logo_path = os.path.join(script_home,'logo.png')
+    if 'logo_path' in formatting:
+      if os.path.exists(os.path.join(script_home,formatting['logo_path'])):
+        logo_path = os.path.join(script_home,formatting['logo_path'])
+      else:
+        logo_path = formatting['logo_path']
+    if logo_path and os.path.exists(logo_path) and os.path.isfile(logo_path):
+      logo_watermark(output_file, logo_path)
 
 
