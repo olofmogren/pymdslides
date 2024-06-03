@@ -1,6 +1,6 @@
 # pymdslides
 
-Script to generate PDF slides from markdown input. Can be configured with custom fonts and has a number of built in layouts. Supports Latex formulas via matplotlib. pymdslides is built around pyfpdf. For other dependencies, look at dependencies.txt.
+Script to generate slides in html or pdf from markdown input. Can be configured with custom fonts and has a number of built in layouts. Supports Latex formulas via mathjax or matplotlib. pymdslides is built with lxml and pyfpdf as backends. For other dependencies, look at dependencies.txt.
 
 Level 1 headlines generates a new page. Each document can have a configuration inside a yaml section, and each page can have one specific configuration which is specified insida a yaml section after the headline.
 
@@ -17,30 +17,38 @@ The config file, and the document preample, and each section preamble can all ta
 * crop_images: **true**|false
 * packed_images: **true**|false
 * text_color:
-  - 0
-  - 0
-  - 0
-  -- colors are coded with RGB, 0-255.
+    - 0
+    - 0
+    - 0
+    -- colors are coded with RGB, 0-255.
 * background_color:
-  - 255
-  - 255
-  - 255
-  -- colors are coded with RGB, 0-255.
+    - 255
+    - 255
+    - 255
+    -- colors are coded with RGB, 0-255.
 * background_image: path_to_background_image_file.png
 * footer: Made with PYMDSLIDES
 * footer_color:
-  - 128
-  - 128
-  - 128
-  -- colors are coded with RGB, 0-255.
+    - 128
+    - 128
+    - 128
+    -- colors are coded with RGB, 0-255.
 * logo_path: logo_path.png
 * columns: integer_value, the number of columns for content
 * incremental_bullets: true|**false**
 * l4_box_fill_color:
-  - 230
-  - 240
-  - 255
-  -- colors are coded with RGB, 0-255.
+    - 230
+    - 240
+    - 255
+    -- colors are coded with RGB, 0-255.
+* fonts:
+    - font_file_standard: Path to supported font file
+    - font_name_standard: Name of standard font
+    - font_file_title: Path to supported font file
+    - font_name_title: Name of title font
+    - font_file_footer: Path to supported font file
+    - font_name_footer: Name of footer font
+    -- pymdfiles will work without specifying fonts. If files are specified but not font names, names will be guessed from file names.
 
 ### Document-wide configuration
 

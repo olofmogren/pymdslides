@@ -4,6 +4,7 @@
 layout: center
 packed_images: false
 crop_images: false
+footer: Nice footer about the author and event.
 ---
 
 * layout: center

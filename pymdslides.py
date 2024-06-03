@@ -16,12 +16,11 @@ import os
 
 import sys,math,time,re
 from PIL import Image, ImageOps
-import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib import rcParams
-rcParams['text.usetex'] = True
-#import latextools
-import numpy as np
+#import matplotlib
+#import matplotlib.pyplot as plt
+#from matplotlib import rcParams
+#rcParams['text.usetex'] = True
+#import numpy as np
 from subprocess import Popen,PIPE
 from datetime import datetime
 
@@ -31,9 +30,10 @@ from pdfrw.pagemerge import RectXObj
 import shutil
 import yaml
 import copy
-from markdown_it import MarkdownIt
-from mdit_plain.renderer import RendererPlain
+#from markdown_it import MarkdownIt
+#from mdit_plain.renderer import RendererPlain
 from backend_pdf import backend_pdf
+from backend_html import backend_html
 from fpdf import FPDF # still required for vector images on pdf backend.
 
 import copy
@@ -49,20 +49,21 @@ default_l4_box_fill_color = [230,240,255]
 default_dimensions = {
         'page_width': 480,
         'page_height': 270,
-        'page_margins': {'x0': 30, 'y0': 40, 'x1': 30, 'y1': 40},
+        'page_margins': {'x0': 30, 'y0': 22, 'x1': 30, 'y1': 22},
         'internal_margin': 10,
         'font_size_standard': 34,
         'font_size_title': 72,
         'font_size_subtitle': 40,
-        'font_size_footer': 12,
+        'font_size_footer': 14,
         'pixel_per_mm': .15, # magical numbers that make the text align with the equations. .15 corresponds to text size 34, .17 corresponds to text size 40
-        'em': 18,
-        'em_title': 26,
-        'footer_em': 6,
+        'em': 16,
+        'em_title': 24,
+        'em_subtitle': 14,
+        'em_footer': 6,
         'margin_footer': 4,
 }
 
-def dump_page_content(backend, content, formatting, headlines, raster_images, md_file_stripped, line_number):
+def dump_page_content(backend, content, formatting, headlines, raster_images, treat_as_raster_images, md_file_stripped, line_number):
   print('--------------------------------------')
   backend.add_page()
   #backend.text(txt=content, markdown=True)
@@ -103,19 +104,21 @@ def dump_page_content(backend, content, formatting, headlines, raster_images, md
         alt_texts.append(alt_text)
       elif l4_subtitle is not None:
         #print('l4 line:', line)
-        if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
-          # a hack. assumes that if we have selected a font, it is a unicode enabled font, with the bullet symbol.
-          if line.startswith('* '):
-            # pretty bullet symbols
-            line = '• '+line[2:]
+        if backend.get_format() == 'pdf':
+          if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
+	    # a hack. assumes that if we have selected a font, it is a unicode enabled font, with the bullet symbol.
+            if line.startswith('* '):
+              # pretty bullet symbols
+              line = '• '+line[2:]
         l4_lines.append(line)
       else:
       #elif line:
-        if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
+        if backend.get_format() == 'pdf':
+          if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
           # a hack. assumes that if we have selected a font, it is a unicode enabled font, with the bullet symbol.
-          if line.startswith('* '):
-            # pretty bullet symbols
-            line = '• '+line[2:]
+            if line.startswith('* '):
+              # pretty bullet symbols
+              line = '• '+line[2:]
         if line == '__':
           print('{}:{}: ignoring empty line "{}"'.format(md_file_stripped, line_number, line))
         else:
@@ -128,9 +131,9 @@ def dump_page_content(backend, content, formatting, headlines, raster_images, md
       l4_boxes.append(l4_lines)
       l4_subtitle = None
       l4_lines = []
-  return render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, formatting, headlines, raster_images, md_file_stripped, line_number)
+  return render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, formatting, headlines, raster_images, treat_as_raster_images, md_file_stripped, line_number)
 
-def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, formatting, headlines, raster_images, md_file_stripped, line_number):
+def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, formatting, headlines, raster_images, treat_as_raster_images, md_file_stripped, line_number):
   print('{}:{}: rendering page "{}"'.format(md_file_stripped, line_number, title))
   lines = strip_lines(lines)
   vector_images = []
@@ -142,20 +145,19 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
   if 'background_color' not in formatting:
     formatting['background_color'] = [255,255,255]
 
-  backend.set_fill_color(formatting['background_color'])
-  backend.rect(x=0, y=0, w=formatting['dimensions']['page_width'], h=formatting['dimensions']['page_height'], style='F')
+  backend.set_background_color(formatting['background_color'])
   backend.set_text_color(text_color)
 
   packed_images = True
   if 'background_image' in formatting:
     print('{}:{}: background_image {}'.format(md_file_stripped, line_number, formatting['background_image']))
-    vec_imgs = put_images_on_page(md_file_stripped, line_number, [formatting['background_image']], [''], formatting['layout'], len(lines) > 0, packed_images, True, background=True, raster_images=raster_images)
+    vec_imgs = put_images_on_page(md_file_stripped, line_number, [formatting['background_image']], [''], formatting['layout'], len(lines) > 0, packed_images, True, background=True, raster_images=raster_images, treat_as_raster_images=treat_as_raster_images)
     vector_images += vec_imgs
 
   if 'packed_images' in formatting and formatting['packed_images'] == False:
     packed_images = False
   print('{}:{}: crop_images {}'.format(md_file_stripped, line_number, formatting['crop_images']))
-  vec_imgs = put_images_on_page(md_file_stripped, line_number, images, alt_texts, formatting['layout'], len(lines) > 0, packed_images, formatting['crop_images'], background=False, raster_images=raster_images)
+  vec_imgs = put_images_on_page(md_file_stripped, line_number, images, alt_texts, formatting['layout'], len(lines) > 0, packed_images, formatting['crop_images'], background=False, raster_images=raster_images, treat_as_raster_images=treat_as_raster_images)
   # vector images are saved to put on the page using pdf_rw afterwards.
   vector_images += vec_imgs
   
@@ -163,9 +165,9 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
   x = offsets['x0']
   y = offsets['y0']
 
-  # if title is alone, put it in middle of page
+  # if title_vertical_center, put it in middle of page
   if 'title_vertical_center' in formatting and formatting['title_vertical_center']: # and formatting['layout'] in ['image_full', 'image_left_half', 'image_left_small', 'image_right_half', 'image_right_full']:
-    y = formatting['dimensions']['page_height']//2-formatting['dimensions']['em_title']//2
+    y = formatting['dimensions']['page_height']//2-int(1.5*formatting['dimensions']['em_title'])
   if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
     print('Setting font title with size',formatting['dimensions']['font_size_title'])
     backend.set_font('font_title', '', formatting['dimensions']['font_size_title'])
@@ -173,39 +175,48 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
     print('Setting font size title',formatting['dimensions']['font_size_title'])
     backend.set_font_size(formatting['dimensions']['font_size_title'])
   # CENTERING TITLE:
-  if formatting['layout'] == 'center':
-    width = backend.get_string_width(title)
-    centering_offset = round((offsets['w']-width)/2)
-    print('title','"{}"'.format(title))
-    print('title width',width,'x',x,'centering_offset',centering_offset)
-    print('offsets', offsets)
-    x = x+centering_offset
+  #if formatting['layout'] == 'center':
+  #  width = backend.get_string_width(title)
+  #  centering_offset = round((offsets['w']-width)/2)
+  #  print('title','"{}"'.format(title))
+  #  print('title width',width,'x',x,'centering_offset',centering_offset)
+  #  print('offsets', offsets)
+  #  x = x+centering_offset
+  # MOVED TO BACKEND
+
   backend.set_xy(x,y)
-  backend.text(txt=title, x=x, y=y)#, w=offsets['w'])
+  backend.textbox(lines=[title], x=x, y=y, w=offsets['w'], h=int(formatting['dimensions']['em_title']*1.2), h_level=1, headlines=headlines, text_color=text_color, align=get_alignment(formatting), markdown_format=False)
   x = offsets['x0']
   y += formatting['dimensions']['em_title']
 
   if subtitle:
-    x_subtitle = x+formatting['dimensions']['em']
-    y_subtitle = y-formatting['dimensions']['em_title']//2
+    x_subtitle = x
+    if get_alignment(formatting) == 'left':
+      x_subtitle = x+formatting['dimensions']['em']
+    y_subtitle = y-formatting['dimensions']['em_title']//5
     if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
+      print('set_font, subtitle, 198')
       backend.set_font('font_title', '', formatting['dimensions']['font_size_subtitle'])
     else:
       backend.set_font_size(formatting['dimensions']['font_size_subtitle'])
+
     # CENTERING SUBTITLE:
-    if formatting['layout'] == 'center':
-      x_subtitle = x
-      width = backend.get_string_width(subtitle)
-      centering_offset = round((offsets['w']-width)/2)
-      print('subtitle','"{}"'.format(subtitle))
-      print('subtitle_width',width,'x',x,'centering_offset',centering_offset)
-      print('offsets', offsets)
-      x_subtitle = x_subtitle+centering_offset
+    #if formatting['layout'] == 'center':
+    #  x_subtitle = x
+    #  width = backend.get_string_width(subtitle)
+    #  centering_offset = round((offsets['w']-width)/2)
+    #  print('subtitle','"{}"'.format(subtitle))
+    #  print('subtitle_width',width,'x',x,'centering_offset',centering_offset)
+    #  print('offsets', offsets)
+    #  x_subtitle = x_subtitle+centering_offset
+    # MOVED TO BACKEND
+
     backend.set_xy(x_subtitle,y_subtitle)
-    backend.text(txt=subtitle, x=x_subtitle, y=y_subtitle)#, w=offsets['w'])
+    backend.textbox(lines=[subtitle], x=x_subtitle, y=y_subtitle, w=offsets['w'], h=int(formatting['dimensions']['em_subtitle']*1.5), h_level=2, headlines=headlines, text_color=text_color, align=get_alignment(formatting), markdown_format=False)
   x = offsets['x0']
   y += formatting['dimensions']['em_title']
 
+  print('images', len(images))
   offsets = get_offsets_for_text(formatting['layout'], images=(len(images) > 0))
   column_offsets = offsets
   if 'columns' in formatting and formatting['columns'] > 1:
@@ -214,32 +225,38 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
   y = column_offsets['y0']
   column = 0
   current_table = []
-  for line in lines:
-    #column_offsets = offsets
-    column_divider = False
-    if 'columns' in formatting and formatting['columns'] > 1:
-      if len(line) > 3 and all([c == '-' for c in line]) and column < formatting['columns']-1:
-        column += 1
-        column_offsets = get_column_offsets(offsets, formatting['columns'], column)
-        column_divider = True
-        x = column_offsets['x0']
-        y = column_offsets['y0']
-    #print('offsets:', column_offsets)
-    #print('line:', line)
-    if len(line) > 1 and line[0] == '|' and line[-1] == '|':
-      print('{}:{}:detected table {}'.format(md_file_stripped, line_number, line))
-      current_table.append(line[1:-1].split('|'))
-      continue
-    elif(len(current_table)):
-      print('{}:{}: rendering table'.format(md_file_stripped, line_number))
-      x , y = render_table(current_table, x, y, column_offsets, headlines, text_color)
-      current_table = []
-    #print('column_offsets',column_offsets)
-    x, y = position_and_render_text_line(line, x, y, column_offsets, headlines, text_color, formatting, column_divider=column_divider)
-  if(len(current_table)):
-    print('{}:{}: rendering table'.format(md_file_stripped, line_number))
-    x , y = render_table(current_table, x, y, column_offsets, headlines, text_color)
-    current_table = []
+  if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
+    backend.set_font('standard', '', formatting['dimensions']['font_size_standard'])
+  else:
+    backend.set_font_size(formatting['dimensions']['font_size_standard'])
+  print('textbox', offsets)
+  backend.textbox(lines=lines, x=x, y=y, w=offsets['w'], h=offsets['h'], headlines=headlines, h_level=None, text_color=text_color, align=get_alignment(formatting), markdown_format=True)
+#  for line in lines:
+#    #column_offsets = offsets
+#    column_divider = False
+#    if 'columns' in formatting and formatting['columns'] > 1:
+#      if len(line) > 3 and all([c == '-' for c in line]) and column < formatting['columns']-1:
+#        column += 1
+#        column_offsets = get_column_offsets(offsets, formatting['columns'], column)
+#        column_divider = True
+#        x = column_offsets['x0']
+#        y = column_offsets['y0']
+#    #print('offsets:', column_offsets)
+#    #print('line:', line)
+#    if len(line) > 1 and line[0] == '|' and line[-1] == '|':
+#      print('{}:{}:detected table {}'.format(md_file_stripped, line_number, line))
+#      current_table.append(line[1:-1].split('|'))
+#      continue
+#    elif(len(current_table)):
+#      print('{}:{}: rendering table'.format(md_file_stripped, line_number))
+#      x , y = render_table(current_table, x, y, column_offsets, headlines, text_color)
+#      current_table = []
+#    #print('column_offsets',column_offsets)
+#    x, y = position_and_render_text_line(line, x, y, column_offsets, headlines, text_color, formatting, column_divider=column_divider)
+#  if(len(current_table)):
+#    print('{}:{}: rendering table'.format(md_file_stripped, line_number))
+#    x , y = render_table(current_table, x, y, column_offsets, headlines, text_color)
+#    current_table = []
   if 'footer' in formatting:
     backend.set_text_color(formatting.get('footer_color', default_footer_color))
     if 'fonts' in formatting and 'font_file_footer' in formatting['fonts']:
@@ -248,13 +265,16 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
       backend.set_font_size(formatting['dimensions']['font_size_footer'])
     #x = formatting['dimensions']['page_width']//2-backend.get_string_width(formatting['footer'])//2
     x = formatting['dimensions']['margin_footer']
-    backend.text(txt=formatting['footer'], x=x, y=formatting['dimensions']['page_height']-formatting['dimensions']['margin_footer']) #, w=offsets['w'], align='L')
-    backend.set_text_color(text_color)
-  elif(len(current_table)):
-    print('{}: {}: rendering table'.format(md_file_stripped, line_number))
-    x , y = render_table(current_table, x, y, column_offsets, headlines, text_color)
-    current_table = []
+    backend.text(txt=formatting['footer'], x=x, y=formatting['dimensions']['page_height']-formatting['dimensions']['margin_footer']-formatting['dimensions']['em_footer'], em=formatting['dimensions']['em_footer'], footer=True) #, w=offsets['w'], align='L')
+#    backend.set_text_color(text_color)
+#  elif(len(current_table)):
+#    print('{}: {}: rendering table'.format(md_file_stripped, line_number))
+#    x , y = render_table(current_table, x, y, column_offsets, headlines, text_color)
+#    current_table = []
+# MOVED TO BACKEND
 
+#  if len(l4_boxes):
+#    backend.l4_boxes(l4_boxes, , x, y, w, h, align='left')
   if len(l4_boxes):
     print('{}:{}: l4_boxes: \n  {}'.format(md_file_stripped, line_number, yaml.dump(l4_boxes).replace('\n', '\n  ')))
   box_offsets_list = []
@@ -271,17 +291,16 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
       j_box_offset = box_offsets_list[j]
       y_offset += j_box_offset['h']+formatting['dimensions']['internal_margin']
     box_offsets_list[i]['y0'] = box_offsets_list[i]['y0']-y_offset
-
+#
   for i,(lines,box_offsets) in enumerate(zip(l4_boxes,box_offsets_list)):
-    backend.set_draw_color(formatting.get('l4_box_border_color', default_l4_box_border_color))
-    backend.set_fill_color(formatting.get('l4_box_fill_color', default_l4_box_fill_color))
     with backend.local_context(fill_opacity=0.75, stroke_opacity=0.75):
-      backend.rect(box_offsets['x0'], box_offsets['y0'], box_offsets['w'], box_offsets['h'], round_corners=True, style="DF", corner_radius=10)
+      backend.l4_box(lines, box_offsets['x0'], box_offsets['y0'], box_offsets['w'], box_offsets['h'], headlines, align=get_alignment(formatting), border_color=default_l4_box_border_color, border_opacity=0.75, background_color=default_l4_box_fill_color, background_opacity=0.75, markdown_format=True, text_color=[0,0,0])
     #print('backend.rect(',box_offsets['x0'], box_offsets['y0'], box_offsets['w'], box_offsets['h'], 'round_corners=True', 'style="D"',')')
-    x = box_offsets['x0']+formatting['dimensions']['internal_margin']
-    y = box_offsets['y0']+formatting['dimensions']['internal_margin']
-    for line in lines:
-      x, y = position_and_render_text_line(line, x, y, box_offsets, headlines, text_color, formatting, column_divider=False)
+    #x = box_offsets['x0']+formatting['dimensions']['internal_margin']
+    #y = box_offsets['y0']+formatting['dimensions']['internal_margin']
+    #for line in lines:
+    #  x, y = position_and_render_text_line(line, x, y, box_offsets, headlines, text_color, formatting, column_divider=False)
+    # MOVED TO BACKEND
   return vector_images
 
 def preprocess_formatting(formatting):
@@ -391,169 +410,6 @@ def get_column_offsets(offsets, num_columns, column):
   column_offsets['w'] = column_width_excl_margin
   return column_offsets
 
-def position_and_render_text_line(line, x, y, offsets, headlines, text_color, formatting, column_divider=False):
-  origin_x = x
-  if formatting['layout'] == 'center':
-    # CENTERING LINE:
-    width = get_text_line_width(line, x, y, offsets, headlines, text_color, column_divider)
-    #print('centering',offsets)
-    centering_offset = round((offsets['w']-width)/2)
-    print('line','"{}"'.format(line))
-    print('line width',width,'x',x,'centering_offset',centering_offset)
-    print('offsets', offsets)
-    x = x+centering_offset
-  x, y, width = render_text_line(line, x, y, offsets, headlines, text_color, column_divider)
-  x = origin_x
-  return x, y
-    
-def render_text_line(line, x, y, offsets, headlines, text_color, column_divider=False):
-    #print('line:',line)
-    origin_x = x
-    origin_y = y
-    #print(offsets)
-    width = offsets['w']
-    backend.set_xy(x,y)
-    if backend.will_page_break(formatting['dimensions']['em']):
-      print('line will overflow the page. not including in PDF!!!',line)
-      return x,y,0
-    if line.startswith('###') and (len(line) <= 3 or line[3] != '#'):
-        line = '**'+line[4:]+'**'
-    latex_sections = get_latex_sections(line)
-    internal_links = get_internal_links(line)
-    merged = latex_sections+internal_links
-    merged = sorted(merged, key=lambda x: x[0])
-    #print(latex_sections)
-    heights = []
-    #if len(line) > 0 and line[0] == '$' and line[-1] == '$':
-    if len(line) == 0:
-      #print('empty line!')
-      y += int(0.5*formatting['dimensions']['em'])
-    elif len(line) > 3 and all([c == '-' for c in line]):
-      backend.set_line_width(0.5)
-      # TODO: configuration of column divider line color
-      backend.set_draw_color([160,160,160])
-      if column_divider:
-        x = offsets['x0']-formatting['dimensions']['internal_margin']//2
-        backend.line(x1=x, y1=offsets['y0'], x2=x, y2=offsets['y1'])
-      else:
-        backend.line(x1=x, y1=y+int(0.5*formatting['dimensions']['em']), x2=x+offsets['w'], y2=y+int(0.5*formatting['dimensions']['em']))
-      y += formatting['dimensions']['em']
-      if column_divider:
-        y = origin_y
-      backend.set_draw_color(text_color)
-    else:
-      pos = 0
-      for tag in merged:
-        if tag[0] > pos:
-          pre_tag = line[pos:tag[0]-1]
-          #print('rendering pre_tag', pre_tag)
-          x, new_y = render_part_of_line(pre_tag, x, y)
-          heights.append(formatting['dimensions']['em'])
-        if tag[2] == 'latex':
-          formula = line[tag[0]:tag[1]]
-          x, new_y, latex_width = render_latex(formula, x, y, text_color)
-          heights.append(new_y-origin_y)
-        else: # internal link
-          #print('line', line)
-          #print('tag', tag)
-          link = line[tag[0]:tag[1]+1]
-          #print('link',link)
-          x, new_y = render_internal_link(link, x, y, headlines)
-          heights.append(new_y-origin_y)
-        pos = tag[1]+1
-      if pos < len(line):
-        x, new_y = render_part_of_line(line[pos:], x, y)
-        heights.append(formatting['dimensions']['em'])
-        heights.append(new_y-origin_y)
-      y = origin_y + max(heights)
-      width = x-origin_x
-      #print('y', origin_y, y)
-    return origin_x, y, width
-
-def get_text_line_width(line, x, y, offsets, headlines, text_color, column_divider=False):
-    #print(offsets)
-    #print('line', line, len(line))
-    width = offsets['w']
-    if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
-      backend.set_font('font_standard', '', formatting['dimensions']['font_size_standard'])
-    else:
-      backend.set_font_size(formatting['dimensions']['font_size_standard'])
-    if backend.will_page_break(formatting['dimensions']['em']):
-      print('line will overflow the page. not including in PDF!!!',line)
-      return width
-    if line.startswith('###') and (len(line) <= 3 or line[3] != '#'):
-        line = '**'+line[4:]+'**'
-    latex_sections = get_latex_sections(line)
-    internal_links = get_internal_links(line)
-    merged = latex_sections+internal_links
-    merged = sorted(merged, key=lambda x: x[0])
-    if len(line) == 0:
-      return width
-    elif len(line) > 3 and all([c == '-' for c in line]):
-      return width
-    else:
-      new_widths = []
-      pos = 0
-      for tag in merged:
-        if tag[0] > pos:
-          pre_tag = line[pos:tag[0]-1]
-          new_widths.append(backend.get_string_width(markdown_to_text(pre_tag)))
-          #print('pretag width',new_widths[-1],'('+pre_tag+')')
-        if tag[2] == 'latex':
-          formula = line[tag[0]:tag[1]]
-          x, new_y, latex_width = render_latex(formula, x, y, text_color, dry_run=True)
-          new_widths.append(latex_width)
-          #print('latex width',new_widths[-1],'('+formula+')')
-        else: # internal link
-          link = line[tag[0]:tag[1]+1]
-          splitted = link.split('](#')
-          link_text = splitted[0][1:]
-          new_widths.append(backend.get_string_width(link_text))
-          #print('link width',new_widths[-1],'('+link_text+')')
-        pos = tag[1]+1
-      if pos < len(line):
-        new_widths.append(backend.get_string_width(markdown_to_text(line[pos:])))
-        #print('last part width',new_widths[-1],'('+line[pos:]+')')
-    #print('sum',sum(new_widths))
-    return sum(new_widths)
-
-def render_table(table, x, y, offsets, headlines, text_color, column_divider=False):
-  print('table:',table)
-  origin_x = x
-  origin_y = y
-  if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
-    backend.set_font('font_standard', '', formatting['dimensions']['font_size_standard'])
-  else:
-    backend.set_font_size(formatting['dimensions']['font_size_standard'])
-  # due to a bug (in my code or in pfpdf), the table is centered on the page. uncentering:
-  uncentered_x = x-(formatting['dimensions']['page_width']//2-offsets['w']//2)
-  backend.set_xy(uncentered_x,y)
-  backend.set_xy(0,y)
-  backend.set_left_margin(offsets['x0'])
-  with backend.table(width=offsets['w'], align='LEFT', markdown=True) as pdf_table:
-    for tr in table:
-      row = pdf_table.row()
-      for td in tr:
-        row.cell(td)
-  y += int(formatting['dimensions']['em']*len(table)*1.8)
-  return origin_x, y
-
-def render_part_of_line(part, x, y):
-  #print('part', '"'+part+'"')
-  if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
-    backend.set_font('font_standard', '', formatting['dimensions']['font_size_standard'])
-  else:
-    backend.set_font_size(formatting['dimensions']['font_size_standard'])
-  backend.set_xy(x,y)
-  part = part.replace('&nbsp;', ' ')
-  if not part.strip():
-    backend.text(txt=part, x=x, y=y)#, w=offsets['w'], align=align)
-  else:
-    #print(part)
-    backend.cell(txt=part, markdown=True)
-  x = backend.get_x()
-  return x, y
-
 def render_internal_link(link, x, y, headlines):
   #print(link)
   x_origin = x
@@ -563,7 +419,7 @@ def render_internal_link(link, x, y, headlines):
   target = splitted[1][:-1]
   print('link', '"'+link_text+'","'+target+'"')
   if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
-    backend.set_font('font_standard', 'u', formatting['dimensions']['font_size_standard'])
+    backend.set_font('standard', 'u', formatting['dimensions']['font_size_standard'])
   else:
     backend.set_font('helvetica', 'u', formatting['dimensions']['font_size_standard'])
     #backend.set_font_size(formatting['dimensions']['font_size_standard'])
@@ -579,150 +435,127 @@ def render_internal_link(link, x, y, headlines):
   x = round(x-0.7*space_width)
   return x, y
 
-def render_latex(formula, x, y, text_color, dry_run=False):
-  return render_latex_matplotlib(formula, x, y, text_color, dry_run=dry_run)
-
-def render_latex_latextools(formula, x, y):
-    # seems impossible to import svg or backend!
-    formula = '$'+formula+'$'
-    #print('formula', formula)
-    # Latex!
-    latex_eq = latextools.render_snippet(formula, commands=[latextools.cmd.all_math])
-    #svg_eq = latex_eq.as_svg()
-    tmp_f = '/tmp/pymdslides_tmp_file'
-    latex_eq.save(tmp_f+'backend')
-    backend.rasterize(tmp_f+'.png')
-    #svg_eq.save(tmp_f)
-    #lines = []
-    #with open(tmp_f, 'r') as f:
-    #  for line in f:
-    #    lines.append(line.replace('0%', '0'))
-    #with open(tmp_f, 'w') as f:
-    #  f.write('\n'.join(lines))
-    backend.image(tmp_f+'.png', x=x, y=y)
-    #backend.template(tmp_f, x=x, y=y, w=60, h=formatting['dimensions']['em'])
-    x += width_mm
-    y += height_mm-y_offset # TODO: also give the y_offset space above the line
-    return x, y, width_mm
-
-def render_latex_matplotlib(formula, x, y, text_color, dry_run=False):
-    formula = '$base~'+formula+'$'
-    #print('formula', formula)
-    # Latex!
-    fig = plt.figure(frameon=False)
-    #fig.text(0.0, 0.0, line, fontsize=14)
-    fig.text(0.5, 0.5, formula, fontsize=14)
-    #ax = plt.gca()
-    #ax.axes.get_xaxis().set_visible(False)
-    #ax.axes.get_yaxis().set_visible(False)
-    ax = plt.Axes(fig, [0., 0., 1., 1.])
-    ax.set_axis_off()
-    fig.add_axes(ax)
-    #plt.xlim([-1.0, 1.0])
-    #plt.ylim([-1.0, 1.0])
-    image_format = 'PNG'
-    tmp_f = '/tmp/pymdslides_tmp_file'
-    tmp_f += '-'+str(time.time())+'.'+image_format.lower()
-    fig.savefig(tmp_f, dpi=560)
-    with Image.open(tmp_f) as img:
-      #print(img.mode)
-      if img.mode == 'RGBA':
-        # need to get rid of alpha channel to do the getbbox below.
-        background = Image.new('RGBA', img.size, (255,255,255))
-        alpha_composite = Image.alpha_composite(background, img)
-        img = alpha_composite.convert('RGB')
-      img_invert = ImageOps.invert(img)
-      box = img_invert.getbbox() # (left, upper, right, lower)
-      print('box', box)
-      formula_box = list(box)
-      baseline_width = 220
-      formula_box[0] = box[0]+baseline_width # cropping away the 'base' inserted in first line of this function.
-      cropped_img = img.crop(formula_box)
-      cropped_img.save(tmp_f)
-      im_width,im_height = cropped_img.size
-
-      baseline_box = list(box)
-      baseline_box[2] = baseline_box[0]+baseline_width
-      baseline_img = img.crop(baseline_box)
-      #baseline_offset = get_baseline_offset(baseline_img) 
-      img_invert = ImageOps.invert(baseline_img)
-      box = img_invert.getbbox() # (left, upper, right, lower)
-      baseline_offset = box[1] # distance from upper edge to top of b character in the 'base' test above.
-      #baseline_f = tmp_f+'baseline.png'
-      #baseline_img.save(baseline_f)
-      #print('baseline_offset', baseline_offset, 'formatting['dimensions']['em']', formatting['dimensions']['em'])
-    #backend.image(logo_path, x=formatting['dimensions']['page_width']-30, y=formatting['dimensions']['page_height']-35, w=24, h=30)
-    arbitrary_image_margin_mm = 1
-    width_mm = int(im_width*formatting['dimensions']['pixel_per_mm'])
-    height_mm = int(im_height*formatting['dimensions']['pixel_per_mm'])
-    baseline_offset_mm = int(baseline_offset*formatting['dimensions']['pixel_per_mm'])
-    #y_offset = (height_mm-formatting['dimensions']['em'])//2
-    print('baseline_offset_mm', baseline_offset_mm)
-    y_offset = baseline_offset_mm+arbitrary_image_margin_mm
-    print('y_offset', y_offset)
-
-    if not dry_run:
-      # adding alpha channel, so we can have background images in backend.
-      with Image.open(tmp_f) as img:
-        img_alpha = ImageOps.invert(ImageOps.grayscale(img))
-        #print(img_alpha)
-        # making it all black behind the alpha map, white elsewhere. Then it should be readable without alpha map if neccessary anytime, and we don't get any white or gray pixels mixed in.
-        white_area = np.array(img)==255
-        white_area = white_area.astype(np.uint8)*255
-        #print(white_area)
-        img = Image.fromarray(white_area)
-        img.putalpha(img_alpha)
-      img.save(tmp_f)
-
-      if text_color[0] != 0 or text_color[1] != 0 or text_color[2] != 0:
-        with Image.open(tmp_f) as img:
-          img = img.convert("L")
-          img = ImageOps.colorize(img, black=text_color, white=[255,255,255])
-          img.putalpha(img_alpha)
-        img.save(tmp_f)
-      
-      backend.image(tmp_f, x=x, y=y-y_offset, w=width_mm, h=height_mm)
-      print('remove(',tmp_f,')')
-      os.remove(tmp_f)
-    #print(tmp_f)
-    x += width_mm
-    y += height_mm-y_offset # TODO: also give the y_offset space above the line
-    return x,y,width_mm
+#def render_latex(formula, x, y, text_color, dry_run=False):
+#  return render_latex_matplotlib(formula, x, y, text_color, dry_run=dry_run)
+#
+#def render_latex_matplotlib(formula, x, y, text_color, dry_run=False):
+#    formula = '$base~'+formula+'$'
+#    #print('formula', formula)
+#    # Latex!
+#    fig = plt.figure(frameon=False)
+#    #fig.text(0.0, 0.0, line, fontsize=14)
+#    fig.text(0.5, 0.5, formula, fontsize=14)
+#    #ax = plt.gca()
+#    #ax.axes.get_xaxis().set_visible(False)
+#    #ax.axes.get_yaxis().set_visible(False)
+#    ax = plt.Axes(fig, [0., 0., 1., 1.])
+#    ax.set_axis_off()
+#    fig.add_axes(ax)
+#    #plt.xlim([-1.0, 1.0])
+#    #plt.ylim([-1.0, 1.0])
+#    image_format = 'PNG'
+#    tmp_f = '/tmp/pymdslides_tmp_file'
+#    tmp_f += '-'+str(time.time())+'.'+image_format.lower()
+#    fig.savefig(tmp_f, dpi=560)
+#    with Image.open(tmp_f) as img:
+#      #print(img.mode)
+#      if img.mode == 'RGBA':
+#        # need to get rid of alpha channel to do the getbbox below.
+#        background = Image.new('RGBA', img.size, (255,255,255))
+#        alpha_composite = Image.alpha_composite(background, img)
+#        img = alpha_composite.convert('RGB')
+#      img_invert = ImageOps.invert(img)
+#      box = img_invert.getbbox() # (left, upper, right, lower)
+#      print('box', box)
+#      formula_box = list(box)
+#      baseline_width = 220
+#      formula_box[0] = box[0]+baseline_width # cropping away the 'base' inserted in first line of this function.
+#      cropped_img = img.crop(formula_box)
+#      cropped_img.save(tmp_f)
+#      im_width,im_height = cropped_img.size
+#
+#      baseline_box = list(box)
+#      baseline_box[2] = baseline_box[0]+baseline_width
+#      baseline_img = img.crop(baseline_box)
+#      #baseline_offset = get_baseline_offset(baseline_img) 
+#      img_invert = ImageOps.invert(baseline_img)
+#      box = img_invert.getbbox() # (left, upper, right, lower)
+#      baseline_offset = box[1] # distance from upper edge to top of b character in the 'base' test above.
+#      #baseline_f = tmp_f+'baseline.png'
+#      #baseline_img.save(baseline_f)
+#      #print('baseline_offset', baseline_offset, 'formatting['dimensions']['em']', formatting['dimensions']['em'])
+#    #backend.image(logo_path, x=formatting['dimensions']['page_width']-30, y=formatting['dimensions']['page_height']-35, w=24, h=30)
+#    arbitrary_image_margin_mm = 1
+#    width_mm = int(im_width*formatting['dimensions']['pixel_per_mm'])
+#    height_mm = int(im_height*formatting['dimensions']['pixel_per_mm'])
+#    baseline_offset_mm = int(baseline_offset*formatting['dimensions']['pixel_per_mm'])
+#    #y_offset = (height_mm-formatting['dimensions']['em'])//2
+#    print('baseline_offset_mm', baseline_offset_mm)
+#    y_offset = baseline_offset_mm+arbitrary_image_margin_mm
+#    print('y_offset', y_offset)
+#
+#    if not dry_run:
+#      # adding alpha channel, so we can have background images in backend.
+#      with Image.open(tmp_f) as img:
+#        img_alpha = ImageOps.invert(ImageOps.grayscale(img))
+#        #print(img_alpha)
+#        # making it all black behind the alpha map, white elsewhere. Then it should be readable without alpha map if neccessary anytime, and we don't get any white or gray pixels mixed in.
+#        white_area = np.array(img)==255
+#        white_area = white_area.astype(np.uint8)*255
+#        #print(white_area)
+#        img = Image.fromarray(white_area)
+#        img.putalpha(img_alpha)
+#      img.save(tmp_f)
+#
+#      if text_color[0] != 0 or text_color[1] != 0 or text_color[2] != 0:
+#        with Image.open(tmp_f) as img:
+#          img = img.convert("L")
+#          img = ImageOps.colorize(img, black=text_color, white=[255,255,255])
+#          img.putalpha(img_alpha)
+#        img.save(tmp_f)
+#      
+#      backend.image(tmp_f, x=x, y=y-y_offset, w=width_mm, h=height_mm)
+#      print('remove(',tmp_f,')')
+#      os.remove(tmp_f)
+#    #print(tmp_f)
+#    x += width_mm
+#    y += height_mm-y_offset # TODO: also give the y_offset space above the line
+#    return x,y,width_mm
 
 
-def get_latex_sections(line):
-  latex_formulas = []
-  if '$' in line:
-    splits = re.split(r'(?<!\\)\$', line)
-    pos = 0
-    for i,split in enumerate(splits):
-      if i%2 == 1:
-        latex_formulas.append((pos,pos+len(split), 'latex'))
-      pos += len(split)+1 # one for the dollar sign
-  return latex_formulas
+#def get_latex_sections(line):
+#  latex_formulas = []
+#  if '$' in line:
+#    splits = re.split(r'(?<!\\)\$', line)
+#    pos = 0
+#    for i,split in enumerate(splits):
+#      if i%2 == 1:
+#        latex_formulas.append((pos,pos+len(split), 'latex'))
+#      pos += len(split)+1 # one for the dollar sign
+#  return latex_formulas
 
-def get_internal_links(line):
-  internal_links = []
-  if '](#' in line:
-    locations = find_all(line, '](#')
-    #print('line', line)
-    #@locations = [l for l in locations] # I HAVE NO IDEA WHY THIS IS NEEDED!
-    #print(locations)
-    for l in locations:
-      #print(l)
-      beginning = line.rfind('[', 0, l)
-      end = line.find(')', l)
-      #print('beginning, end', beginning, end)
-      if beginning != -1 and end != -1:
-        internal_links.append((beginning,end,'link'))
-  return internal_links 
+#def get_internal_links(line):
+#  internal_links = []
+#  if '](#' in line:
+#    locations = find_all(line, '](#')
+#    #print('line', line)
+#    #@locations = [l for l in locations] # I HAVE NO IDEA WHY THIS IS NEEDED!
+#    #print(locations)
+#    for l in locations:
+#      #print(l)
+#      beginning = line.rfind('[', 0, l)
+#      end = line.find(')', l)
+#      #print('beginning, end', beginning, end)
+#      if beginning != -1 and end != -1:
+#        internal_links.append((beginning,end,'link'))
+#  return internal_links 
 
 
 def get_offsets_for_text(layout, images=True):
   # returns offsets for text area.
   # layouts = ['image_left_half', 'image_left_small', 'image_right_half', 'image_right_small', 'center', 'image_center', 'image_fill']
   if layout in ['center', 'image_center']:
-    y = formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']
+    y = formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2
     drawable_height = formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y0']-formatting['dimensions']['em_title']-formatting['dimensions']['page_margins']['y1']
     if images:
       drawable_height = drawable_height//2
@@ -730,15 +563,15 @@ def get_offsets_for_text(layout, images=True):
       y += drawable_height
     offsets = {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': y, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
   elif layout == 'image_left_half':
-    offsets =  {'x0': (formatting['dimensions']['page_width']//2)+formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title'], 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
+    offsets =  {'x0': (formatting['dimensions']['page_width']//2)+formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
   elif layout == 'image_left_small':
-    offsets =  {'x0': (formatting['dimensions']['page_width']//2)+formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title'], 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
+    offsets =  {'x0': (formatting['dimensions']['page_width']//2)+formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
   elif layout == 'image_right_half':
-    offsets =  {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title'], 'x1': (formatting['dimensions']['page_width']//2)-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
+    offsets =  {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': (formatting['dimensions']['page_width']//2)-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
   elif layout == 'image_right_small':
-    offsets =  {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title'], 'x1': (formatting['dimensions']['page_width']//2)-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
+    offsets =  {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': (formatting['dimensions']['page_width']//2)-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
   else: #image_fill
-    offsets = {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title'], 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
+    offsets = {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
     #offsets =  {'x0': 0, 'y0': 0, 'x1': formatting['dimensions']['page_width'], 'y1': formatting['dimensions']['page_height']}
   offsets['w'] = offsets['x1']-offsets['x0']
   offsets['h'] = offsets['y1']-offsets['y0']
@@ -764,7 +597,7 @@ def get_offsets(layout):
   offsets['h'] = offsets['y1']-offsets['y0']
   return offsets
 
-def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout, has_text, packed_images, crop_images, background=False, raster_images=False):
+def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout, has_text, packed_images, crop_images, background=False, raster_images=False, treat_as_raster_images=[]):
   vector_graphics = []
   #print('crop_images', crop_images)
   #print('put_images_on_page()', 'layout', layout)
@@ -796,7 +629,7 @@ def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout,
       #print('locations',locations)
     for image,location in zip(page_images,locations):
       image_to_display = image
-      if is_vector_format(image):
+      if is_vector_format(image) and not os.path.splitext(image)[1] in treat_as_raster_images:
         if raster_images:
           tmp_f = '/tmp/pymdslides_tmp_file'
           tmp_f += '-'+str(time.time())+'.png'
@@ -811,133 +644,19 @@ def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout,
         else:
           # this will be postponed as we need a workaround using pdfrw and cairosvg.
           vector_graphics.append((backend.pages_count-1, image, location))
-      if not is_vector_format(image) or raster_images:
-        if crop_images:
-          #image_to_display_2 = get_cropped_image_file(image_to_display, location)
-          #if image_to_display_2 != image_to_display and image_to_display != image:
-          #  # remove first tmp file:
-          #  print('remove(',image_to_display,')')
-          #  os.remove(image_to_display)
-          #image_to_display = image_to_display_2
-          viewpoint = location
-          location = get_cropped_location(image_to_display, location)
-          with backend.rect_clip(x=viewpoint['x0'], y=viewpoint['y0'], w=viewpoint['w'], h=viewpoint['h']):
-            #print('putting cropped image',image_to_display)
-            backend.image(image_to_display, x=location['x0'], y = location['y0'], w = location['w'], h = location['h'], type = '', link = '')
-        else:
-          #image_to_display = image
-          location = get_uncropped_location(image_to_display, location)
-          if image_to_display[-4:] == '.jpg' or image_to_display[-5:] == '.jpeg':
-            tmp_f = '/tmp/pymdslides_tmp_file'
-            tmp_f += '-'+str(time.time())+'.jpg'
-            while os.path.exists(tmp_f):
-              tmp_f = '/tmp/pymdslides_tmp_file'
-              tmp_f += '-'+str(time.time())+'.jpg'
-            #print('workaround jpg image',image_to_display,'copied to',tmp_f)
-            shutil.copyfile(image_to_display, tmp_f)
-            image_to_display = tmp_f
-
-          #print('putting uncropped image',image_to_display)
-          backend.image(image_to_display, x=location['x0'], y = location['y0'], w = location['w'], h = location['h'], type = '', link = '')
-        if image_to_display != image:
-          # tmpfile
-          print('remove(',image_to_display,')')
-          os.remove(image_to_display)
+      if not is_vector_format(image) or raster_images or os.path.splitext(image)[1] in treat_as_raster_images:
+        backend.image(image_to_display, x=location['x0'], y = location['y0'], w = location['w'], h = location['h'], link = '', crop_images=crop_images)
 
   # credit images:
   if len(credit_images):
     locations = get_images_locations(credit_images, layout, has_text, packed_images, cred=True)
     # print("credit_images", credit_images)
     for image,location in zip(credit_images,locations):
-      print('location', location)
-      #if crop_images:
-      image_to_display = get_cropped_image_file(image, location)
-      #else:
-      #  image_to_display = image
-      #  location = get_uncropped_location(image, location)
-      backend.image(image_to_display, x=location['x0'], y = location['y0'], w = location['w'], h = location['h'], type = '', link = '')
-      if image_to_display != image:
-        print('remove(',image_to_display,')')
-        os.remove(image_to_display)
+      backend.image(image, x=location['x0'], y = location['y0'], w = location['w'], h = location['h'], link = '', crop_images=True)
   return vector_graphics
 
 def is_vector_format(filename):
   return filename.split('#')[0][-3:] in ['pdf', '.ps', 'eps', 'svg']
-
-def get_uncropped_location(image, location):
-  # fix location:
-  new_location = {}
-  with Image.open(image) as img:
-    if location['w']/location['h'] == img.width/img.height:
-      new_location = location
-    elif location['w']/location['h'] < img.width/img.height:
-      # image wider than box
-      #print('image wider than box')
-
-      new_height = int(location['w']*(img.height/img.width))
-      #print('new_height', new_height)
-      y_offset = (location['h']-new_height)//2
-      #print('y_offset', y_offset)
-      new_location = {'x0':  location['x0'], 'y0': location['y0']+y_offset, 'w': location['w'], 'h': new_height}
-    else:
-      # image higher than box
-      #print('image higher than box')
-      new_width = int(location['h']*(img.width/img.height))
-      x_offset = (location['w']-new_width)//2
-      new_location = {'x0':  location['x0']+x_offset, 'y0': location['y0'], 'w': new_width, 'h': location['h']}
-    return new_location
-
-def get_cropped_location(image, location):
-  # get location around the actual location. will then be cropped to location.
-  new_location = {}
-  with Image.open(image) as img:
-    if location['w']/location['h'] == img.width/img.height:
-      new_location = location
-    elif location['w']/location['h'] < img.width/img.height:
-      # image wider than box
-      #print('image wider than box')
-      new_width = int(location['h']*(img.width/img.height))
-      x_offset = (location['w']-new_width)//2
-      new_location = {'x0':  location['x0']+x_offset, 'y0': location['y0'], 'w': new_width, 'h': location['h']}
-    else:
-      # image higher than box
-      #print('image higher than box')
-      new_height = int(location['w']*(img.height/img.width))
-      #print('new_height', new_height)
-      y_offset = (location['h']-new_height)//2
-      #print('y_offset', y_offset)
-      new_location = {'x0':  location['x0'], 'y0': location['y0']+y_offset, 'w': location['w'], 'h': new_height}
-    return new_location
-
-def get_cropped_image_file(image, location):
-  # fix crop:
-  tmp_f = '/tmp/pymdslides_tmp_file'
-  #print("image:",image)
-  with Image.open(image) as img:
-    if img.width < 10 or img.height < 10:
-      img = img.resize((img.width*10, img.height*10))
-    new_width = img.width
-    new_height = img.height
-    x_offset = 0
-    y_offset = 0
-    if location['w']/location['h'] == img.width/img.height:
-      return image
-    elif location['w']/location['h'] < img.width/img.height:
-      # shrink width
-      new_width = int(img.height*(location['w']/location['h']))
-      x_offset = int((img.width-new_width)/2)
-    else:
-      # shrink height
-      new_height = int(img.width*(location['h']/location['w']))
-      y_offset = int((img.height-new_height)/2)
-    box = (x_offset, y_offset, x_offset+new_width, y_offset+new_height)
-    #print('width',img.width,'height',img.height)
-    #print('box',box)
-    crop = img.crop(box)
-    image_format = 'PNG'
-    tmp_f += '-'+str(time.time())+'.'+image_format.lower()
-    crop.save(tmp_f, image_format)
-    return tmp_f
 
 def get_images_locations(images, layout, has_text, packed_images=False, cred=False):
   # layouts = ['image_left_half', 'image_left_small', 'image_right_half', 'image_right_small', 'center', 'image_center', 'image_fill']
@@ -1024,24 +743,21 @@ def get_image_area(layout, has_text):
   if layout in ['center', 'image_center']:
     drawable_height = formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y0']-formatting['dimensions']['em_title']-formatting['dimensions']['page_margins']['y1']
     if has_text:
-      image_area = {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title'], 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': drawable_height//2+formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']-formatting['dimensions']['internal_margin']//2}
+      image_area = {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': drawable_height//2+formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']-formatting['dimensions']['internal_margin']//2}
     else:
-      image_area = {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title'], 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
+      image_area = {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
   elif layout == 'image_left_half':
     image_area =  {'x0': 0, 'y0': 0, 'x1': formatting['dimensions']['page_width']//2, 'y1': formatting['dimensions']['page_height']}
   elif layout == 'image_left_small':
-    image_area =  {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title'], 'x1': (formatting['dimensions']['page_width']//2)-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
+    image_area =  {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': (formatting['dimensions']['page_width']//2)-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
   elif layout == 'image_right_half':
     image_area =  {'x0': formatting['dimensions']['page_width']//2, 'y0': 0, 'x1': formatting['dimensions']['page_width'], 'y1': formatting['dimensions']['page_height']}
   elif layout == 'image_right_small':
-    image_area =  {'x0': (formatting['dimensions']['page_width']//2)+formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title'], 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
+    image_area =  {'x0': (formatting['dimensions']['page_width']//2)+formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
   else: #image_full
     image_area =  {'x0': 0, 'y0': 0, 'x1': formatting['dimensions']['page_width'], 'y1': formatting['dimensions']['page_height']}
   #print('image_area',image_area)
   return image_area
-
-def draw_svg_image(backend, svg_file):
-  backend.draw_svg_image(svg_file)
 
 def same_color(first, second):
   if len(first) != len(second):
@@ -1216,7 +932,8 @@ def put_vector_images_on_pdf(output_file, vector_images, crop_images):
 
 def logo_watermark(output_file, logo_path):
   if output_file[-4:] == 'html':
-    backend.logo_watermark(logo_path)
+    pass
+    #backend.logo_watermark(logo_path)
   else:
     reader = PdfReader(output_file)
     writer = PdfWriter()
@@ -1244,9 +961,9 @@ def get_git_commit(script_home):
   print("{}: git commit: {}".format(datetime.today().strftime('%Y-%m-%d %H:%M:%S'), git_commit))
   return git_commit
 
-def markdown_to_text(md_data):
-  parser = MarkdownIt(renderer_cls=RendererPlain)
-  return parser.render(md_data)
+#def markdown_to_text(md_data):
+#  parser = MarkdownIt(renderer_cls=RendererPlain)
+#  return parser.render(md_data)
 
 def recursive_dict_update(d1, d2):
   for k in d2:
@@ -1327,16 +1044,34 @@ def preprocess_md_page(content, line_number, config):
     #print('p',p)
     pages.append(p)
   return pages
+
+def get_alignment(formatting):
+  if formatting['layout'] ==  'center':
+    return 'center'
+  else:
+    return 'left'
+  #if formatting['layout'] == 'image_left_half':
+  #elif formatting['layout'] == 'image_left_small':
+  #elif formatting['layout'] == 'image_right_half':
+  #elif formatting['layout'] ==  'image_right_small':
+  #elif formatting['layout'] == 'image_center':
+  #elif formatting['layout'] == 'image_fill':
   
 if __name__ == "__main__":
   md_file = sys.argv[1]
   print('md_file:',md_file)
-  output_file = '.'.join(md_file.split('.')[:-1])+'.pdf'
+  output_format = 'html'
+  if len(sys.argv) > 2:
+    output_format = sys.argv[2]
+  output_file = '.'.join(md_file.split('.')[:-1])+'.'+output_format
   md_file_stripped = md_file.split('/')[-1]
 
   raster_images = False
-  if '--raster-images' in sys.argv:
+  if '--raster-images' in sys.argv or output_format == 'html':
     raster_images = True
+  if output_format == 'html':
+    treat_as_raster_images = ['svg']
+    
   
   script_home = os.path.dirname(os.path.realpath(__file__))
   print('script_home', script_home)
@@ -1439,9 +1174,31 @@ if __name__ == "__main__":
       headlines[-1] = headlines_h2[-1]
   print('headlines',headlines)
 
+  document_title = headlines[0]+' '+headlines_h2[0].strip()
+  if document_title == '':
+    document_title = 'PYMD HTML SLIDES'
   # INITIALIZE FPDF:
 
-  backend = backend_pdf(md_file_stripped, formatting, script_home)
+  if output_format == 'pdf':
+    backend = backend_pdf(md_file_stripped, formatting, script_home, output_file)
+  elif output_format == 'html':
+    backend = backend_html(md_file_stripped, formatting, script_home, output_file)
+  else:
+    raise Exception('Dude! Unknown output format: '+output_format)
+
+  logo_path = os.path.join(script_home,'logo.png')
+  if 'logo_path' in formatting:
+    if formatting['logo_path'] == '':
+      logo_path = None
+    elif os.path.exists(os.path.join(script_home,formatting['logo_path'])):
+      logo_path = os.path.join(script_home,formatting['logo_path'])
+    else:
+      logo_path = formatting['logo_path']
+  if output_format == 'html':
+    logo_width=23
+    logo_height=30
+    if logo_path is not None:
+      backend.set_logo(logo_path, x=formatting['dimensions']['page_width']-logo_width-formatting['dimensions']['margin_footer'], y=formatting['dimensions']['page_height']-logo_height-formatting['dimensions']['margin_footer'] , w=logo_width, h=logo_height)
 
   # MAIN PROCESSING LOOP.
 
@@ -1456,7 +1213,7 @@ if __name__ == "__main__":
 
     print('{}:{}: generating page (#) {}'.format(md_file_stripped, page['line_numbers'][-1], page_number))
     # TODO: separate images and content below.
-    vector_images_page = dump_page_content(backend, page['images']+page['content'], page['config'], headlines, raster_images, md_file_stripped, page['line_numbers'][0])
+    vector_images_page = dump_page_content(backend, page['images']+page['content'], page['config'], headlines, raster_images, treat_as_raster_images, md_file_stripped, page['line_numbers'][0])
     page_number += 1
     print('------------------------------------')
     if len(vector_images_page) > 0:
@@ -1477,7 +1234,7 @@ if __name__ == "__main__":
 
   # VECTOR IMAGES FOR PDF BACKEND:
 
-  if output_file[-3:] == 'pdf':
+  if output_format == 'pdf':
     if len(vector_images) > 0:
       print('vector_images',len(vector_images))
       #modified_output_file = output_file+'-with-graphics.pdf'
@@ -1485,12 +1242,6 @@ if __name__ == "__main__":
       #put_vector_images_on_pdf(modified_output_file, vector_images)
       put_vector_images_on_pdf(output_file, vector_images, formatting['crop_images'])
 
-    logo_path = os.path.join(script_home,'logo.png')
-    if 'logo_path' in formatting:
-      if os.path.exists(os.path.join(script_home,formatting['logo_path'])):
-        logo_path = os.path.join(script_home,formatting['logo_path'])
-      else:
-        logo_path = formatting['logo_path']
     if logo_path and os.path.exists(logo_path) and os.path.isfile(logo_path):
       logo_watermark(output_file, logo_path)
 
