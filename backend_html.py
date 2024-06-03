@@ -1,8 +1,23 @@
+# -*- coding: utf-8 -*-
+
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <https://www.gnu.org/licenses/>.
+
+
 import os, os.path, shutil, re
 from lxml import etree as ET
 from markdown2 import markdown
 from lxml.html.soupparser import fromstring
 from PIL import Image
+from urllib.parse import urlparse
 
 class backend_html:
   def __init__(self, input_file, formatting, script_home, output_file):
@@ -137,6 +152,17 @@ border: 1px #ccc solid;
 
     default_javascript = '''
 var currentPageId = "page-1";
+function mouseuphandler(e) {
+  e.pageX;
+  width = document.getElementById(currentPageId).offsetWidth;
+  //alert(width);
+  if (e.pageX < 0.25*width) {
+    prevPage();
+  }
+  else {
+    nextPage()
+  }
+}
 function pageLoad(){
   var currentPageId = "page-1";
   newPageId = window.location.hash.substring(1);
@@ -341,14 +367,7 @@ MathJax = {
     subcontainer.set('class', 'subcontainer')
     self.current_page_div.append(subcontainer)
     self.current_page_div = subcontainer
-    prevPageClickDiv = ET.Element('div')
-    prevPageClickDiv.set('class', 'prev-page-click-div')
-    prevPageClickDiv.set('onmouseup', 'prevPage()')
-    self.current_page_div.append(prevPageClickDiv)
-    nextPageClickDiv = ET.Element('div')
-    nextPageClickDiv.set('class', 'next-page-click-div')
-    nextPageClickDiv.set('onmouseup', 'nextPage()')
-    self.current_page_div.append(nextPageClickDiv)
+    self.current_page_div.set('onmouseup', 'mouseuphandler(event);')
     #self.current_page_div.set('style', 'width: 100vw; height: 56.25vw; /* height:width ratio = 9/16 = .5625  */ background: pink; max-height: 100vh; max-width: 177.78vh; /* 16/9 = 1.778 */ margin: auto; position: absolute; top:0;bottom:0; /* vertical center */ left:0;right:0; /* horizontal center */')
     if len(self.current_page_div) == 0 and self.current_page_div.text == '':
       self.current_page_div.text = ' ' # no break space
@@ -680,43 +699,55 @@ MathJax = {
     return False
 
   def image(self, file, x, y, w, h, crop_images=False, copy=True, link=None):
-    img = ET.Element('img')
+    media_tag = ET.Element('img')
+    style = ''
     new_filename = file
     already_copied = False
+    extension = os.path.splitext(file)[1]
+    is_video = is_video_link(file)
 
-    if self.oversized_images == "DOWNSCALE":
-      width = self.html_x(w)
-      height = self.html_y(h)
-      with Image.open(file) as im:
-        im_w, im_h = im.size
-        im_aspect = im_w/im_h
-        box_aspect = w/h
-        if im_aspect > box_aspect:
-          # image will be its own width
-          target_width_pixels = float(width[:-1])*self.downscale_resolution_width
-          target_height_pixels = (1/im_aspect)*target_width_pixels
-        else:
-          # image will be its own height
-          target_height_pixels = float(height[:-1])*self.downscale_resolution_height
-          target_width_pixels = im_aspect*target_height_pixels
-        if target_width_pixels < im_w:
-          print('downscaling image',file)
-          im.resize((target_width_pixels, target_height_pixels))
-          new_filename = self.resources_dir+os.path.basename(file)
-          im.save(new_filename)
-          already_copied = False
-    if copy and not already_copied:
-      new_filename = self.resources_dir+os.path.basename(file)
-      shutil.copyfile(file, new_filename)
-    img.set('src', new_filename)
-    style = 'position: absolute; left: {}; top: {}; width: {}; height: {};'.format(self.html_x(x), self.html_y(y), self.html_x(w), self.html_y(h))
+    if is_video:
+      media_tag = ET.Element('iframe')
+      media_tag.set('frameborder', '0')
+      media_tag.set('allow', 'autoplay; encrypted-media')
+      media_tag.set('allowfullscreen', 'true')
+      media_tag.text = ' '
+      media_tag.set('src', file)
+    else:
+      if self.oversized_images == "DOWNSCALE":
+        width = self.html_x(w)
+        height = self.html_y(h)
+        if extension != 'svg':
+          with Image.open(file) as im:
+            im_w, im_h = im.size
+            im_aspect = im_w/im_h
+            box_aspect = w/h
+            if im_aspect > box_aspect:
+              # image will be its own width
+              target_width_pixels = float(width[:-1])*self.downscale_resolution_width
+              target_height_pixels = (1/im_aspect)*target_width_pixels
+            else:
+              # image will be its own height
+              target_height_pixels = float(height[:-1])*self.downscale_resolution_height
+              target_width_pixels = im_aspect*target_height_pixels
+            if target_width_pixels < im_w:
+              print('downscaling image',file)
+              im.resize((target_width_pixels, target_height_pixels))
+              new_filename = self.resources_dir+os.path.basename(file)
+              im.save(new_filename)
+              already_copied = False
+      if copy and not already_copied:
+        new_filename = self.resources_dir+os.path.basename(file)
+        shutil.copyfile(file, new_filename)
+      media_tag.set('src', new_filename)
+    style += 'position: absolute; left: {}; top: {}; width: {}; height: {};'.format(self.html_x(x), self.html_y(y), self.html_x(w), self.html_y(h))
     #print('image style',style)
     if crop_images == False:
       style += ' object-fit: contain;'
     else:
       style += ' object-fit: cover;'
-    img.set('style', style)
-    self.current_page_div.append(img)
+    media_tag.set('style', style)
+    self.current_page_div.append(media_tag)
     self.set_xy(self.x, self.y+h)
     return True
 
@@ -744,14 +775,14 @@ MathJax = {
   def get_format(self):
     return 'html'
 
-  def ensure_div_closing_tags(self, T):
+  def ensure_closing_tags(self, T):
     #if T.tag == 'div':
     #  print('div:',T, len(T), T.text)
-    if T.tag == 'div' and len(T) == 0 and (T.text == '' or T.text is None):
+    if T.tag in ['div', 'p'] and len(T) == 0 and (T.text == '' or T.text is None):
       #print('makes sure no empty divs makes unclosed divs. found one.')
       T.text = ' ' # no break sspace
     for c in T:
-      self.ensure_div_closing_tags(c)
+      self.ensure_closing_tags(c)
 
   def output(self, filename):
     #with open(args[0], 'w') as f:
@@ -759,12 +790,12 @@ MathJax = {
     #tree = ET.ElementTree(self.html)
     #ET.indent(tree, space="\t", level=0)
 
-    self.ensure_div_closing_tags(self.html)
+    self.ensure_closing_tags(self.html)
 
     with open(filename, 'w') as f:
       #s = ET.tostring(tree, xml_declaration=True, encoding="UTF-8", doctype="<!DOCTYPE html>")
       ET.indent(self.html, space="\t", level=0)
-      s = ET.tostring(self.html, encoding="unicode")
+      s = ET.tostring(self.html, method='html', encoding="unicode")
       s = '<!DOCTYPE html>\n\n'+s
       f.write(s)
     #tree.docinfo.doctype = '<!DOCTYPE html>'
@@ -796,3 +827,7 @@ def change_filename_extension(filename, extension):
   pos = filename.rfind('.')
   basename = filename[:pos]
   return basename + '.' + extension
+
+def is_video_link(link):
+  parsed_uri = urlparse(link)
+  return any([x in parsed_uri.netloc for x in ['youtube', 'youtu.be', 'vimeo', 'dailymotion', 'dai.ly']])

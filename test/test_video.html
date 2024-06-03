@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<style>
+body {
+  overflow: hidden;
+}
+@font-face {
+  font-family: Code Pro Bold;
+  src: url('test_video_pymd_html_resources/CodePro-Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: Lato Regular;
+  src: url('test_video_pymd_html_resources/Lato-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: Roboto Mono Regular;
+  src: url('test_video_pymd_html_resources/RobotoMono-Regular.woff2') format('woff2');
+}
+h1 {
+  font-family: Code Pro Bold, Arial, Sans-Serif;
+  /*font-size: 4cqw;*/
+  font-size: 4.50cqw;
+}
+h2 {
+  font-family: Code Pro Bold, Arial, Sans-Serif;
+  /*font-size: 2.8cqw;*/
+  font-size: 2.50cqw;
+}
+h3 {
+  font-family: Code Pro Bold, Arial, Sans-Serif;
+  /*font-size: 2cqw;*/
+  font-size: 1.79cqw;
+}
+h4 {
+  font-family: Code Pro Bold, Arial, Sans-Serif;
+  /*font-size: 2cqw;*/
+  font-size: 1.79cqw;
+}
+body {
+  font-family: Lato Regular, Arial, Sans-Serif;
+  background-color: black;
+}
+div.page_div {
+  width: 100vw;
+  height: 56.25vw; /* height:width ratio = 9/16 = .5625  */
+  max-height: 100vh;
+  max-width: 177.78vh; /* 16/9 = 1.778 */
+  margin: auto;
+  position: absolute;
+  top:0;
+  bottom:0; /* vertical center */
+  left:0;
+  right:0; /* horizontal center */'
+  container-type: size;
+  overflow: hidden;
+}
+div.subcontainer {
+  container-type: size;
+  width: 100%;
+  height: 100%;
+  font-size: 2.12cqw;
+}
+div.prev-page-click-div {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 25%;
+  height: 100%;
+  z-index: 7;
+}
+div.next-page-click-div {
+  position: absolute;
+  left: 25%;
+  top: 0;
+  width: 75%;
+  height: 100%;
+  z-index: 7;
+}
+div.footer {
+  font-family: Roboto Mono Regular, Arial, Sans-Serif;
+  /*font-size: 1cqw;*/
+  font-size: 0.88cqw;
+}
+/*div {
+border: 1px #ccc solid;
+}
+p {
+border: 1px #ccc solid;
+}*/
+</style>
+		<title>Youtube video </title>
+		<script>
+var currentPageId = "page-1";
+function mouseuphandler(e) {
+  e.pageX;
+  width = document.getElementById(currentPageId).offsetWidth;
+  //alert(width);
+  if (e.pageX < 0.25*width) {
+    prevPage();
+  }
+  else {
+    nextPage()
+  }
+}
+function pageLoad(){
+  var currentPageId = "page-1";
+  newPageId = window.location.hash.substring(1);
+  if (newPageId != "") {
+    if (currentPageId != newPageId){
+      goToPage(newPageId);
+    }
+  }
+}
+function prevPage(){
+  splits = currentPageId.split("-");
+  currentPageNumber = parseInt(splits[1]);
+  prevPageNumber = currentPageNumber-1;
+  pageId = "page-"+prevPageNumber;
+  element = document.getElementById(pageId);
+  if (element) {
+    document.getElementById(currentPageId).style.visibility="hidden";
+    document.getElementById(pageId).style.visibility="visible";
+    currentPageId = pageId;
+    window.location.hash = pageId;
+  }
+}
+function nextPage(){
+  splits = currentPageId.split("-");
+  currentPageNumber = parseInt(splits[1]);
+  nextPageNumber = currentPageNumber+1;
+  pageId = "page-"+nextPageNumber;
+  element = document.getElementById(pageId);
+  if (element) {
+    document.getElementById(currentPageId).style.visibility="hidden";
+    document.getElementById(pageId).style.visibility="visible";
+    currentPageId = pageId;
+    window.location.hash = pageId;
+  }
+}
+function goToPage(pageId){
+    //alert(pageId);
+    document.getElementById(currentPageId).style.visibility="hidden";
+    document.getElementById(pageId).style.visibility="visible";
+    currentPageId = pageId;
+    window.location.hash = pageId;
+}
+document.onkeydown = function(event) {
+  switch (event.keyCode) {
+    case 33:
+      // page up
+      prevPage();
+    break;
+    case 34:
+      // page down
+      nextPage();
+    break;
+    case 37:
+      // left arrow
+      prevPage();
+    break;
+    case 38:
+      // up arrow
+      prevPage();
+    break;
+    case 32:
+      //space
+      nextPage();
+    break;
+    case 39:
+      // right arrow
+      nextPage();
+    break;
+    case 40:
+      // down arrow
+      nextPage();
+    break;
+  }
+};
+</script>
+		<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\(', '\)']]
+  },
+  svg: {
+    fontCache: 'global'
+  }
+};
+</script>
+		<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"> </script>
+		<script id="MathJax-script" async="true" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"> </script>
+		<meta generator='pymdslides, git commit: "51245fe8ec90af8b2d2cf97dcba193335dca421c" https://github.com/olofmogren/pymdslides/'>
+		<meta generation-date="2024-06-03 13:12:35.001559+02:00">
+	</head>
+	<body onload="pageLoad();">
+		<div id="page-1" class="page_div" style="visibility: visible; background-color: white; ">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;    font-family: ; font-size: 0.88cqw; ">
+				<img src="test_video_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<iframe frameborder="0" allow="autoplay; encrypted-media" allowfullscreen="true" src="https://www.youtube.com/embed/su0absbCuo8?rel=0" style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; object-fit: contain;"> </iframe>
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0;">Youtube video</h1>
+				</div>
+				<div style="position: absolute; left: 6.25%; top: 63.70%; width: 87.50%; height: 28.15%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
+					<p> </p>
+				</div>
+				<div class="footer" id="footer" style="position: absolute; left: 0.83%; top: 96.30%; color: #646464ff;">Nice footer about the author and event.</div>
+			</div>
+		</div>
+	</body>
+</html>

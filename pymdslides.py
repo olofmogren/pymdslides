@@ -435,121 +435,6 @@ def render_internal_link(link, x, y, headlines):
   x = round(x-0.7*space_width)
   return x, y
 
-#def render_latex(formula, x, y, text_color, dry_run=False):
-#  return render_latex_matplotlib(formula, x, y, text_color, dry_run=dry_run)
-#
-#def render_latex_matplotlib(formula, x, y, text_color, dry_run=False):
-#    formula = '$base~'+formula+'$'
-#    #print('formula', formula)
-#    # Latex!
-#    fig = plt.figure(frameon=False)
-#    #fig.text(0.0, 0.0, line, fontsize=14)
-#    fig.text(0.5, 0.5, formula, fontsize=14)
-#    #ax = plt.gca()
-#    #ax.axes.get_xaxis().set_visible(False)
-#    #ax.axes.get_yaxis().set_visible(False)
-#    ax = plt.Axes(fig, [0., 0., 1., 1.])
-#    ax.set_axis_off()
-#    fig.add_axes(ax)
-#    #plt.xlim([-1.0, 1.0])
-#    #plt.ylim([-1.0, 1.0])
-#    image_format = 'PNG'
-#    tmp_f = '/tmp/pymdslides_tmp_file'
-#    tmp_f += '-'+str(time.time())+'.'+image_format.lower()
-#    fig.savefig(tmp_f, dpi=560)
-#    with Image.open(tmp_f) as img:
-#      #print(img.mode)
-#      if img.mode == 'RGBA':
-#        # need to get rid of alpha channel to do the getbbox below.
-#        background = Image.new('RGBA', img.size, (255,255,255))
-#        alpha_composite = Image.alpha_composite(background, img)
-#        img = alpha_composite.convert('RGB')
-#      img_invert = ImageOps.invert(img)
-#      box = img_invert.getbbox() # (left, upper, right, lower)
-#      print('box', box)
-#      formula_box = list(box)
-#      baseline_width = 220
-#      formula_box[0] = box[0]+baseline_width # cropping away the 'base' inserted in first line of this function.
-#      cropped_img = img.crop(formula_box)
-#      cropped_img.save(tmp_f)
-#      im_width,im_height = cropped_img.size
-#
-#      baseline_box = list(box)
-#      baseline_box[2] = baseline_box[0]+baseline_width
-#      baseline_img = img.crop(baseline_box)
-#      #baseline_offset = get_baseline_offset(baseline_img) 
-#      img_invert = ImageOps.invert(baseline_img)
-#      box = img_invert.getbbox() # (left, upper, right, lower)
-#      baseline_offset = box[1] # distance from upper edge to top of b character in the 'base' test above.
-#      #baseline_f = tmp_f+'baseline.png'
-#      #baseline_img.save(baseline_f)
-#      #print('baseline_offset', baseline_offset, 'formatting['dimensions']['em']', formatting['dimensions']['em'])
-#    #backend.image(logo_path, x=formatting['dimensions']['page_width']-30, y=formatting['dimensions']['page_height']-35, w=24, h=30)
-#    arbitrary_image_margin_mm = 1
-#    width_mm = int(im_width*formatting['dimensions']['pixel_per_mm'])
-#    height_mm = int(im_height*formatting['dimensions']['pixel_per_mm'])
-#    baseline_offset_mm = int(baseline_offset*formatting['dimensions']['pixel_per_mm'])
-#    #y_offset = (height_mm-formatting['dimensions']['em'])//2
-#    print('baseline_offset_mm', baseline_offset_mm)
-#    y_offset = baseline_offset_mm+arbitrary_image_margin_mm
-#    print('y_offset', y_offset)
-#
-#    if not dry_run:
-#      # adding alpha channel, so we can have background images in backend.
-#      with Image.open(tmp_f) as img:
-#        img_alpha = ImageOps.invert(ImageOps.grayscale(img))
-#        #print(img_alpha)
-#        # making it all black behind the alpha map, white elsewhere. Then it should be readable without alpha map if neccessary anytime, and we don't get any white or gray pixels mixed in.
-#        white_area = np.array(img)==255
-#        white_area = white_area.astype(np.uint8)*255
-#        #print(white_area)
-#        img = Image.fromarray(white_area)
-#        img.putalpha(img_alpha)
-#      img.save(tmp_f)
-#
-#      if text_color[0] != 0 or text_color[1] != 0 or text_color[2] != 0:
-#        with Image.open(tmp_f) as img:
-#          img = img.convert("L")
-#          img = ImageOps.colorize(img, black=text_color, white=[255,255,255])
-#          img.putalpha(img_alpha)
-#        img.save(tmp_f)
-#      
-#      backend.image(tmp_f, x=x, y=y-y_offset, w=width_mm, h=height_mm)
-#      print('remove(',tmp_f,')')
-#      os.remove(tmp_f)
-#    #print(tmp_f)
-#    x += width_mm
-#    y += height_mm-y_offset # TODO: also give the y_offset space above the line
-#    return x,y,width_mm
-
-
-#def get_latex_sections(line):
-#  latex_formulas = []
-#  if '$' in line:
-#    splits = re.split(r'(?<!\\)\$', line)
-#    pos = 0
-#    for i,split in enumerate(splits):
-#      if i%2 == 1:
-#        latex_formulas.append((pos,pos+len(split), 'latex'))
-#      pos += len(split)+1 # one for the dollar sign
-#  return latex_formulas
-
-#def get_internal_links(line):
-#  internal_links = []
-#  if '](#' in line:
-#    locations = find_all(line, '](#')
-#    #print('line', line)
-#    #@locations = [l for l in locations] # I HAVE NO IDEA WHY THIS IS NEEDED!
-#    #print(locations)
-#    for l in locations:
-#      #print(l)
-#      beginning = line.rfind('[', 0, l)
-#      end = line.find(')', l)
-#      #print('beginning, end', beginning, end)
-#      if beginning != -1 and end != -1:
-#        internal_links.append((beginning,end,'link'))
-#  return internal_links 
-
 
 def get_offsets_for_text(layout, images=True):
   # returns offsets for text area.
@@ -606,7 +491,7 @@ def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout,
   # print("images", images,alt_texts)
   images_to_remove = []
   for i,(image,alt_text) in enumerate(zip(images,alt_texts)):
-    if image == "" or not os.path.isfile(image):
+    if (image == "" or not os.path.isfile(image)) and '://' not in image:
       #print("{}:{}: Warning: Empty image tag, or image file does not exist. '{}'. Ignoring.".format(md_file_stripped, line_number, image, alt_text))
       images_to_remove.append(i)
   images_to_remove.reverse()
