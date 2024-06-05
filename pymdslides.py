@@ -224,9 +224,9 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
     num_columns = formatting['columns']
     column_offsets = get_column_offsets(offsets, formatting['columns'], column=0)
   column_lines = split_lines_into_columns(lines, num_columns)
-  print('column_lines', column_lines)
+  #print('column_lines', column_lines)
   for c in range(num_columns):
-    print('column:', c)
+    #print('column:', c)
     lines_this_column = column_lines[c]
     x = column_offsets['x0']
     y = column_offsets['y0']

@@ -90,7 +90,7 @@ p {
 border: 1px #ccc solid;
 }*/
 </style>
-		<title>Testing a table </title>
+		<title>A table </title>
 		<script>
 var currentPageId = "page-1";
 function mouseuphandler(e) {
@@ -189,36 +189,86 @@ MathJax = {
   }
 };
 </script>
-		<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"> </script>
-		<script id="MathJax-script" async="true" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"> </script>
-		<meta generator='pymdslides, git commit: "7a2ac4d68016725243be2a2df68bb62e4f462c1e" https://github.com/olofmogren/pymdslides/'>
-		<meta generation-date="2024-06-05 12:21:51.777209+02:00">
+		<script id="MathJax-script" async="true" src="test_table_pymd_html_resources/tex-mml-svg.js"> </script>
+		<meta generator='pymdslides, git commit: "0a799cb0c17604967a3cc7fbce1b0d56c6b59804" https://github.com/olofmogren/pymdslides/'>
+		<meta generation-date="2024-06-05 15:29:21.681978+02:00">
 	</head>
 	<body onload="pageLoad();">
 		<div id="page-1" class="page_div" style="visibility: visible; background-color: white; ">
 			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
 				<img src="test_table_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
 				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;">Testing a table</h1>
+					<h1 style="margin: 0; padding: 0;">A table</h1>
 				</div>
 				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
-					<p>| Column 1 | Column 2|
-| Cell 1 | Cell 2 |</p>
+					<table style="margin-left: auto; margin-right: auto; ">
+						<thead>
+							<tr>
+								<th>Column 1</th>
+								<th>Column 2</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>Cell 1</td>
+								<td>Cell 2</td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
 			</div>
 		</div>
 		<div id="page-2" class="page_div" style="visibility: hidden; background-color: white; ">
 			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
 				<img src="test_table_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0;">Table with a formula</h1>
+				</div>
+				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
+					<table style="margin-left: auto; margin-right: auto; ">
+						<thead>
+							<tr>
+								<th>Column 1</th>
+								<th>Column 2</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>$y = \theta * x$</td>
+								<td>$a = b*c$</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div id="page-3" class="page_div" style="visibility: hidden; background-color: white; ">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
+				<img src="test_table_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
 				<img src="test_table_pymd_html_resources/testing_image.jpg" style="position: absolute; left: 56.25%; top: 24.44%; width: 37.50%; height: 67.41%; object-fit: cover;">
 				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;">Testing a table with an image</h1>
+					<h1 style="margin: 0; padding: 0;">A table with an image</h1>
 				</div>
 				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 37.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
-					<p>| Column 1 | Column 2|
-| Cell 1 | Cell 2 |
-| Cell 3 | Cell 4 |
-With a line after.</p>
+					<table>
+						<thead>
+							<tr>
+								<th>Column 1</th>
+								<th>Column 2</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>Cell 1</td>
+								<td>Cell 2</td>
+							</tr>
+							<tr>
+								<td>Cell 3</td>
+								<td>Cell 4</td>
+							</tr>
+						</tbody>
+					</table>
+					<p>With a line after.</p>
 				</div>
 			</div>
 		</div>

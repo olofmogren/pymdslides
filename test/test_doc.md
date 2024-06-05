@@ -1,4 +1,4 @@
-# Slide1
+# Test doc
 
 ---
 layout: center
@@ -140,9 +140,13 @@ text_color:
 ---
 
 A bit *of italic*
+
 $a = \frac{b}{c}$
+
 And **a bold thing**, too.
-Testing [linking (mogren.one)](http://mogren.one/), too.
+
+Testing [linking \(mogren.one\)](http://mogren.one/), too.
+
 A text, following with a $\frac{formula}{divisor}$
 
 # Some more strangeness
@@ -160,7 +164,7 @@ text_color:
 ---
 
 $a = \left(\frac{\frac{\sum_i^N X_i^2}{y}}{c}\right)$
-* [Link to page 1](#Slide1)
+* [Link to page 1](#Test doc)
 
 # Another formula
 
@@ -250,7 +254,9 @@ We can fill a page with boxes.
 * The
 * Page
 * Overflow line 1
-* OVerflow line 2
+* Overflow line 2
+* Overflow line 3
+* Overflow line 4
 
 # Images side-by-side
 

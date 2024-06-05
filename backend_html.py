@@ -18,6 +18,7 @@ from markdown2 import markdown
 from lxml.html.soupparser import fromstring
 from PIL import Image
 from urllib.parse import urlparse
+import requests
 
 class backend_html:
   def __init__(self, input_file, formatting, script_home, output_file):
@@ -55,7 +56,17 @@ class backend_html:
           self.font_sizes[font_cat+'_l3'] = self.html_font_size(formatting['dimensions']['font_size_{}'.format(font_cat)]/1.4)
           self.font_sizes[font_cat+'_l4'] = self.html_font_size(formatting['dimensions']['font_size_{}'.format(font_cat)]/1.4)
 
-
+    mathjax_url = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-svg.js'
+    mathjax_local_file = os.path.join(script_home, 'mathjax', 'tex-mml-svg.js')
+    if not os.path.exists(mathjax_local_file):
+      print('Downloading mathjax to local storage...')
+      response = requests.get(mathjax_url)
+      print(response)
+      os.makedirs(os.path.dirname(mathjax_local_file))
+      with open(mathjax_local_file, 'wb') as f:
+        f.write(response.content)
+    shutil.copy(mathjax_local_file, os.path.join(self.resources_dir, os.path.basename(mathjax_local_file)))
+    mathjax_local_file = os.path.join(self.resources_dir, os.path.basename(mathjax_local_file))
 
     default_style = '''
 body {{
@@ -265,14 +276,14 @@ MathJax = {
 };
 '''
     self.head.append(mathjax0)
-    mathjax1 = ET.Element('script')
-    mathjax1.set('src', 'https://polyfill.io/v3/polyfill.min.js?features=es6')
-    mathjax1.text = ' '
-    self.head.append(mathjax1)
+    #mathjax1 = ET.Element('script')
+    #mathjax1.set('src', 'https://polyfill.io/v3/polyfill.min.js?features=es6')
+    #mathjax1.text = ' '
+    #self.head.append(mathjax1)
     mathjax2 = ET.Element('script')
     mathjax2.set('id', 'MathJax-script')
     mathjax2.set('async', 'true')
-    mathjax2.set('src', 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js')
+    mathjax2.set('src', mathjax_local_file)
     mathjax2.text = ' '
     self.head.append(mathjax2)
 
@@ -564,10 +575,12 @@ MathJax = {
       #print(trees)
       for subtree in tree: # parser puts everything in an <html> root
         text_tag.append(subtree)
+      self.align_tables([text_tag], align)
     else:
       text_tag.text = '\n'.join(formatted_lines)
     if len(text_div) == 0 and text_div.text == '':
       text_div.text = ' ' # no break sspace
+    self.fix_local_links([text_div], headlines)
     self.x = x
     self.y = y+h
     return x,y+h
@@ -589,6 +602,9 @@ MathJax = {
     else:
       text_color = self.text_color
     style = 'position: absolute; left: {}; top: {}; width: {}; height: {}; text-align: {}; z-index: 4; margin: 0; padding: -1cqw 1cqw 0 1cqw; background-color: {}; border: 1px {} solid; border-radius: 15px; overflow: hidden; color: {}; '.format(self.html_x(self.x), self.html_y(self.y), self.html_x(w), self.html_y(h), align, bgcolor, bcolor, text_color)
+    print('align', align)
+    if align == 'center':
+      style += 'align-items: center; '
     text_div.set('style', style)
     if markdown_format:
       new_lines = []
@@ -606,6 +622,7 @@ MathJax = {
       #print(trees)
       for subtree in tree: # parser puts everything in an <html> root
         text_tag.append(subtree)
+      self.align_tables([text_tag], align)
     else:
       text_tag.text = '\n'.join(lines)
     if len(text_div) == 0 and text_div.text == '':
@@ -614,6 +631,32 @@ MathJax = {
     self.y = y+h
     return True
 
+  def align_tables(self, tag, align):
+    for child in tag:
+      if child.tag == 'table':
+        style = child.get('style')
+        if style == None:
+          style = ''
+        if align == 'center':
+          style = self.update_css_string(style, 'margin-left', 'auto')
+          style = self.update_css_string(style, 'margin-right', 'auto')
+        elif align == 'right':
+          style = self.update_css_string(style, 'right', '0')
+        if style != '':
+          child.set('style', style)
+      self.align_tables(child, align)
+    
+  def fix_local_links(self, tag, headlines):
+    for child in tag:
+      if child.tag == 'a':
+        href = child.get('href')
+        if len(href) > 0 and href[0] == '#':
+          page_no = int(headlines.index(href[1:].strip()))+1
+          child.set('href', '#')
+          child.set('onclick', 'goToPage("page-{}"); return false;'.format(page_no))
+
+      self.fix_local_links(child, headlines)
+    
   def text(self, txt, x, y, h_level=None, em=10, footer=False, text_color=None):
     text_div = ET.Element('div')
     self.current_page_div.append(text_div)
@@ -806,9 +849,10 @@ MathJax = {
     return True
 
 def md_to_html(md):
-  sane = md_extract_formulas(md)
-  html = markdown(sane[0], extras=['cuddled-lists', 'tables'])
-  finalOutput = md_reconstruct_math(html,sane[1])
+  md_, formulas_ = md_extract_formulas(md)
+  print('md_to_html:',md_)
+  html = markdown(md_, extras=['cuddled-lists', 'tables'])
+  finalOutput = md_reconstruct_math(html, formulas_)
   return finalOutput
 
 def md_extract_formulas(md):

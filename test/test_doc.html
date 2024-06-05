@@ -90,7 +90,7 @@ p {
 border: 1px #ccc solid;
 }*/
 </style>
-		<title>Slide1 </title>
+		<title>Test doc </title>
 		<script>
 var currentPageId = "page-1";
 function mouseuphandler(e) {
@@ -189,10 +189,9 @@ MathJax = {
   }
 };
 </script>
-		<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"> </script>
-		<script id="MathJax-script" async="true" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"> </script>
-		<meta generator='pymdslides, git commit: "7a2ac4d68016725243be2a2df68bb62e4f462c1e" https://github.com/olofmogren/pymdslides/'>
-		<meta generation-date="2024-06-05 13:12:16.009392+02:00">
+		<script id="MathJax-script" async="true" src="test_doc_pymd_html_resources/tex-mml-svg.js"> </script>
+		<meta generator='pymdslides, git commit: "0a799cb0c17604967a3cc7fbce1b0d56c6b59804" https://github.com/olofmogren/pymdslides/'>
+		<meta generation-date="2024-06-05 15:48:46.111306+02:00">
 	</head>
 	<body onload="pageLoad();">
 		<div id="page-1" class="page_div" style="visibility: visible; background-color: white; ">
@@ -202,7 +201,7 @@ MathJax = {
 				<img src="test_doc_pymd_html_resources/testing_image.jpg" style="position: absolute; left: 36.04%; top: 24.44%; width: 27.71%; height: 28.15%; object-fit: contain;">
 				<img src="test_doc_pymd_html_resources/neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 65.83%; top: 24.44%; width: 27.71%; height: 28.15%; object-fit: contain;">
 				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;">Slide1</h1>
+					<h1 style="margin: 0; padding: 0;">Test doc</h1>
 				</div>
 				<div style="position: absolute; left: 6.25%; top: 63.70%; width: 87.50%; height: 28.15%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<ul>
@@ -348,10 +347,11 @@ MathJax = {
 				</div>
 				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<p>A bit <strong>of italic</strong>
-$a = \frac{b}{c}$
-And <strong>a bold thing</strong>, too.
-Testing <a href="http://mogren.one/">linking (mogren.one)</a>, too.
-A text, following with a $a = \frac{b}{c}$</p>
+					</p>
+					<p>$a = \frac{b}{c}$</p>
+					<p>And <strong>a bold thing</strong>, too.</p>
+					<p>Testing <a href="http://mogren.one/">linking (mogren.one)</a>, too.</p>
+					<p>A text, following with a $a = \frac{b}{c}$</p>
 				</div>
 			</div>
 		</div>
@@ -365,7 +365,7 @@ A text, following with a $a = \frac{b}{c}$</p>
 					<p>$a = \left(\frac{\frac{\sum_i^N X_i^2}{y}}{c}\right)$</p>
 					<ul>
 						<li>
-							<a href="#Slide1">Link to page 1</a>
+							<a href="#" onclick='goToPage("page-1"); return false;'>Link to page 1</a>
 						</li>
 					</ul>
 				</div>
@@ -494,7 +494,9 @@ Maths: $\mathbf{x} = \sum_{i=0}^N x_i$</p>
 						<li>The</li>
 						<li>Page</li>
 						<li>Overflow line 1</li>
-						<li>OVerflow line 2</li>
+						<li>Overflow line 2</li>
+						<li>Overflow line 3</li>
+						<li>Overflow line 4</li>
 					</ul>
 				</div>
 			</div>
@@ -520,7 +522,7 @@ Maths: $\mathbf{x} = \sum_{i=0}^N x_i$</p>
 				</div>
 				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<p>
-						<a href="#Latex%20and%20formatting">Thank you!</a>
+						<a href="#" onclick='goToPage("page-10"); return false;'>Thank you!</a>
 					</p>
 				</div>
 			</div>
