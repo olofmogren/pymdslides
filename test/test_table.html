@@ -8,15 +8,15 @@ body {
 }
 @font-face {
   font-family: Code Pro Bold;
-  src: url('test_video_pymd_html_resources/CodePro-Bold.woff2') format('woff2');
+  src: url('test_table_pymd_html_resources/CodePro-Bold.woff2') format('woff2');
 }
 @font-face {
   font-family: Lato Regular;
-  src: url('test_video_pymd_html_resources/Lato-Regular.woff2') format('woff2');
+  src: url('test_table_pymd_html_resources/Lato-Regular.woff2') format('woff2');
 }
 @font-face {
   font-family: Roboto Mono Regular;
-  src: url('test_video_pymd_html_resources/RobotoMono-Regular.woff2') format('woff2');
+  src: url('test_table_pymd_html_resources/RobotoMono-Regular.woff2') format('woff2');
 }
 h1 {
   font-family: Code Pro Bold, Arial, Sans-Serif;
@@ -90,7 +90,7 @@ p {
 border: 1px #ccc solid;
 }*/
 </style>
-		<title>Youtube video </title>
+		<title>Testing a table </title>
 		<script>
 var currentPageId = "page-1";
 function mouseuphandler(e) {
@@ -192,31 +192,33 @@ MathJax = {
 		<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"> </script>
 		<script id="MathJax-script" async="true" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"> </script>
 		<meta generator='pymdslides, git commit: "7a2ac4d68016725243be2a2df68bb62e4f462c1e" https://github.com/olofmogren/pymdslides/'>
-		<meta generation-date="2024-06-05 08:47:17.081146+02:00">
+		<meta generation-date="2024-06-05 12:21:51.777209+02:00">
 	</head>
 	<body onload="pageLoad();">
 		<div id="page-1" class="page_div" style="visibility: visible; background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;    font-family: ; font-size: 0.88cqw; ">
-				<img src="test_video_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
-				<iframe frameborder="0" allow="autoplay; encrypted-media" allowfullscreen="true" src="https://www.youtube.com/embed/su0absbCuo8?rel=0" style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; object-fit: contain;"> </iframe>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
+				<img src="test_table_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
 				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;">Youtube video</h1>
+					<h1 style="margin: 0; padding: 0;">Testing a table</h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 63.70%; width: 87.50%; height: 28.15%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
-					<p> </p>
+				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
+					<p>| Column 1 | Column 2|
+| Cell 1 | Cell 2 |</p>
 				</div>
-				<div class="footer" id="footer" style="position: absolute; left: 0.83%; top: 96.30%; color: #646464ff;">Nice footer about the author and event.</div>
 			</div>
 		</div>
 		<div id="page-2" class="page_div" style="visibility: hidden; background-color: white; ">
 			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
-				<img src="test_video_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
-				<iframe frameborder="0" allow="autoplay; encrypted-media" allowfullscreen="true" src="https://www.youtube.com/embed/idqwSfLX-44&amp;rel=0&amp;t=1505s" style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; object-fit: cover;"> </iframe>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;">Another Youtube video</h1>
+				<img src="test_table_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<img src="test_table_pymd_html_resources/testing_image.jpg" style="position: absolute; left: 56.25%; top: 24.44%; width: 37.50%; height: 67.41%; object-fit: cover;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0;">Testing a table with an image</h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 63.70%; width: 87.50%; height: 28.15%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
-					<p> </p>
+				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 37.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
+					<p>| Column 1 | Column 2|
+| Cell 1 | Cell 2 |
+| Cell 3 | Cell 4 |
+With a line after.</p>
 				</div>
 			</div>
 		</div>

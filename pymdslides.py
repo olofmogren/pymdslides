@@ -219,44 +219,24 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
   print('images', len(images))
   offsets = get_offsets_for_text(formatting['layout'], images=(len(images) > 0))
   column_offsets = offsets
+  num_columns = 1
   if 'columns' in formatting and formatting['columns'] > 1:
+    num_columns = formatting['columns']
     column_offsets = get_column_offsets(offsets, formatting['columns'], column=0)
-  x = column_offsets['x0']
-  y = column_offsets['y0']
-  column = 0
-  current_table = []
-  if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
-    backend.set_font('standard', '', formatting['dimensions']['font_size_standard'])
-  else:
-    backend.set_font_size(formatting['dimensions']['font_size_standard'])
-  print('textbox', offsets)
-  backend.textbox(lines=lines, x=x, y=y, w=offsets['w'], h=offsets['h'], headlines=headlines, h_level=None, text_color=text_color, align=get_alignment(formatting), markdown_format=True)
-#  for line in lines:
-#    #column_offsets = offsets
-#    column_divider = False
-#    if 'columns' in formatting and formatting['columns'] > 1:
-#      if len(line) > 3 and all([c == '-' for c in line]) and column < formatting['columns']-1:
-#        column += 1
-#        column_offsets = get_column_offsets(offsets, formatting['columns'], column)
-#        column_divider = True
-#        x = column_offsets['x0']
-#        y = column_offsets['y0']
-#    #print('offsets:', column_offsets)
-#    #print('line:', line)
-#    if len(line) > 1 and line[0] == '|' and line[-1] == '|':
-#      print('{}:{}:detected table {}'.format(md_file_stripped, line_number, line))
-#      current_table.append(line[1:-1].split('|'))
-#      continue
-#    elif(len(current_table)):
-#      print('{}:{}: rendering table'.format(md_file_stripped, line_number))
-#      x , y = render_table(current_table, x, y, column_offsets, headlines, text_color)
-#      current_table = []
-#    #print('column_offsets',column_offsets)
-#    x, y = position_and_render_text_line(line, x, y, column_offsets, headlines, text_color, formatting, column_divider=column_divider)
-#  if(len(current_table)):
-#    print('{}:{}: rendering table'.format(md_file_stripped, line_number))
-#    x , y = render_table(current_table, x, y, column_offsets, headlines, text_color)
-#    current_table = []
+  column_lines = split_lines_into_columns(lines, num_columns)
+  print('column_lines', column_lines)
+  for c in range(num_columns):
+    print('column:', c)
+    lines_this_column = column_lines[c]
+    x = column_offsets['x0']
+    y = column_offsets['y0']
+    if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
+      backend.set_font('standard', '', formatting['dimensions']['font_size_standard'])
+    else:
+      backend.set_font_size(formatting['dimensions']['font_size_standard'])
+    backend.textbox(lines=lines_this_column, x=x, y=y, w=column_offsets['w'], h=column_offsets['h'], headlines=headlines, h_level=None, text_color=text_color, align=get_alignment(formatting), markdown_format=True)
+    # for next column:
+    column_offsets = get_column_offsets(offsets, num_columns, column=c+1)
   if 'footer' in formatting:
     backend.set_text_color(formatting.get('footer_color', default_footer_color))
     if 'fonts' in formatting and 'font_file_footer' in formatting['fonts']:
@@ -302,6 +282,44 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
     #  x, y = position_and_render_text_line(line, x, y, box_offsets, headlines, text_color, formatting, column_divider=False)
     # MOVED TO BACKEND
   return vector_images
+
+def split_lines_into_columns(lines, num_columns):
+  if num_columns == 1:
+    return [lines]
+  column_lines = [[]]
+  column = 0
+  for line in lines:
+    #column_offsets = offsets
+    column_divider = False
+    if len(line) > 3 and all([c == '-' for c in line]) and column < num_columns-1:
+      column += 1
+      column_lines.append([])
+    else:
+      column_lines[column].append(line)
+  for i in range(len(column_lines), num_columns):
+    column_lines.append([])
+  return column_lines
+
+#        column_divider = True
+#        x = column_offsets['x0']
+#        y = column_offsets['y0']
+#    #print('offsets:', column_offsets)
+#    #print('line:', line)
+#    if len(line) > 1 and line[0] == '|' and line[-1] == '|':
+#      print('{}:{}:detected table {}'.format(md_file_stripped, line_number, line))
+#      current_table.append(line[1:-1].split('|'))
+#      continue
+#    elif(len(current_table)):
+#      print('{}:{}: rendering table'.format(md_file_stripped, line_number))
+#      x , y = render_table(current_table, x, y, column_offsets, headlines, text_color)
+#      current_table = []
+#    #print('column_offsets',column_offsets)
+#    x, y = position_and_render_text_line(line, x, y, column_offsets, headlines, text_color, formatting, column_divider=column_divider)
+#  if(len(current_table)):
+#    print('{}:{}: rendering table'.format(md_file_stripped, line_number))
+#    x , y = render_table(current_table, x, y, column_offsets, headlines, text_color)
+#    current_table = []
+
 
 def preprocess_formatting(formatting):
   for color in ['background_color', 'text_color', 'footer_color', 'l4_box_fill_color']:

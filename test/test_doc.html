@@ -6,24 +6,40 @@
 body {
   overflow: hidden;
 }
-h1 {
+@font-face {
   font-family: Code Pro Bold;
-  font-size: 4cqw;
+  src: url('test_doc_pymd_html_resources/CodePro-Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: Lato Regular;
+  src: url('test_doc_pymd_html_resources/Lato-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: Roboto Mono Regular;
+  src: url('test_doc_pymd_html_resources/RobotoMono-Regular.woff2') format('woff2');
+}
+h1 {
+  font-family: Code Pro Bold, Arial, Sans-Serif;
+  /*font-size: 4cqw;*/
+  font-size: 4.50cqw;
 }
 h2 {
-  font-family: Code Pro Bold;
-  font-size: 2.8cqw;
+  font-family: Code Pro Bold, Arial, Sans-Serif;
+  /*font-size: 2.8cqw;*/
+  font-size: 2.50cqw;
 }
 h3 {
-  font-family: Code Pro Bold;
-  font-size: 2cqw;
+  font-family: Code Pro Bold, Arial, Sans-Serif;
+  /*font-size: 2cqw;*/
+  font-size: 1.79cqw;
 }
 h4 {
-  font-family: Code Pro Bold;
-  font-size: 2cqw;
+  font-family: Code Pro Bold, Arial, Sans-Serif;
+  /*font-size: 2cqw;*/
+  font-size: 1.79cqw;
 }
 body {
-  font-family: Lato;
+  font-family: Lato Regular, Arial, Sans-Serif;
   background-color: black;
 }
 div.page_div {
@@ -44,6 +60,28 @@ div.subcontainer {
   container-type: size;
   width: 100%;
   height: 100%;
+  font-size: 2.12cqw;
+}
+div.prev-page-click-div {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 25%;
+  height: 100%;
+  z-index: 7;
+}
+div.next-page-click-div {
+  position: absolute;
+  left: 25%;
+  top: 0;
+  width: 75%;
+  height: 100%;
+  z-index: 7;
+}
+div.footer {
+  font-family: Roboto Mono Regular, Arial, Sans-Serif;
+  /*font-size: 1cqw;*/
+  font-size: 0.88cqw;
 }
 /*div {
 border: 1px #ccc solid;
@@ -55,6 +93,17 @@ border: 1px #ccc solid;
 		<title>Slide1 </title>
 		<script>
 var currentPageId = "page-1";
+function mouseuphandler(e) {
+  e.pageX;
+  width = document.getElementById(currentPageId).offsetWidth;
+  //alert(width);
+  if (e.pageX < 0.25*width) {
+    prevPage();
+  }
+  else {
+    nextPage()
+  }
+}
 function pageLoad(){
   var currentPageId = "page-1";
   newPageId = window.location.hash.substring(1);
@@ -142,41 +191,38 @@ MathJax = {
 </script>
 		<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"> </script>
 		<script id="MathJax-script" async="true" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"> </script>
-		<link rel="preload" as="font" href="pymd_html_resources/codeprobold.woff2" type="font/woff2" crossorigin="anonymous"/>
-		<link rel="preload" as="font" href="pymd_html_resources/lato_regular.woff2" type="font/woff2" crossorigin="anonymous"/>
-		<link rel="preload" as="font" href="pymd_html_resources/roboto_mono_regular.woff2" type="font/woff2" crossorigin="anonymous"/>
-		<meta generator="pymdslides, git commit: &quot;7cbddf5a883931bbd3b7f6f7ab791e3b74ec8685&quot; https://github.com/olofmogren/pymdslides/"/>
-		<meta generation-date="2024-05-31 08:32:54.685803+02:00"/>
+		<meta generator='pymdslides, git commit: "7a2ac4d68016725243be2a2df68bb62e4f462c1e" https://github.com/olofmogren/pymdslides/'>
+		<meta generation-date="2024-06-05 13:12:16.009392+02:00">
 	</head>
 	<body onload="pageLoad();">
 		<div id="page-1" class="page_div" style="visibility: visible; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<img src="pymd_html_resources/neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 6.25%; top: 24.44%; width: 27.71%; height: 28.15%; object-fit: contain;"/>
-				<img src="pymd_html_resources/testing_image.jpg" style="position: absolute; left: 36.04%; top: 24.44%; width: 27.71%; height: 28.15%; object-fit: contain;"/>
-				<img src="pymd_html_resources/neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 65.83%; top: 24.44%; width: 27.71%; height: 28.15%; object-fit: contain;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;    font-family: ; font-size: 0.88cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<img src="test_doc_pymd_html_resources/neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 6.25%; top: 24.44%; width: 27.71%; height: 28.15%; object-fit: contain;">
+				<img src="test_doc_pymd_html_resources/testing_image.jpg" style="position: absolute; left: 36.04%; top: 24.44%; width: 27.71%; height: 28.15%; object-fit: contain;">
+				<img src="test_doc_pymd_html_resources/neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 65.83%; top: 24.44%; width: 27.71%; height: 28.15%; object-fit: contain;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
 					<h1 style="margin: 0; padding: 0;">Slide1</h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 63.70%; width: 87.50%; height: 28.15%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 6.25%; top: 63.70%; width: 87.50%; height: 28.15%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<ul>
 						<li>layout: center</li>
 						<li>Three images</li>
 						<li>And the final bullet</li>
 					</ul>
 				</div>
-				<div style="position: absolute; left: 0.83%; top: 96.30%; color: #646464ff;font-face: Roboto Mono; font-size: 1cqw; padding: 0; margin: 0;">Nice footer about the author and event.</div>
+				<div class="footer" id="footer" style="position: absolute; left: 0.83%; top: 96.30%; color: #646464ff;">Nice footer about the author and event.</div>
 			</div>
 		</div>
 		<div id="page-2" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<img src="pymd_html_resources/monamie.jpg" style="position: absolute; left: 0.00%; top: 0.00%; width: 50.00%; height: 50.00%; object-fit: cover;"/>
-				<img src="pymd_html_resources/testing_image.jpg" style="position: absolute; left: 0.00%; top: 50.00%; width: 50.00%; height: 50.00%; object-fit: cover;"/>
-				<div style="position: absolute; left: 56.25%; top: 8.15%; width: 37.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<img src="test_doc_pymd_html_resources/monamie.jpg" style="position: absolute; left: 0.00%; top: 0.00%; width: 50.00%; height: 50.00%; object-fit: cover;">
+				<img src="test_doc_pymd_html_resources/testing_image.jpg" style="position: absolute; left: 0.00%; top: 50.00%; width: 50.00%; height: 50.00%; object-fit: cover;">
+				<div style="position: absolute; left: 56.25%; top: 8.15%; width: 37.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
 					<h1 style="margin: 0; padding: 0;">Image left</h1>
 				</div>
-				<div style="position: absolute; left: 56.25%; top: 24.44%; width: 37.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 56.25%; top: 24.44%; width: 37.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<ul>
 						<li>layout: image<em>left</em>half</li>
 						<li>packed_images: true</li>
@@ -186,13 +232,13 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-3" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<img src="pymd_html_resources/testing_image.jpg" style="position: absolute; left: 6.25%; top: 24.44%; width: 37.50%; height: 67.41%; object-fit: cover;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<img src="test_doc_pymd_html_resources/testing_image.jpg" style="position: absolute; left: 6.25%; top: 24.44%; width: 37.50%; height: 67.41%; object-fit: cover;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
 					<h1 style="margin: 0; padding: 0;">Image left small</h1>
 				</div>
-				<div style="position: absolute; left: 56.25%; top: 24.44%; width: 37.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 56.25%; top: 24.44%; width: 37.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<ul>
 						<li>layout: image<em>left</em>small</li>
 						<li>Another bullet</li>
@@ -202,13 +248,13 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-4" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<img src="pymd_html_resources/testing_image.jpg" style="position: absolute; left: 50.00%; top: 0.00%; width: 50.00%; height: 100.00%; object-fit: cover;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 37.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<img src="test_doc_pymd_html_resources/testing_image.jpg" style="position: absolute; left: 50.00%; top: 0.00%; width: 50.00%; height: 100.00%; object-fit: cover;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 37.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
 					<h1 style="margin: 0; padding: 0;">Image right</h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 37.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 37.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<ul>
 						<li>One bullet</li>
 						<li>Another bullet</li>
@@ -218,13 +264,13 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-5" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<img src="pymd_html_resources/testing_image.jpg" style="position: absolute; left: 56.25%; top: 24.44%; width: 37.50%; height: 67.41%; object-fit: cover;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<img src="test_doc_pymd_html_resources/testing_image.jpg" style="position: absolute; left: 56.25%; top: 24.44%; width: 37.50%; height: 67.41%; object-fit: cover;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
 					<h1 style="margin: 0; padding: 0;">Image right small</h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 37.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 37.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<ul>
 						<li>One bullet</li>
 						<li>Another bullet</li>
@@ -234,13 +280,13 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-6" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<img src="pymd_html_resources/testing_image.jpg" style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 28.15%; object-fit: contain;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<img src="test_doc_pymd_html_resources/testing_image.jpg" style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 28.15%; object-fit: contain;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
 					<h1 style="margin: 0; padding: 0;">Center again, not cropping</h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 63.70%; width: 87.50%; height: 28.15%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 6.25%; top: 63.70%; width: 87.50%; height: 28.15%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<ul>
 						<li>One bullet</li>
 						<li>Another bullet</li>
@@ -250,13 +296,13 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-7" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<img src="pymd_html_resources/testing_image.jpg" style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 28.15%; object-fit: cover;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<img src="test_doc_pymd_html_resources/testing_image.jpg" style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 28.15%; object-fit: cover;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
 					<h1 style="margin: 0; padding: 0;">Image center</h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 63.70%; width: 87.50%; height: 28.15%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 6.25%; top: 63.70%; width: 87.50%; height: 28.15%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<ul>
 						<li>Default cropping</li>
 						<li>Another bullet</li>
@@ -266,13 +312,13 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-8" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<img src="pymd_html_resources/testing_image.jpg" style="position: absolute; left: 0.00%; top: 0.00%; width: 100.00%; height: 100.00%; object-fit: cover;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #00008cff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<img src="test_doc_pymd_html_resources/testing_image.jpg" style="position: absolute; left: 0.00%; top: 0.00%; width: 100.00%; height: 100.00%; object-fit: cover;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #00008cff; ">
 					<h1 style="margin: 0; padding: 0;">Image fill</h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #00008cff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #00008cff;  font-size: 2.12cqw; ">
 					<ul>
 						<li>The image_fill layout puts image as background, with or without text.</li>
 						<li>Another bullet: $a = \frac{b}{c}$</li>
@@ -282,12 +328,12 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-9" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #000000ff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #ffffffff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #000000ff;  font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #ffffffff; ">
 					<h1 style="margin: 0; padding: 0;">Black slide</h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #ffffffff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #ffffffff;  font-size: 2.12cqw; ">
 					<ul>
 						<li>Only bullet</li>
 					</ul>
@@ -295,28 +341,28 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-10" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
 					<h1 style="margin: 0; padding: 0;">Latex and formatting</h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<p>A bit <strong>of italic</strong>
 $a = \frac{b}{c}$
 And <strong>a bold thing</strong>, too.
 Testing <a href="http://mogren.one/">linking (mogren.one)</a>, too.
-A text, following with a $\frac{formula}{divisor}$</p>
+A text, following with a $a = \frac{b}{c}$</p>
 				</div>
 			</div>
 		</div>
 		<div id="page-11" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #00008cff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #00008cff; ">
 					<h1 style="margin: 0; padding: 0;">Some more strangeness</h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #00008cff; font-size: 2.4cqw;">
-					<p>$a = \left(\frac{\frac{\sum<em>i^N X</em>i^2}{y}}{c}\right)$</p>
+				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #00008cff;  font-size: 2.12cqw; ">
+					<p>$a = \left(\frac{\frac{\sum_i^N X_i^2}{y}}{c}\right)$</p>
 					<ul>
 						<li>
 							<a href="#Slide1">Link to page 1</a>
@@ -326,16 +372,16 @@ A text, following with a $\frac{formula}{divisor}$</p>
 			</div>
 		</div>
 		<div id="page-12" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
 					<h1 style="margin: 0; padding: 0;">Another formula</h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<ul>
-						<li>A small one $a = b * c$ this time.</li>
+						<li>A small one $a = b * c$</li>
 					</ul>
-					<hr/>
+					<hr>
 					<ul>
 						<li>Another bullet</li>
 					</ul>
@@ -343,17 +389,18 @@ A text, following with a $\frac{formula}{divisor}$</p>
 			</div>
 		</div>
 		<div id="page-13" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;    font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
 					<h1 style="margin: 0; padding: 0;">Two column layout</h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 41.67%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<ul>
 						<li>First bullet</li>
 						<li>Second bullet</li>
 					</ul>
-					<hr/>
+				</div>
+				<div style="position: absolute; left: 50.00%; top: 24.44%; width: 41.67%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<ul>
 						<li>Third bullet</li>
 						<li>Fourth bullet</li>
@@ -362,25 +409,27 @@ A text, following with a $\frac{formula}{divisor}$</p>
 			</div>
 		</div>
 		<div id="page-14" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<img src="pymd_html_resources/neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 6.25%; top: 24.44%; width: 29.17%; height: 28.15%; object-fit: contain;"/>
-				<img src="pymd_html_resources/testing_image.jpg" style="position: absolute; left: 35.42%; top: 24.44%; width: 29.17%; height: 28.15%; object-fit: contain;"/>
-				<img src="pymd_html_resources/neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 64.58%; top: 24.44%; width: 29.17%; height: 28.15%; object-fit: contain;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;      font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<img src="test_doc_pymd_html_resources/neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 6.25%; top: 24.44%; width: 29.17%; height: 28.15%; object-fit: contain;">
+				<img src="test_doc_pymd_html_resources/testing_image.jpg" style="position: absolute; left: 35.42%; top: 24.44%; width: 29.17%; height: 28.15%; object-fit: contain;">
+				<img src="test_doc_pymd_html_resources/neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 64.58%; top: 24.44%; width: 29.17%; height: 28.15%; object-fit: contain;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
 					<h1 style="margin: 0; padding: 0;">Three column layout</h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 63.70%; width: 87.50%; height: 28.15%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 6.25%; top: 63.70%; width: 27.08%; height: 28.15%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<ul>
 						<li>First bullet</li>
 						<li>Second bullet</li>
 					</ul>
-					<hr/>
+				</div>
+				<div style="position: absolute; left: 35.42%; top: 63.70%; width: 27.08%; height: 28.15%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<ul>
 						<li>Third bullet</li>
 						<li>Fourth bullet</li>
 					</ul>
-					<hr/>
+				</div>
+				<div style="position: absolute; left: 64.58%; top: 63.70%; width: 27.08%; height: 28.15%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<ul>
 						<li>Fifth bullet</li>
 						<li>Sixth bullet</li>
@@ -389,32 +438,32 @@ A text, following with a $\frac{formula}{divisor}$</p>
 			</div>
 		</div>
 		<div id="page-15" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 37.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 37.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
 					<h1 style="margin: 0; padding: 0;">Thank you </h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 37.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
-					<p/>
+				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 37.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
+					<p> </p>
 				</div>
 			</div>
 		</div>
 		<div id="page-16" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<img src="pymd_html_resources/testing_image.jpg" style="position: absolute; left: 50.00%; top: 0.00%; width: 50.00%; height: 100.00%; object-fit: cover;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 37.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;    font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<img src="test_doc_pymd_html_resources/testing_image.jpg" style="position: absolute; left: 50.00%; top: 0.00%; width: 50.00%; height: 100.00%; object-fit: cover;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 37.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
 					<h1 style="margin: 0; padding: 0;">Level four headlines</h1>
 				</div>
-				<div style="position: absolute; left: 9.58%; top: 15.56%; width: 37.50%; height: 7.78%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 9.58%; top: 15.56%; width: 37.50%; height: 7.78%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
 					<h2 style="margin: 0; padding: 0;">create boxes</h2>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 37.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 37.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<p> </p>
 				</div>
 				<div style="position: absolute; left: 6.25%; top: 91.85%; width: 50.00%; height: 19.26%; text-align: start; z-index: 4; margin: 0; padding: -1cqw 1cqw 0 1cqw; background-color: #e6f0ff0xbf; border: 1px #0xc80xc80xc80xbf solid; border-radius: 15px; overflow: hidden; color: #000000ff; ">
 					<p>Writing a lot of cool things in a box.
-Maths: $\mathbf{x} = \sum<em>{i=0}^N x</em>i$</p>
+Maths: $\mathbf{x} = \sum_{i=0}^N x_i$</p>
 				</div>
 				<div style="position: absolute; left: 25.00%; top: 57.78%; width: 50.00%; height: 13.33%; text-align: start; z-index: 4; margin: 0; padding: -1cqw 1cqw 0 1cqw; background-color: #e6f0ff0xbf; border: 1px #0xc80xc80xc80xbf solid; border-radius: 15px; overflow: hidden; color: #000000ff; ">
 					<p>We can fill a page with boxes.</p>
@@ -427,12 +476,12 @@ Maths: $\mathbf{x} = \sum<em>{i=0}^N x</em>i$</p>
 			</div>
 		</div>
 		<div id="page-17" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
 					<h1 style="margin: 0; padding: 0;">And a page can overflow</h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<ul>
 						<li>But</li>
 						<li>Then</li>
@@ -451,27 +500,27 @@ Maths: $\mathbf{x} = \sum<em>{i=0}^N x</em>i$</p>
 			</div>
 		</div>
 		<div id="page-18" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;" onmouseup="nextPage()">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<img src="pymd_html_resources/testing_image.jpg" style="position: absolute; left: 0.00%; top: 0.00%; width: 50.00%; height: 100.00%; object-fit: cover;"/>
-				<img src="pymd_html_resources/neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 50.00%; top: 0.00%; width: 50.00%; height: 100.00%; object-fit: cover;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #ff6464ff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<img src="test_doc_pymd_html_resources/testing_image.jpg" style="position: absolute; left: 0.00%; top: 0.00%; width: 50.00%; height: 100.00%; object-fit: cover;">
+				<img src="test_doc_pymd_html_resources/neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 50.00%; top: 0.00%; width: 50.00%; height: 100.00%; object-fit: cover;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #ff6464ff; ">
 					<h1 style="margin: 0; padding: 0;">Images side-by-side</h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #ff6464ff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #ff6464ff;  font-size: 2.12cqw; ">
 					<p> </p>
 				</div>
 			</div>
 		</div>
 		<div id="page-19" class="page_div" style="visibility: hidden; background-color: white; ">
-			<div class="subcontainer" style=" background-color: #ffffffff;">
-				<img src="pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;"/>
-				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.12cqw; ">
+				<img src="test_doc_pymd_html_resources/rise.png" style="position: absolute; left: 94.38%; top: 87.41%; width: 4.79%; height: 11.11%; z-index: 5;">
+				<div style="position: absolute; left: 6.25%; top: 8.15%; width: 87.50%; height: 10.37%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
 					<h1 style="margin: 0; padding: 0;"> </h1>
 				</div>
-				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; font-size: 2.4cqw;">
+				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<p>
-						<a href="#Latex and formatting">Thank you!</a>
+						<a href="#Latex%20and%20formatting">Thank you!</a>
 					</p>
 				</div>
 			</div>

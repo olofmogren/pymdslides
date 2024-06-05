@@ -300,7 +300,7 @@ MathJax = {
     self.logo = None
 
   def set_logo(self, logo, x, y, w, h, copy=True):
-    print('setting_logo', str(logo))
+    #print('setting_logo', str(logo))
     if copy:
       new_filename = self.resources_dir+os.path.basename(logo)
       shutil.copyfile(logo, new_filename)
@@ -321,9 +321,9 @@ MathJax = {
     return '{:.2f}%'.format(y_frac*100)
 
   def html_font_size(self, font_size):
-    print(font_size)
+    #print(font_size)
     result = '{:.2f}cqw'.format(font_size/16.0)
-    print(result)
+    #print(result)
     return result
 
   def unbreakable(self):
@@ -373,7 +373,7 @@ MathJax = {
       self.current_page_div.text = ' ' # no break space
     if self.logo is not None:
       logo_img = ET.Element('img')
-      print('setting src', self.logo)
+      #print('setting src', self.logo)
       logo_img.set('src', self.logo)
       style = 'position: absolute; left: {}; top: {}; width: {}; height: {}; z-index: 5;'.format(self.html_x(self.logo_x),self.html_y(self.logo_y),self.html_x(self.logo_w),self.html_y(self.logo_h))
       logo_img.set('style', style)
@@ -491,7 +491,7 @@ MathJax = {
     self.current_page_div.set('style', style)
 
   def rect(self, x, y, w, h, round_corners, corner_radius, *args, **kwargs):
-    print('rect','round corners' if round_corners else 'not round corners')
+    #print('rect','round corners' if round_corners else 'not round corners')
     rect = ET.Element('div')
     self.current_page_div.append(rect)
     self.x = x
@@ -519,7 +519,7 @@ MathJax = {
     else:
       text_color = self.text_color
     style = 'position: absolute; left: {}; top: {}; width: {}; height: {}; text-align: {}; overflow: hidden; text-wrap: nowrap; color: {}; '.format(self.html_x(x), self.html_y(y), self.html_x(w), self.html_y(h), align, text_color)
-    print('textbox div style', style)
+    #print('textbox div style', style)
     if h_level is not None:
       text_div.set('style', style)
       h_tag = ET.Element('h'+str(h_level))
@@ -552,8 +552,10 @@ MathJax = {
          if len(line) > 3 and all([c == '-' for c in line]):
             new_lines.append('')
          new_lines.append(line)
+
       lines = new_lines
-      formatted_lines = markdown('\n'.join(lines), extras=['cuddled-lists'])
+      formatted_lines = md_to_html('\n'.join(lines))
+      
       #formatted_lines = formatted_lines.replace('\n', '<br />\n')
       #if len(lines) > 0 and 'A small one' in lines[0]:
       #  print(lines)
@@ -569,6 +571,7 @@ MathJax = {
     self.x = x
     self.y = y+h
     return x,y+h
+
 
   def l4_box(self, lines, x, y, w, h, headlines, align='left', border_color=[0,0,0], border_opacity=0.75, background_color=[255,255,255], background_opacity=0.75, markdown_format=True, text_color=None):
     formatted_lines = lines
@@ -594,7 +597,7 @@ MathJax = {
             new_lines.append('')
          new_lines.append(line)
       lines = new_lines
-      formatted_lines = markdown('\n'.join(lines), extras=['cuddled-lists'])
+      formatted_lines = md_to_html('\n'.join(lines))
       #formatted_lines = formatted_lines.replace('\n', '<br />\n')
       #if len(lines) > 0 and 'A small one' in lines[0]:
       #  print(lines)
@@ -802,6 +805,44 @@ MathJax = {
     #tree.write(args[0], encoding="utf-8", xml_declaration=True)
     return True
 
+def md_to_html(md):
+  sane = md_extract_formulas(md)
+  html = markdown(sane[0], extras=['cuddled-lists', 'tables'])
+  finalOutput = md_reconstruct_math(html,sane[1])
+  return finalOutput
+
+def md_extract_formulas(md):
+  md_sane_lines = []
+  formulas = []
+  for line in md.split('\n'):
+    if '$' in line:
+      formula_starts_ends = []
+      formula_start = None
+      for p in range(len(line)):
+        if line[p] == '$' and (p == 0 or line[p-1] != '\\'):
+          if formula_start is None:
+            formula_start = p
+          else:
+            formula_starts_ends.append((formula_start,p+1))
+            formula_start = None
+      new_line = ''
+      pos = 0
+      number = 0
+      for (s,e) in formula_starts_ends:
+        new_line += line[pos:s]+'${}$'.format(number)
+        formulas.append((number, line[s:e]))
+        number += 1
+        pos = e
+      md_sane_lines.append(new_line)
+    else:
+      md_sane_lines.append(line)
+  return '\n'.join(md_sane_lines), formulas
+
+def md_reconstruct_math(html, formulas):
+  for (n,f) in formulas:
+    html = html.replace('${}$'.format(n), f)
+  return html
+
 def dec_to_hex_color(color, alpha=1.0):
   a = 'ff'
   if type(color) == str:
@@ -812,7 +853,7 @@ def dec_to_hex_color(color, alpha=1.0):
     c = hex(color).rjust(2, '0')+hex(color).rjust(2, '0')+hex(color).rjust(2, '0')
   if alpha < 1.0:
     a = hex(int(255*alpha))
-  print(color)
+  #print(color)
   return '#'+c+a
 
 
