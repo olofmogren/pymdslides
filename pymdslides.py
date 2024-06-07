@@ -967,6 +967,8 @@ if __name__ == "__main__":
   if len(sys.argv) > 2:
     output_format = sys.argv[2]
   output_file = '.'.join(md_file.split('.')[:-1])+'.'+output_format
+  if output_format == 'html':
+    output_file = os.path.join('.'.join(md_file.split('.')[:-1]),'index.'+output_format)
   md_file_stripped = md_file.split('/')[-1]
 
   raster_images = False
@@ -974,6 +976,8 @@ if __name__ == "__main__":
     raster_images = True
   if output_format == 'html':
     treat_as_raster_images = ['svg']
+  else:
+    treat_as_raster_images = []
     
   
   script_home = os.path.dirname(os.path.realpath(__file__))
@@ -1085,7 +1089,7 @@ if __name__ == "__main__":
   if output_format == 'pdf':
     backend = backend_pdf(md_file_stripped, formatting, script_home, output_file)
   elif output_format == 'html':
-    backend = backend_html(md_file_stripped, formatting, script_home, output_file)
+    backend = backend_html(md_file_stripped, formatting, script_home, output_file, copy_resources_to='same_dir')
   else:
     raise Exception('Dude! Unknown output format: '+output_format)
 

@@ -21,15 +21,22 @@ from urllib.parse import urlparse
 import requests
 
 class backend_html:
-  def __init__(self, input_file, formatting, script_home, output_file):
-    output_path = os.path.dirname(output_file)
-    if len(output_path) > 0:
-      output_path += '/'
-    self.resources_dir = os.path.join(output_path,os.path.splitext(os.path.basename(output_file))[0]+'_pymd_html_resources/')
-    try:
-      os.makedirs(self.resources_dir)
-    except FileExistsError:
-      pass
+  def __init__(self, input_file, formatting, script_home, output_file, copy_resources_to=None):
+    self.output_file = output_file
+    self.output_dir = os.path.dirname(output_file)
+    if len(self.output_dir) > 0:
+      self.output_dir += '/'
+    if copy_resources_to == 'sub_dir':
+      self.resources_dir = os.path.join(self.output_dir,os.path.splitext(os.path.basename(output_file))[0]+'_pymd_resources/')
+    elif copy_resources_to == 'same_dir':
+      self.resources_dir = self.output_dir
+    else:
+      self.resources_dir = None
+    if self.resources_dir is not None:
+      try:
+        os.makedirs(self.resources_dir)
+      except FileExistsError:
+        pass
     self.font_files = {}
     self.font_names = {}
     self.font_sizes = {}
@@ -46,8 +53,14 @@ class backend_html:
           f = TTFont(os.path.join(script_home,ttf_file))
           f.flavor='woff2'
           f.save(os.path.join(script_home,woff2_file))
-        shutil.copy(os.path.join(script_home,woff2_file), self.resources_dir)
-        self.font_files[font_cat] = self.resources_dir+os.path.basename(woff2_file)
+        if self.resources_dir is not None:
+          shutil.copy(os.path.join(script_home,woff2_file), self.resources_dir)
+          if self.resources_dir == self.output_dir:
+            self.font_files[font_cat] = os.path.basename(woff2_file)
+          else:
+            self.font_files[font_cat] = self.resources_dir+os.path.basename(woff2_file)
+        else:
+          self.font_files[font_cat] = woff2_file
         self.font_names[font_cat] = fontname
     for font_cat in ['title', 'subtitle', 'standard', 'footer']:
       if 'dimensions' in formatting and 'font_size_{}'.format(font_cat) in formatting['dimensions']:
@@ -65,8 +78,17 @@ class backend_html:
       os.makedirs(os.path.dirname(mathjax_local_file))
       with open(mathjax_local_file, 'wb') as f:
         f.write(response.content)
-    shutil.copy(mathjax_local_file, os.path.join(self.resources_dir, os.path.basename(mathjax_local_file)))
-    mathjax_local_file = os.path.join(self.resources_dir, os.path.basename(mathjax_local_file))
+    if self.resources_dir is not None:
+      if self.resources_dir == self.output_dir:
+        shutil.copy(mathjax_local_file, os.path.join(self.output_dir, os.path.basename(mathjax_local_file)))
+        mathjax_url = mathjax_local_file
+      else:
+        shutil.copy(mathjax_local_file, os.path.join(self.resources_dir, os.path.basename(mathjax_local_file)))
+        mathjax_url = os.path.join(self.resources_dir, os.path.basename(mathjax_local_file))
+    else:
+      mathjax_url = mathjax_local_file
+      
+      
 
     default_style = '''
 body {{
@@ -246,6 +268,15 @@ document.onkeydown = function(event) {
       // down arrow
       nextPage();
     break;
+    case 70:
+      // f - fulscreen
+      if (window.fullScreen) {
+        document.exitFullscreen();
+      }
+      else {
+        document.documentElement.requestFullscreen();
+      }
+    break;
   }
 };
 '''
@@ -283,7 +314,7 @@ MathJax = {
     mathjax2 = ET.Element('script')
     mathjax2.set('id', 'MathJax-script')
     mathjax2.set('async', 'true')
-    mathjax2.set('src', mathjax_local_file)
+    mathjax2.set('src', mathjax_url)
     mathjax2.text = ' '
     self.head.append(mathjax2)
 
@@ -312,9 +343,14 @@ MathJax = {
 
   def set_logo(self, logo, x, y, w, h, copy=True):
     #print('setting_logo', str(logo))
-    if copy:
-      new_filename = self.resources_dir+os.path.basename(logo)
-      shutil.copyfile(logo, new_filename)
+    new_filename = logo
+    if copy and self.resources_dir is not None:
+      if self.resources_dir == self.output_dir:
+        new_filename = os.path.basename(logo)
+        shutil.copyfile(logo, os.path.join(self.output_dir, new_filename))
+      else:
+        new_filename = os.path.join(self.resources_dir,os.path.basename(logo))
+        shutil.copyfile(logo, new_filename)
     self.logo = new_filename
     self.logo_x = x
     self.logo_y = y
@@ -760,7 +796,7 @@ MathJax = {
       media_tag.text = ' '
       media_tag.set('src', file)
     else:
-      if self.oversized_images == "DOWNSCALE":
+      if self.oversized_images == "DOWNSCALE" and self.resources_dir is not None:
         width = self.html_x(w)
         height = self.html_y(h)
         if extension != 'svg':
@@ -782,9 +818,13 @@ MathJax = {
               new_filename = self.resources_dir+os.path.basename(file)
               im.save(new_filename)
               already_copied = False
-      if copy and not already_copied:
-        new_filename = self.resources_dir+os.path.basename(file)
-        shutil.copyfile(file, new_filename)
+      if copy and not already_copied and self.resources_dir is not None:
+        if self.resources_dir == self.output_dir:
+          new_filename = os.path.basename(file)
+          shutil.copyfile(file, os.path.join(self.output_dir, new_filename))
+        else:
+          new_filename = self.resources_dir+os.path.basename(file)
+          shutil.copyfile(file, new_filename)
       media_tag.set('src', new_filename)
     style += 'position: absolute; left: {}; top: {}; width: {}; height: {};'.format(self.html_x(x), self.html_y(y), self.html_x(w), self.html_y(h))
     #print('image style',style)
@@ -844,6 +884,7 @@ MathJax = {
       s = ET.tostring(self.html, method='html', encoding="unicode")
       s = '<!DOCTYPE html>\n\n'+s
       f.write(s)
+    # TODO: index.html shutil.copyfile(filename, os.path.join(resources_dir, 'index.html'))
     #tree.docinfo.doctype = '<!DOCTYPE html>'
     #tree.write(args[0], encoding="utf-8", xml_declaration=True)
     return True
