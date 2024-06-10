@@ -130,10 +130,6 @@ body {{
   font-family: {}, Arial, Sans-Serif;
   background-color: black;
 }}
-div {{
-  background-color: #fff;
-  color: #000;
-}}
 div.page_div {{
   width: 100vw;
   height: 56.25vw; /* height:width ratio = 9/16 = .5625  */
@@ -147,28 +143,13 @@ div.page_div {{
   right:0; /* horizontal center */'
   container-type: size;
   overflow: hidden;
+  z-index: 2;
 }}
 div.subcontainer {{
   container-type: size;
   width: 100%;
   height: 100%;
   font-size: {};
-}}
-div.prev-page-click-div {{
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 25%;
-  height: 100%;
-  z-index: 7;
-}}
-div.next-page-click-div {{
-  position: absolute;
-  left: 25%;
-  top: 0;
-  width: 75%;
-  height: 100%;
-  z-index: 7;
 }}
 div.black_div {{
   background-color: #000;
@@ -190,8 +171,11 @@ div.loading_div {{
   width: 100vw;
   height: 100vh;
   visibility: visible;
-  z-index: 8;
+  z-index: 1;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }}
 '''.format(self.font_names['title'], self.font_files['title'], self.font_names['standard'], self.font_files['standard'], self.font_names['footer'], self.font_files['footer'], self.font_names['title'], self.font_sizes['title'], self.font_names['title'], self.font_sizes['subtitle'], self.font_names['title'], self.font_sizes['subtitle_l3'], self.font_names['title'], self.font_sizes['subtitle_l4'], self.font_names['standard'], self.font_sizes['standard'])
     #print('name',self.font_names['footer'])
@@ -238,11 +222,10 @@ function mouseuphandler(e) {
 function pageLoad(){
   var currentPageId = "page-1";
   newPageId = window.location.hash.substring(1);
-  if (newPageId != "") {
-    //if (currentPageId != newPageId){
-      goToPage(newPageId);
-    //}
+  if (newPageId == "") {
+    newPageId = currentPageId;
   }
+  goToPage(newPageId);
 }
 function prevPage(){
   splits = currentPageId.split("-");
@@ -373,14 +356,17 @@ MathJax = {
     self.body.append(black_div)
     loading_div = ET.Element('div')
     loading_div.set('class', 'loading_div')
+    loading_subdiv = ET.Element('div')
+    #loading_subdiv.set('style', 'margin-top: auto; margin-bottom: auto; top: 0; bottom: 0; position: absolute;')
+    loading_div.append(loading_subdiv)
     loading_span1 = ET.Element('p')
     loading_span1.text = 'Loading'
     loading_span2 = ET.Element('p')
     loading_span2.text = 'PYMD slides requires a javascript-enabled browser.'
     #br = ET.element('br')
-    loading_div.append(loading_span1)
+    loading_subdiv.append(loading_span1)
     #loading_div.append(br)
-    loading_div.append(loading_span2)
+    loading_subdiv.append(loading_span2)
     self.body.append(loading_div)
 
     self.page_width = formatting['dimensions']['page_width']
