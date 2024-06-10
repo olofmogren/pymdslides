@@ -374,7 +374,7 @@ document.onkeydown = function(event) {
     mathjax0.text = '''
 MathJax = {
   tex: {
-    inlineMath: [['$', '$'], ['\\(', '\\)']]
+    inlineMath: [['$', '$']]
   },
   svg: {
     fontCache: 'global'
@@ -998,7 +998,7 @@ MathJax = {
 
 def md_to_html(md):
   md_, formulas_ = md_extract_formulas(md)
-  print('md_to_html:',md_)
+  #print('md_to_html:',md_)
   html = markdown(md_, extras=['cuddled-lists', 'tables'])
   finalOutput = md_reconstruct_math(html, formulas_)
   return finalOutput
