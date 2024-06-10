@@ -91,20 +91,22 @@ class backend_html:
       
 
     screen_css = '''
+@font-face {{
+  font-family: {};
+  src: url('{}') format('woff2');
+}}
+@font-face {{
+  font-family: {};
+  src: url('{}') format('woff2');
+}}
+@font-face {{
+  font-family: {};
+  src: url('{}') format('woff2');
+}}
 body {{
   overflow: hidden;
-}}
-@font-face {{
-  font-family: {};
-  src: url('{}') format('woff2');
-}}
-@font-face {{
-  font-family: {};
-  src: url('{}') format('woff2');
-}}
-@font-face {{
-  font-family: {};
-  src: url('{}') format('woff2');
+  background-color: black;
+  font-family: {}, Arial, Sans-Serif;
 }}
 h1 {{
   font-family: {}, Arial, Sans-Serif;
@@ -125,10 +127,6 @@ h4 {{
   font-family: {}, Arial, Sans-Serif;
   /*font-size: 2cqw;*/
   font-size: {};
-}}
-body {{
-  font-family: {}, Arial, Sans-Serif;
-  background-color: black;
 }}
 .page_visible {{
   visibility: visible;
@@ -173,8 +171,8 @@ div.black_div {{
   z-index: 8;
 }}
 div.loading_div {{
-  background-color: #fff;
-  color: #000;
+  background-color: black;
+  color: white;
   position: absolute;
   top:0;
   left: 0;
@@ -187,7 +185,7 @@ div.loading_div {{
   align-items: center;
   justify-content: center;
 }}
-'''.format(self.font_names['title'], self.font_files['title'], self.font_names['standard'], self.font_files['standard'], self.font_names['footer'], self.font_files['footer'], self.font_names['title'], self.font_sizes['title'], self.font_names['title'], self.font_sizes['subtitle'], self.font_names['title'], self.font_sizes['subtitle_l3'], self.font_names['title'], self.font_sizes['subtitle_l4'], self.font_names['standard'], self.font_sizes['standard'])
+'''.format(self.font_names['title'], self.font_files['title'], self.font_names['standard'], self.font_files['standard'], self.font_names['footer'], self.font_files['footer'], self.font_names['standard'], self.font_names['title'], self.font_sizes['title'], self.font_names['title'], self.font_sizes['subtitle'], self.font_names['title'], self.font_sizes['subtitle_l3'], self.font_names['title'], self.font_sizes['subtitle_l4'], self.font_sizes['standard'])
     #print('name',self.font_names['footer'])
     #print('size',self.font_sizes['footer'])
     screen_css += '''div.footer {{
