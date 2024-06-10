@@ -90,7 +90,7 @@ class backend_html:
       
       
 
-    default_style = '''
+    screen_css = '''
 body {{
   overflow: hidden;
 }}
@@ -130,7 +130,17 @@ body {{
   font-family: {}, Arial, Sans-Serif;
   background-color: black;
 }}
+.page_visible {{
+  visibility: visible;
+}}
+.page_hidden {{
+  visibility: hidden;
+}}
 div.page_div {{
+  background-color: #fff;
+}}
+div.page_div {{
+  background-color: #fff;
   width: 100vw;
   height: 56.25vw; /* height:width ratio = 9/16 = .5625  */
   max-height: 100vh;
@@ -180,7 +190,7 @@ div.loading_div {{
 '''.format(self.font_names['title'], self.font_files['title'], self.font_names['standard'], self.font_files['standard'], self.font_names['footer'], self.font_files['footer'], self.font_names['title'], self.font_sizes['title'], self.font_names['title'], self.font_sizes['subtitle'], self.font_names['title'], self.font_sizes['subtitle_l3'], self.font_names['title'], self.font_sizes['subtitle_l4'], self.font_names['standard'], self.font_sizes['standard'])
     #print('name',self.font_names['footer'])
     #print('size',self.font_sizes['footer'])
-    default_style += '''div.footer {{
+    screen_css += '''div.footer {{
   font-family: {}, Arial, Sans-Serif;
   /*font-size: 1cqw;*/
   font-size: {};
@@ -191,6 +201,24 @@ border: 1px #ccc solid;
 p {{
 border: 1px #ccc solid;
 }}*/
+@page
+{{
+    size: A4 landscape;
+    margin: 0;
+}}
+@media print {{
+  div.page_div {{
+    position: relative;
+    visibility: visible;
+    page-break-after: always;
+  }}
+.page_visible {{
+  visibility: visible;
+}}
+.page_hidden {{
+  visibility: visible;
+}}
+}}
 '''.format(self.font_names['footer'], self.font_sizes['footer'])
 
 
@@ -228,35 +256,49 @@ function pageLoad(){
   goToPage(newPageId);
 }
 function prevPage(){
+  //alert('prevPage')
   splits = currentPageId.split("-");
   currentPageNumber = parseInt(splits[1]);
   prevPageNumber = currentPageNumber-1;
   pageId = "page-"+prevPageNumber;
   element = document.getElementById(pageId);
   if (element) {
-    document.getElementById(currentPageId).style.visibility="hidden";
-    document.getElementById(pageId).style.visibility="visible";
+    document.getElementById(currentPageId).classList.remove('page_visible');
+    document.getElementById(currentPageId).classList.add('page_hidden');
+    document.getElementById(pageId).classList.remove('page_hidden');
+    document.getElementById(pageId).classList.add('page_visible');
+    //document.getElementById(currentPageId).style.visibility="hidden";
+    //document.getElementById(pageId).style.visibility="visible";
     currentPageId = pageId;
     window.location.hash = pageId;
   }
 }
 function nextPage(){
+  //alert('nextPage')
   splits = currentPageId.split("-");
   currentPageNumber = parseInt(splits[1]);
   nextPageNumber = currentPageNumber+1;
   pageId = "page-"+nextPageNumber;
   element = document.getElementById(pageId);
   if (element) {
-    document.getElementById(currentPageId).style.visibility="hidden";
-    document.getElementById(pageId).style.visibility="visible";
+    document.getElementById(currentPageId).classList.remove('page_visible');
+    document.getElementById(currentPageId).classList.add('page_hidden');
+    document.getElementById(pageId).classList.remove('page_hidden');
+    document.getElementById(pageId).classList.add('page_visible');
+    //document.getElementById(currentPageId).style.visibility="hidden";
+    //document.getElementById(pageId).style.visibility="visible";
     currentPageId = pageId;
     window.location.hash = pageId;
   }
 }
 function goToPage(pageId){
     //alert(pageId);
-    document.getElementById(currentPageId).style.visibility="hidden";
-    document.getElementById(pageId).style.visibility="visible";
+    document.getElementById(currentPageId).classList.remove('page_visible');
+    document.getElementById(currentPageId).classList.add('page_hidden');
+    document.getElementById(pageId).classList.remove('page_hidden');
+    document.getElementById(pageId).classList.add('page_visible');
+    //document.getElementById(currentPageId).style.visibility="hidden";
+    //document.getElementById(pageId).style.visibility="visible";
     currentPageId = pageId;
     window.location.hash = pageId;
 }
@@ -311,7 +353,8 @@ document.onkeydown = function(event) {
     self.head = ET.Element('head')
     self.html.append(self.head)
     self.doc_style = ET.Element('style')
-    self.doc_style.text = default_style
+    #self.doc_style.set('media', 'screen')
+    self.doc_style.text = screen_css
     self.head.append(self.doc_style)
     self.title = ET.Element('title')
     self.title.text = 'PYMD HTML SLIDES'
@@ -357,10 +400,9 @@ MathJax = {
     loading_div = ET.Element('div')
     loading_div.set('class', 'loading_div')
     loading_subdiv = ET.Element('div')
-    #loading_subdiv.set('style', 'margin-top: auto; margin-bottom: auto; top: 0; bottom: 0; position: absolute;')
     loading_div.append(loading_subdiv)
     loading_span1 = ET.Element('p')
-    loading_span1.text = 'Loading'
+    loading_span1.text = 'Loading.'
     loading_span2 = ET.Element('p')
     loading_span2.text = 'PYMD slides requires a javascript-enabled browser.'
     #br = ET.element('br')
@@ -447,14 +489,14 @@ MathJax = {
     self.current_page_div = ET.Element('div')
     self.body.append(self.current_page_div)
     self.current_page_div.set('id', 'page-{}'.format(self.pages_count))
-    html_class = 'page_div'
+    html_class = 'page_div page_hidden'
     style = ''
     self.current_page_div.set('class', html_class)
     #if self.pages_count == 1:
     #    style += 'visibility: visible; '
     #else:
     #    style += 'visibility: hidden; '
-    style += 'visibility: hidden; ' # all pages hidden at first
+    #style += 'visibility: hidden; ' # all pages hidden at first
     style += 'background-color: white; '
     self.current_page_div.set('style', style)
     subcontainer = ET.Element('div')
