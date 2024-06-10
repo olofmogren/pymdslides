@@ -130,6 +130,10 @@ body {{
   font-family: {}, Arial, Sans-Serif;
   background-color: black;
 }}
+div {{
+  background-color: #fff;
+  color: #000;
+}}
 div.page_div {{
   width: 100vw;
   height: 56.25vw; /* height:width ratio = 9/16 = .5625  */
@@ -175,7 +179,19 @@ div.black_div {{
   width: 100vw;
   height: 100vh;
   visibility: hidden;
-  z-index: 8;'
+  z-index: 8;
+}}
+div.loading_div {{
+  background-color: #fff;
+  color: #000;
+  position: absolute;
+  top:0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  visibility: visible;
+  z-index: 8;
+  text-align: center;
 }}
 '''.format(self.font_names['title'], self.font_files['title'], self.font_names['standard'], self.font_files['standard'], self.font_names['footer'], self.font_files['footer'], self.font_names['title'], self.font_sizes['title'], self.font_names['title'], self.font_sizes['subtitle'], self.font_names['title'], self.font_sizes['subtitle_l3'], self.font_names['title'], self.font_sizes['subtitle_l4'], self.font_names['standard'], self.font_sizes['standard'])
     #print('name',self.font_names['footer'])
@@ -356,7 +372,7 @@ MathJax = {
     #black_div.set('class', 'page_div')
     self.body.append(black_div)
     loading_div = ET.Element('div')
-    style = 'margin: auto;'
+    loading_div.set('class', 'loading_div')
     loading_span1 = ET.Element('p')
     loading_span1.text = 'Loading'
     loading_span2 = ET.Element('p')
