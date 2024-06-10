@@ -454,16 +454,16 @@ MathJax = {
   def html_x(self, x):
     x_frac = x/self.page_width
     #return str(round(x_frac*100))+'%'
-    return '{:.2f}%'.format(x_frac*100)
+    return '{:.3f}%'.format(x_frac*100)
 
   def html_y(self, y):
     y_frac = y/self.page_height
     #return str(round(y_frac*100))+'%'
-    return '{:.2f}%'.format(y_frac*100)
+    return '{:.3f}%'.format(y_frac*100)
 
   def html_font_size(self, font_size):
     #print(font_size)
-    result = '{:.2f}cqw'.format(font_size/16.0)
+    result = '{:.3f}cqw'.format(font_size/16.0)
     #print(result)
     return result
 
