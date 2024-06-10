@@ -292,15 +292,23 @@ function nextPage(){
   }
 }
 function goToPage(pageId){
-    //alert(pageId);
-    document.getElementById(currentPageId).classList.remove('page_visible');
-    document.getElementById(currentPageId).classList.add('page_hidden');
-    document.getElementById(pageId).classList.remove('page_hidden');
-    document.getElementById(pageId).classList.add('page_visible');
-    //document.getElementById(currentPageId).style.visibility="hidden";
-    //document.getElementById(pageId).style.visibility="visible";
-    currentPageId = pageId;
-    window.location.hash = pageId;
+  //alert(pageId);
+  document.getElementById(currentPageId).classList.remove('page_visible');
+  document.getElementById(currentPageId).classList.add('page_hidden');
+  document.getElementById(pageId).classList.remove('page_hidden');
+  document.getElementById(pageId).classList.add('page_visible');
+  //document.getElementById(currentPageId).style.visibility="hidden";
+  //document.getElementById(pageId).style.visibility="visible";
+  currentPageId = pageId;
+  window.location.hash = pageId;
+}
+function localPageLink(pageId, event){
+  //alert(pageId);
+  event.stopPropagation(); // do not fire event on parent elements.
+  goToPage(pageId);
+}
+function stopProp(event){
+  event.stopPropagation();
 }
 document.onkeydown = function(event) {
   switch (event.keyCode) {
@@ -703,7 +711,7 @@ MathJax = {
       text_tag.text = '\n'.join(formatted_lines)
     if len(text_div) == 0 and text_div.text == '':
       text_div.text = ' ' # no break sspace
-    self.fix_local_links([text_div], headlines)
+    self.fix_all_links([text_div], headlines)
     self.x = x
     self.y = y+h
     return x,y+h
@@ -769,6 +777,10 @@ MathJax = {
           child.set('style', style)
       self.align_tables(child, align)
     
+  def fix_all_links(self, tag, headlines):
+    self.fix_local_links(tag, headlines)
+    self.fix_external_links(tag)
+
   def fix_local_links(self, tag, headlines):
     for child in tag:
       if child.tag == 'a':
@@ -776,9 +788,17 @@ MathJax = {
         if len(href) > 0 and href[0] == '#':
           page_no = int(headlines.index(href[1:].strip()))+1
           child.set('href', '#')
-          child.set('onclick', 'goToPage("page-{}"); return false;'.format(page_no))
-
+          child.set('onclick', 'localPageLink("page-{}", event); return false;'.format(page_no))
+          child.set('onmouseup', 'stopProp(event);')
       self.fix_local_links(child, headlines)
+    
+  def fix_external_links(self, tag):
+    for child in tag:
+      if child.tag == 'a':
+        href = child.get('href')
+        if len(href) > 0 and not href[0] == '#':
+          child.set('onmouseup', 'stopProp(event);')
+      self.fix_external_links(child)
     
   def text(self, txt, x, y, h_level=None, em=10, footer=False, text_color=None):
     text_div = ET.Element('div')

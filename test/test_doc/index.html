@@ -200,15 +200,23 @@ function nextPage(){
   }
 }
 function goToPage(pageId){
-    //alert(pageId);
-    document.getElementById(currentPageId).classList.remove('page_visible');
-    document.getElementById(currentPageId).classList.add('page_hidden');
-    document.getElementById(pageId).classList.remove('page_hidden');
-    document.getElementById(pageId).classList.add('page_visible');
-    //document.getElementById(currentPageId).style.visibility="hidden";
-    //document.getElementById(pageId).style.visibility="visible";
-    currentPageId = pageId;
-    window.location.hash = pageId;
+  //alert(pageId);
+  document.getElementById(currentPageId).classList.remove('page_visible');
+  document.getElementById(currentPageId).classList.add('page_hidden');
+  document.getElementById(pageId).classList.remove('page_hidden');
+  document.getElementById(pageId).classList.add('page_visible');
+  //document.getElementById(currentPageId).style.visibility="hidden";
+  //document.getElementById(pageId).style.visibility="visible";
+  currentPageId = pageId;
+  window.location.hash = pageId;
+}
+function localPageLink(pageId, event){
+  //alert(pageId);
+  event.stopPropagation(); // do not fire event on parent elements.
+  goToPage(pageId);
+}
+function stopProp(event){
+  event.stopPropagation();
 }
 document.onkeydown = function(event) {
   switch (event.keyCode) {
@@ -267,8 +275,8 @@ MathJax = {
 };
 </script>
 		<script id="MathJax-script" async="true" src="/home/mogren/sync/code/mogren/pymdslides/mathjax/tex-mml-svg.js"> </script>
-		<meta generator='pymdslides, git commit: "0348c923231b9bf387de235a55cd46c99a52306b" https://github.com/olofmogren/pymdslides/'>
-		<meta generation-date="2024-06-10 11:18:04.579278+02:00">
+		<meta generator='pymdslides, git commit: "7fd0f6d137b9537fa445b404c0a635c64efa45db" https://github.com/olofmogren/pymdslides/'>
+		<meta generation-date="2024-06-10 11:41:14.978771+02:00">
 	</head>
 	<body onload="pageLoad();">
 		<div class="black_div" id="black_div"> </div>
@@ -434,7 +442,7 @@ MathJax = {
 					</p>
 					<p>$a = \frac{b}{c}$</p>
 					<p>And <strong>a bold thing</strong>, too.</p>
-					<p>Testing <a href="http://mogren.one/">linking (mogren.one)</a>, too.</p>
+					<p>Testing <a href="http://mogren.one/" onmouseup="stopProp(event);">linking (mogren.one)</a>, too.</p>
 					<p>A text, following with a $a = \frac{b}{c}$</p>
 				</div>
 			</div>
@@ -449,7 +457,7 @@ MathJax = {
 					<p>$a = \left(\frac{\frac{\sum_i^N X_i^2}{y}}{c}\right)$</p>
 					<ul>
 						<li>
-							<a href="#" onclick='goToPage("page-1"); return false;'>Link to page 1</a>
+							<a href="#" onclick='localPageLink("page-1", event); return false;' onmouseup="stopProp(event);">Link to page 1</a>
 						</li>
 					</ul>
 				</div>
@@ -606,7 +614,7 @@ Maths: $\mathbf{x} = \sum_{i=0}^N x_i$</p>
 				</div>
 				<div style="position: absolute; left: 6.25%; top: 24.44%; width: 87.50%; height: 67.41%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.12cqw; ">
 					<p>
-						<a href="#" onclick='goToPage("page-10"); return false;'>Thank you!</a>
+						<a href="#" onclick='localPageLink("page-10", event); return false;' onmouseup="stopProp(event);">Thank you!</a>
 					</p>
 				</div>
 			</div>
