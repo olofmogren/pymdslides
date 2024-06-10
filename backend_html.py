@@ -166,6 +166,17 @@ div.next-page-click-div {{
   height: 100%;
   z-index: 7;
 }}
+div.black_div {{
+  background-color: #000;
+  color: #fff;
+  position: absolute;
+  top:0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  visibility: hidden;
+  z-index: 8;'
+}}
 '''.format(self.font_names['title'], self.font_files['title'], self.font_names['standard'], self.font_files['standard'], self.font_names['footer'], self.font_files['footer'], self.font_names['title'], self.font_sizes['title'], self.font_names['title'], self.font_sizes['subtitle'], self.font_names['title'], self.font_sizes['subtitle_l3'], self.font_names['title'], self.font_sizes['subtitle_l4'], self.font_names['standard'], self.font_sizes['standard'])
     #print('name',self.font_names['footer'])
     #print('size',self.font_sizes['footer'])
@@ -185,6 +196,18 @@ border: 1px #ccc solid;
 
     default_javascript = '''
 var currentPageId = "page-1";
+var blackPageVar = false;
+function blackPage() {
+  if (blackPageVar) {
+    document.getElementById('black_div').style.visibility = 'hidden';
+    //alert('un-black page');
+  }
+  else {
+    document.getElementById('black_div').style.visibility = 'visible';
+    //alert('black page');
+  }
+  blackPageVar = !blackPageVar;
+}
 function mouseuphandler(e) {
   e.pageX;
   width = document.getElementById(currentPageId).offsetWidth;
@@ -200,9 +223,9 @@ function pageLoad(){
   var currentPageId = "page-1";
   newPageId = window.location.hash.substring(1);
   if (newPageId != "") {
-    if (currentPageId != newPageId){
+    //if (currentPageId != newPageId){
       goToPage(newPageId);
-    }
+    //}
   }
 }
 function prevPage(){
@@ -268,6 +291,10 @@ document.onkeydown = function(event) {
       // down arrow
       nextPage();
     break;
+    case 66:
+      // b - blank/black
+      blackPage();
+    break;
     case 70:
       // f - fulscreen
       if (window.fullScreen) {
@@ -322,6 +349,23 @@ MathJax = {
     self.body.set('onload', 'pageLoad();')
     self.html.append(self.body)
     self.current_page_div = None
+
+    black_div = ET.Element('div')
+    black_div.set('class', 'black_div')
+    black_div.set('id', 'black_div')
+    #black_div.set('class', 'page_div')
+    self.body.append(black_div)
+    loading_div = ET.Element('div')
+    style = 'margin: auto;'
+    loading_span1 = ET.Element('p')
+    loading_span1.text = 'Loading'
+    loading_span2 = ET.Element('p')
+    loading_span2.text = 'PYMD slides requires a javascript-enabled browser.'
+    #br = ET.element('br')
+    loading_div.append(loading_span1)
+    #loading_div.append(br)
+    loading_div.append(loading_span2)
+    self.body.append(loading_div)
 
     self.page_width = formatting['dimensions']['page_width']
     self.page_height = formatting['dimensions']['page_height']
@@ -404,10 +448,11 @@ MathJax = {
     html_class = 'page_div'
     style = ''
     self.current_page_div.set('class', html_class)
-    if self.pages_count == 1:
-        style += 'visibility: visible; '
-    else:
-        style += 'visibility: hidden; '
+    #if self.pages_count == 1:
+    #    style += 'visibility: visible; '
+    #else:
+    #    style += 'visibility: hidden; '
+    style += 'visibility: hidden; ' # all pages hidden at first
     style += 'background-color: white; '
     self.current_page_div.set('style', style)
     subcontainer = ET.Element('div')
