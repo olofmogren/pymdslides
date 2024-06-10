@@ -362,8 +362,6 @@ document.onkeydown = function(event) {
     self.script = ET.Element('script')
     self.script.text = default_javascript
     self.head.append(self.script)
-# <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-# <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     mathjax0 = ET.Element('script')
     mathjax0.text = '''
 MathJax = {
