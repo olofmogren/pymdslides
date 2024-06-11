@@ -141,7 +141,6 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
   if 'text_color' in formatting:
     print('{}:{}: text_color {}'.format(md_file_stripped, line_number, formatting['text_color']))
     text_color = formatting['text_color']
-  #if 'background_color' in formatting and not same_color(formatting['background_color'], [255,255,255]):
   if 'background_color' not in formatting:
     formatting['background_color'] = [255,255,255]
 
@@ -170,7 +169,7 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
     y = formatting['dimensions']['page_height']//2-int(1.5*formatting['dimensions']['em_title'])
   if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
     print('Setting font title with size',formatting['dimensions']['font_size_title'])
-    backend.set_font('font_title', '', formatting['dimensions']['font_size_title'])
+    backend.set_font('title', '', formatting['dimensions']['font_size_title'])
   else:
     print('Setting font size title',formatting['dimensions']['font_size_title'])
     backend.set_font_size(formatting['dimensions']['font_size_title'])
@@ -196,7 +195,7 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
     y_subtitle = y-formatting['dimensions']['em_title']//5
     if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
       print('set_font, subtitle, 198')
-      backend.set_font('font_title', '', formatting['dimensions']['font_size_subtitle'])
+      backend.set_font('title', '', formatting['dimensions']['font_size_subtitle'])
     else:
       backend.set_font_size(formatting['dimensions']['font_size_subtitle'])
 
@@ -240,7 +239,7 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
   if 'footer' in formatting:
     backend.set_text_color(formatting.get('footer_color', default_footer_color))
     if 'fonts' in formatting and 'font_file_footer' in formatting['fonts']:
-      backend.set_font('font_footer', '', formatting['dimensions']['font_size_footer'])
+      backend.set_font('footer', '', formatting['dimensions']['font_size_footer'])
     else:
       backend.set_font_size(formatting['dimensions']['font_size_footer'])
     #x = formatting['dimensions']['page_width']//2-backend.get_string_width(formatting['footer'])//2
@@ -427,32 +426,6 @@ def get_column_offsets(offsets, num_columns, column):
   column_offsets['x1'] = column_offsets['x0']+column_width_excl_margin
   column_offsets['w'] = column_width_excl_margin
   return column_offsets
-
-def render_internal_link(link, x, y, headlines):
-  #print(link)
-  x_origin = x
-  link = link.replace('&nbsp;', ' ')
-  splitted = link.split('](#')
-  link_text = splitted[0][1:]
-  target = splitted[1][:-1]
-  print('link', '"'+link_text+'","'+target+'"')
-  if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
-    backend.set_font('standard', 'u', formatting['dimensions']['font_size_standard'])
-  else:
-    backend.set_font('helvetica', 'u', formatting['dimensions']['font_size_standard'])
-    #backend.set_font_size(formatting['dimensions']['font_size_standard'])
-  backend.set_xy(x,y)
-  page_number = headlines.index(target)+1
-  #print(headlines)
-  print('page_number', page_number, 'target', target)
-  link_ref = backend.add_link(page=page_number)
-  backend.cell(txt=link_text, link=link_ref, markdown=True)
-  x = backend.get_x()
-  # workaround. x has a distance, similar to a space after the link.
-  space_width = backend.get_string_width(' ')
-  x = round(x-0.7*space_width)
-  return x, y
-
 
 def get_offsets_for_text(layout, images=True):
   # returns offsets for text area.
@@ -661,24 +634,6 @@ def get_image_area(layout, has_text):
     image_area =  {'x0': 0, 'y0': 0, 'x1': formatting['dimensions']['page_width'], 'y1': formatting['dimensions']['page_height']}
   #print('image_area',image_area)
   return image_area
-
-def same_color(first, second):
-  if len(first) != len(second):
-    return False
-  for f,s in zip(first,second):
-    if f != s:
-      return False
-  return True
-
-def find_all(a_str, sub):
-    result = []
-    start = 0
-    while True:
-        start = a_str.find(sub, start)
-        if start == -1: break
-        result.append(start)
-        start += len(sub) # use start += 1 to find overlapping matches
-    return result
 
 def put_vector_images_on_pdf_with_crop(output_file, vector_images, crop_images):
   reader = PdfReader(output_file)

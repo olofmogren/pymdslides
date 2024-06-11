@@ -37,42 +37,42 @@ class backend_pdf:
         fname = formatting['fonts']['font_file_standard']
         if os.path.exists(os.path.join(script_home, fname)):
           fname = os.path.join(script_home, fname)
-        print('self.pdf.add_font(','font_standard', '', 'fname)')
-        self.pdf.add_font('font_standard', '', fname)
-        self.pdf.set_font('font_standard', '', formatting['dimensions']['font_size_standard'])
+        print('self.pdf.add_font(','font_standard', '', fname, ')')
+        self.pdf.add_font('standard', '', fname)
+        self.pdf.set_font('standard', '', formatting['dimensions']['font_size_standard'])
       if formatting['fonts']['font_file_standard_italic']:
         fname = formatting['fonts']['font_file_standard_italic']
         if os.path.exists(os.path.join(script_home, fname)):
           fname = os.path.join(script_home, fname)
-        print('self.pdf.add_font(font_standard, i)')
-        self.pdf.add_font('font_standard', 'i', fname)
+        print('self.pdf.add_font(standard, i',fname,')')
+        self.pdf.add_font('standard', 'i', fname)
       if formatting['fonts']['font_file_standard_bold']:
         fname = formatting['fonts']['font_file_standard_bold']
         if os.path.exists(os.path.join(script_home, fname)):
           fname = os.path.join(script_home, fname)
-        print('self.pdf.add_font(font_standard, b)')
-        self.pdf.add_font('font_standard', 'b', fname)
+        print('self.pdf.add_font(standard, b',fname,')')
+        self.pdf.add_font('standard', 'b', fname)
       if formatting['fonts']['font_file_standard_bolditalic']:
         fname = formatting['fonts']['font_file_standard_bolditalic']
         if os.path.exists(os.path.join(script_home, fname)):
           fname = os.path.join(script_home, fname)
-        print('self.pdf.add_font(font_standard, bi)')
-        self.pdf.add_font('font_standard', 'bi', fname)
+        print('self.pdf.add_font(standard, bi',fname,')')
+        self.pdf.add_font('standard', 'bi', fname)
       if formatting['fonts']['font_file_footer']:
         fname = formatting['fonts']['font_file_footer']
         if os.path.exists(os.path.join(script_home, fname)):
           fname = os.path.join(script_home, fname)
-        print('self.pdf.add_font(font_footer)')
-        self.pdf.add_font('font_footer', '', fname)
+        print('self.pdf.add_font(footer',fname,')')
+        self.pdf.add_font('footer', '', fname)
       if formatting['fonts']['font_file_title']:
         fname = formatting['fonts']['font_file_title']
         if os.path.exists(os.path.join(script_home, fname)):
           fname = os.path.join(script_home, fname)
-        print('self.pdf.add_font(font_title)')
-        self.pdf.add_font('font_title', '', fname)
-        self.pdf.add_font('font_title', 'b', fname)
-        self.pdf.add_font('font_title', 'i', fname)
-        self.pdf.add_font('font_title', 'bi', fname)
+        print('self.pdf.add_font(title',fname,')')
+        self.pdf.add_font('title', '', fname)
+        self.pdf.add_font('title', 'b', fname)
+        self.pdf.add_font('title', 'i', fname)
+        self.pdf.add_font('title', 'bi', fname)
     self.pdf.set_text_color(0,0,0)
     #self.pdf.set_image_filter("FlatDecode")
     self.pdf.oversized_images = "DOWNSCALE"
@@ -187,8 +187,8 @@ class backend_pdf:
 
   def l4_box(self, lines, x, y, w, h, headlines, align='left', border_color=[0,0,0], border_opacity=0.75, background_color=[255,255,255], background_opacity=0.75, markdown_format=True, text_color=[0,0,0]):
     offsets = {'x0': x, 'y0': y, 'x1': x+w, 'y1': y+h, 'w': w, 'h': h}
-    backend.set_draw_color(border_color)
-    backend.set_fill_color(background_color)
+    self.pdf.set_draw_color(border_color)
+    self.pdf.set_fill_color(background_color)
 
     with self.pdf.local_context(fill_opacity=background_opacity, stroke_opacity=border_opacity):
       self.pdf.rect(x, y, w, h, round_corners=True, style="DF", corner_radius=10)
@@ -284,7 +284,7 @@ class backend_pdf:
           #print('tag', tag)
           link = line[tag[0]:tag[1]+1]
           #print('link',link)
-          x, new_y = render_internal_link(link, x, y, headlines)
+          x, new_y = self.render_internal_link(link, x, y, headlines)
           heights.append(new_y-origin_y)
         pos = tag[1]+1
       if pos < len(line):
@@ -567,6 +567,32 @@ class backend_pdf:
   def output(self, *args, **kwargs):
     return self.pdf.output(*args, **kwargs)
 
+  def render_internal_link(self, link, x, y, headlines):
+    #print(link)
+    x_origin = x
+    link = link.replace('&nbsp;', ' ')
+    splitted = link.split('](#')
+    link_text = splitted[0][1:]
+    target = splitted[1][:-1]
+    print('link', '"'+link_text+'","'+target+'"')
+    self.pdf.set_font('', 'u')
+    #if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
+    #  self.pdf.set_font('standard', 'u', formatting['dimensions']['font_size_standard'])
+    #else:
+    #  self.pdf.set_font('helvetica', 'u', formatting['dimensions']['font_size_standard'])
+    #  #backend.set_font_size(formatting['dimensions']['font_size_standard'])
+    self.pdf.set_xy(x,y)
+    page_number = headlines.index(target)+1
+    #print(headlines)
+    print('page_number', page_number, 'target', target)
+    link_ref = self.pdf.add_link(page=page_number)
+    self.pdf.cell(txt=link_text, link=link_ref, markdown=True)
+    x = self.pdf.get_x()
+    # workaround. x has a distance, similar to a space after the link.
+    space_width = self.pdf.get_string_width(' ')
+    x = round(x-0.7*space_width)
+    return x, y
+
 def get_cropped_location(image, location):
   # get location around the actual location. will then be cropped to location.
   new_location = {}
@@ -617,4 +643,16 @@ def get_uncropped_location(image, location):
       x_offset = (location['w']-new_width)//2
       new_location = {'x0':  location['x0']+x_offset, 'y0': location['y0'], 'w': new_width, 'h': location['h']}
     return new_location
+
+
+def find_all(a_str, sub):
+    result = []
+    start = 0
+    while True:
+        start = a_str.find(sub, start)
+        if start == -1: break
+        result.append(start)
+        start += len(sub) # use start += 1 to find overlapping matches
+    return result
+
 

@@ -424,7 +424,6 @@ MathJax = {
     self.downscale_resolution_width = 3840
     self.downscale_resolution_height = 2160
 
-
     self.input_file_name = input_file
     self.x = formatting['dimensions']['page_margins']['x0']
     self.y = formatting['dimensions']['page_margins']['y0']
@@ -432,6 +431,11 @@ MathJax = {
     self.formatting = formatting
     self.script_home = script_home
     self.logo = None
+
+    self.current_title_tag = None
+    self.current_subtitle_tag = None
+    self.current_page_div = None
+    self.current_footer_div = None
 
   def set_logo(self, logo, x, y, w, h, copy=True):
     #print('setting_logo', str(logo))
@@ -569,12 +573,14 @@ MathJax = {
       self.override_font[category] = font_name
       selector = 'font-family'
       val = font_name
-      self.update_element_css(element, selector, val)
+      if element is not None:
+        self.update_element_css(element, selector, val)
     if font_size is not None:
       self.override_font_size[category] = font_size
       selector = 'font-size'
       val = font_size
-      self.update_element_css(element, selector, val)
+      if element is not None:
+        self.update_element_css(element, selector, val)
     return True
 
   def update_element_css(self, element, selector, val):
@@ -721,27 +727,29 @@ MathJax = {
       align = 'start'
     elif align == 'right':
       align = 'end'
+    print('l4_box', x, y, w, h)
     text_div = ET.Element('div')
     self.current_page_div.append(text_div)
     text_tag = text_div
     bgcolor = dec_to_hex_color(background_color, background_opacity)
+    #print('border: color', border_color, border_opacity)
     bcolor = dec_to_hex_color(border_color, border_opacity)
     if text_color is not None:
       text_color = dec_to_hex_color(text_color)
     else:
       text_color = self.text_color
-    style = 'position: absolute; left: {}; top: {}; width: {}; height: {}; text-align: {}; z-index: 4; margin: 0; padding: -1cqw 1cqw 0 1cqw; background-color: {}; border: 1px {} solid; border-radius: 15px; overflow: hidden; color: {}; '.format(self.html_x(self.x), self.html_y(self.y), self.html_x(w), self.html_y(h), align, bgcolor, bcolor, text_color)
+    style = 'position: absolute; border-radius: 15px; overflow: hidden; left: {}; top: {}; width: {}; text-align: {}; z-index: 4; margin: 0; padding: -1cqw .5cqw .5cqw .5cqw; background-color: {}; border: 1px {} solid; color: {}; '.format(self.html_x(self.x), self.html_y(self.y), self.html_x(w), align, bgcolor, bcolor, text_color)
     print('align', align)
     if align == 'center':
       style += 'align-items: center; '
     text_div.set('style', style)
     if markdown_format:
-      new_lines = []
-      for line in lines:
-         if len(line) > 3 and all([c == '-' for c in line]):
-            new_lines.append('')
-         new_lines.append(line)
-      lines = new_lines
+      #new_lines = []
+      #for line in lines:
+      #   if len(line) > 3 and all([c == '-' for c in line]):
+      #      new_lines.append('')
+      #   new_lines.append(line)
+      #lines = new_lines
       formatted_lines = md_to_html('\n'.join(lines))
       #formatted_lines = formatted_lines.replace('\n', '<br />\n')
       #if len(lines) > 0 and 'A small one' in lines[0]:
@@ -756,6 +764,7 @@ MathJax = {
       text_tag.text = '\n'.join(lines)
     if len(text_div) == 0 and text_div.text == '':
       text_div.text = ' ' # no break sspace
+    self.style_p([text_div])
     self.x = x
     self.y = y+h
     return True
@@ -797,6 +806,16 @@ MathJax = {
         if len(href) > 0 and not href[0] == '#':
           child.set('onmouseup', 'stopProp(event);')
       self.fix_external_links(child)
+    
+  def style_p(self, tag):
+    for child in tag:
+      if child.tag == 'p':
+        style = child.get('style')
+        if style is None:
+          style = ''
+        style = self.update_css_string(style, 'margin', '1px')
+        child.set('style', style)
+      self.style_p(child)
     
   def text(self, txt, x, y, h_level=None, em=10, footer=False, text_color=None):
     text_div = ET.Element('div')
@@ -1036,13 +1055,38 @@ def md_reconstruct_math(html, formulas):
 def dec_to_hex_color(color, alpha=1.0):
   a = 'ff'
   if type(color) == str:
-    c = hex(color[0:2])[2:].rjust(2, '0')+hex(color[2:4])[2:].rjust(2, '0')+hex(color[4:6])[2:].rjust(2, '0')
+    if color == 'white':
+      c = 'ffffff'
+    elif color == 'grey':
+      c = '646464'
+    elif color == 'black':
+      c = '000000'
+    elif color == 'orange':
+      c = 'ffb400'
+    elif color == 'red':
+      c = 'ff0000'
+    elif color == 'green':
+      c = '00ff00'
+    elif color == 'blue':
+      c = '0000ff'
+    elif color == 'yellow':
+      c = 'ffff00'
+    elif color == 'darkred':
+      c = '640000'
+    elif color == 'darkgreen':
+      c = '006400'
+    elif color == 'darkblue':
+      c = '000064'
+    else:
+      c = hex(color[0:2])[2:].rjust(2, '0')+hex(color[2:4])[2:].rjust(2, '0')+hex(color[4:6])[2:].rjust(2, '0')
   elif type(color) == list:
     c = hex(color[0])[2:].rjust(2, '0')+hex(color[1])[2:].rjust(2, '0')+hex(color[2])[2:].rjust(2, '0')
   elif type(color) == int:
-    c = hex(color).rjust(2, '0')+hex(color).rjust(2, '0')+hex(color).rjust(2, '0')
+    #print('color is int')
+    c = hex(color)[2:].rjust(2, '0')+hex(color)[2:].rjust(2, '0')+hex(color)[2:].rjust(2, '0')
+    #print(c)
   if alpha < 1.0:
-    a = hex(int(255*alpha))
+    a = hex(int(255*alpha))[2:]
   #print(color)
   return '#'+c+a
 
