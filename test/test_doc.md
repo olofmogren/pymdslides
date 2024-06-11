@@ -233,6 +233,7 @@ layout: image_right_half
 #### 
 
 Writing a lot of cool things in a box.
+
 Maths: $\mathbf{x} = \sum_{i=0}^N x_i$
 
 #### 

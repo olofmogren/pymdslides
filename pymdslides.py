@@ -184,7 +184,7 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
   # MOVED TO BACKEND
 
   backend.set_xy(x,y)
-  backend.textbox(lines=[title], x=x, y=y, w=offsets['w'], h=int(formatting['dimensions']['em_title']*1.2), h_level=1, headlines=headlines, text_color=text_color, align=get_alignment(formatting), markdown_format=False)
+  backend.textbox(lines=[title], x=x, y=y, w=offsets['w'], h=int(formatting['dimensions']['em_title']*1.3), h_level=1, headlines=headlines, text_color=text_color, align=get_alignment(formatting), markdown_format=False)
   x = offsets['x0']
   y += formatting['dimensions']['em_title']
 

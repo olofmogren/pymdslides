@@ -37,6 +37,28 @@ class backend_html:
         os.makedirs(self.resources_dir)
       except FileExistsError:
         pass
+    self.page_width = formatting['dimensions']['page_width']
+    self.page_height = formatting['dimensions']['page_height']
+
+    self.text_color = dec_to_hex_color([0,0,0])
+
+    self.oversized_images = "DOWNSCALE"
+    self.downscale_resolution_width = 3840
+    self.downscale_resolution_height = self.downscale_resolution_width*(self.page_height/self.page_width)
+    print(self.oversized_images, self.downscale_resolution_width, self.downscale_resolution_height)
+
+    self.input_file_name = input_file
+    self.x = formatting['dimensions']['page_margins']['x0']
+    self.y = formatting['dimensions']['page_margins']['y0']
+    self.pages_count = 0
+    self.formatting = formatting
+    self.script_home = script_home
+    self.logo = None
+
+    self.current_title_tag = None
+    self.current_subtitle_tag = None
+    self.current_page_div = None
+    self.current_footer_div = None
     self.font_files = {}
     self.font_names = {}
     self.font_sizes = {}
@@ -185,10 +207,15 @@ div.loading_div {{
   align-items: center;
   justify-content: center;
 }}
-'''.format(self.font_names['title'], self.font_files['title'], self.font_names['standard'], self.font_files['standard'], self.font_names['footer'], self.font_files['footer'], self.font_names['standard'], self.font_names['title'], self.font_sizes['title'], self.font_names['title'], self.font_sizes['subtitle'], self.font_names['title'], self.font_sizes['subtitle_l3'], self.font_names['title'], self.font_sizes['subtitle_l4'], self.font_sizes['standard'])
-    #print('name',self.font_names['footer'])
-    #print('size',self.font_sizes['footer'])
-    screen_css += '''div.footer {{
+div.l4_box {{
+  position: absolute;
+  border-radius: 1cqw;
+  overflow: hidden; 
+}}
+div.l4_box p {{
+  margin: 1.2cqw;
+}}
+div.footer {{
   font-family: {}, Arial, Sans-Serif;
   /*font-size: 1cqw;*/
   font-size: {};
@@ -217,7 +244,9 @@ border: 1px #ccc solid;
   visibility: visible;
 }}
 }}
-'''.format(self.font_names['footer'], self.font_sizes['footer'])
+'''.format(self.font_names['title'], self.font_files['title'], self.font_names['standard'], self.font_files['standard'], self.font_names['footer'], self.font_files['footer'], self.font_names['standard'], self.font_names['title'], self.font_sizes['title'], self.font_names['title'], self.font_sizes['subtitle'], self.font_names['title'], self.font_sizes['subtitle_l3'], self.font_names['title'], self.font_sizes['subtitle_l4'], self.font_sizes['standard'], self.font_names['footer'], self.font_sizes['footer'])
+    #print('name',self.font_names['footer'])
+    #print('size',self.font_sizes['footer'])
 
 
     default_javascript = '''
@@ -415,27 +444,6 @@ MathJax = {
     loading_subdiv.append(loading_span2)
     self.body.append(loading_div)
 
-    self.page_width = formatting['dimensions']['page_width']
-    self.page_height = formatting['dimensions']['page_height']
-
-    self.text_color = dec_to_hex_color([0,0,0])
-
-    self.oversized_images = "DOWNSCALE"
-    self.downscale_resolution_width = 3840
-    self.downscale_resolution_height = 2160
-
-    self.input_file_name = input_file
-    self.x = formatting['dimensions']['page_margins']['x0']
-    self.y = formatting['dimensions']['page_margins']['y0']
-    self.pages_count = 0
-    self.formatting = formatting
-    self.script_home = script_home
-    self.logo = None
-
-    self.current_title_tag = None
-    self.current_subtitle_tag = None
-    self.current_page_div = None
-    self.current_footer_div = None
 
   def set_logo(self, logo, x, y, w, h, copy=True):
     #print('setting_logo', str(logo))
@@ -465,7 +473,7 @@ MathJax = {
 
   def html_font_size(self, font_size):
     #print(font_size)
-    result = '{:.3f}cqw'.format(font_size/16.0)
+    result = '{:.3f}cqw'.format(35*font_size/self.page_width)
     #print(result)
     return result
 
@@ -727,7 +735,7 @@ MathJax = {
       align = 'start'
     elif align == 'right':
       align = 'end'
-    print('l4_box', x, y, w, h)
+    print('l4_box', x, y, w, h, '---'.join(lines))
     text_div = ET.Element('div')
     self.current_page_div.append(text_div)
     text_tag = text_div
@@ -738,10 +746,11 @@ MathJax = {
       text_color = dec_to_hex_color(text_color)
     else:
       text_color = self.text_color
-    style = 'position: absolute; border-radius: 15px; overflow: hidden; left: {}; top: {}; width: {}; text-align: {}; z-index: 4; margin: 0; padding: -1cqw .5cqw .5cqw .5cqw; background-color: {}; border: 1px {} solid; color: {}; '.format(self.html_x(self.x), self.html_y(self.y), self.html_x(w), align, bgcolor, bcolor, text_color)
+    style = 'left: {}; top: {}; width: {}; text-align: {}; z-index: 4; margin: 0; padding: -1cqw .5cqw .5cqw .5cqw; background-color: {}; border: 1px {} solid; color: {}; '.format(self.html_x(x), self.html_y(y), self.html_x(w), align, bgcolor, bcolor, text_color)
     print('align', align)
     if align == 'center':
       style += 'align-items: center; '
+    text_div.set('class', 'l4_box')
     text_div.set('style', style)
     if markdown_format:
       #new_lines = []
@@ -764,7 +773,7 @@ MathJax = {
       text_tag.text = '\n'.join(lines)
     if len(text_div) == 0 and text_div.text == '':
       text_div.text = ' ' # no break sspace
-    self.style_p([text_div])
+    #self.style_p([text_div])
     self.x = x
     self.y = y+h
     return True
@@ -807,15 +816,15 @@ MathJax = {
           child.set('onmouseup', 'stopProp(event);')
       self.fix_external_links(child)
     
-  def style_p(self, tag):
-    for child in tag:
-      if child.tag == 'p':
-        style = child.get('style')
-        if style is None:
-          style = ''
-        style = self.update_css_string(style, 'margin', '1px')
-        child.set('style', style)
-      self.style_p(child)
+  #def style_p(self, tag):
+  #  for child in tag:
+  #    if child.tag == 'p':
+  #      style = child.get('style')
+  #      if style is None:
+  #        style = ''
+  #      style = self.update_css_string(style, 'margin', '1.2cqw')
+  #      child.set('style', style)
+  #    self.style_p(child)
     
   def text(self, txt, x, y, h_level=None, em=10, footer=False, text_color=None):
     text_div = ET.Element('div')
