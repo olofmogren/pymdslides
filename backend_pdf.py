@@ -18,14 +18,17 @@ from PIL import Image, ImageOps
 import os, time, shutil, re
 import numpy as np
 from markdown_it import MarkdownIt
+import cairosvg
 from mdit_plain.renderer import RendererPlain
+from pdfrw import PdfReader, PdfWriter, PageMerge
+from pdfrw.pagemerge import RectXObj
 import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib import rcParams
 rcParams['text.usetex'] = True
 
-
 pixel_per_mm = .15
+treat_as_raster_images = []
 
 class backend_pdf:
   def __init__(self, input_file, formatting, script_home, output_file):
@@ -83,11 +86,13 @@ class backend_pdf:
     #self.y = formatting['dimensions']['page_margins']['y0']
     self.pages_count = 0
     self.formatting = formatting
-
+    self.vector_graphics = {}
+    self.logo_path = None
+    self.page_width = formatting['dimensions']['page_width']
+    self.page_height = formatting['dimensions']['page_height']
 
   def set_logo(self, logo):
-    print('warning: set_logo() not implemented for pdf backend.')
-    pass
+    self.logo_path = logo
 
   def unbreakable(self):
     return self.pdf.unbreakable()
@@ -502,9 +507,29 @@ class backend_pdf:
     return self.pdf.will_page_break(*args, **kwargs)
 
   def image(self, image, x, y, w, h, crop_images=False, *args, **kwargs):
+    raster_images = False
     ret_val = False
     image_to_display = image
     location = {'x0': x, 'y0': y, 'w': w, 'h': h}
+    if is_vector_format(image) and not os.path.splitext(image)[1] in treat_as_raster_images:
+      if raster_images:
+        tmp_f = '/tmp/pymdslides_tmp_file'
+        tmp_f += '-'+str(time.time())+'.png'
+        input_file = image.split('#')[0]
+        page_no = '0'
+        if '#' in image:
+          page_no = image.split('#')[1]
+        command = 'convert -density 150 '+input_file+'['+page_no+'] '+tmp_f
+        print(command)
+        os.system(command)
+        image_to_display = tmp_f
+      else:
+        # this will be postponed as we need a workaround using pdfrw and cairosvg.
+        self.vector_graphics.setdefault(self.pages_count-1, [])
+        self.vector_graphics[self.pages_count-1].append((image, location))
+    if is_vector_format(image):
+      return ret_val
+
     if crop_images:
       viewpoint = location
       location = get_cropped_location(image_to_display, location)
@@ -564,8 +589,107 @@ class backend_pdf:
   def get_format(self):
     return 'pdf'
 
-  def output(self, *args, **kwargs):
-    return self.pdf.output(*args, **kwargs)
+  def put_vector_images_on_pdf(self, output_file, vector_images):
+    reader = PdfReader(output_file)
+    area = RectXObj(reader.pages[0])
+    #print('reader area', area.w, area.h)
+    points_per_mm = area.w/self.page_width
+    #print('points_per_mm' , points_per_mm )
+    writer = PdfWriter()
+    writer.pagearray = reader.Root.Pages.Kids
+
+    #print(vector_images)
+    for page_no in range(len(writer.pagearray)):
+      #print('i',i)
+      if page_no in vector_images:
+        #print('i (there is an image)',i)
+        for image, image_area in vector_images[page_no]:
+          splits = image.split('#')
+          image_file = splits[0]
+          image_pageno = 0
+          if len(splits) > 1:
+            image_pageno = int(splits[1])
+          image_file_pdf = '/tmp/pymdslides_tmp_file'
+          image_file_pdf += '-'+str(time.time())+'.pdf'
+          if image_file[-3:] == 'svg':
+            cairosvg.svg2pdf(url=image_file, write_to=image_file_pdf)
+          if image_file[-3:] == 'eps':
+            os.system('epstopdf '+image_file+' -o '+image_file_pdf)
+          elif image_file[-3:] == 'pdf':
+            image_file_pdf = image_file
+          image_pdf = PdfReader(image_file_pdf)
+          image_pdf_page = image_pdf.pages[image_pageno]
+          image_pdf_page_xobj = RectXObj(image_pdf_page)
+          image_width = image_pdf_page_xobj.w
+          image_height = image_pdf_page_xobj.h
+          #print(image_area)
+          desired_width = image_area['w']
+          desired_height = image_area['h']
+          desired_x = image_area['x0']
+          desired_y = image_area['y0']
+          if image_area['w']/image_area['h'] > image_width/image_height:
+            # area wider than image:
+            desired_width = int(desired_height*image_width/image_height)
+            desired_x = desired_x+(image_area['w']-desired_width)//2
+          else:
+            desired_height = int(desired_width*image_height/image_width)
+            desired_y = desired_y+(image_area['h']-desired_height)//2
+          #print(image_pdf_page)
+          scale_w = desired_width*points_per_mm/image_width
+          scale_h = desired_height*points_per_mm/image_height
+          #area = RectXObj(image_pdf_page)
+          #print('area', image_pdf_page_xobj.x, image_pdf_page_xobj.y, image_pdf_page_xobj.w, image_pdf_page_xobj.h, scale_w, scale_h)
+          image_pdf_page_xobj.scale(scale_w, scale_h)
+          image_pdf_page_xobj.x = desired_x*points_per_mm
+          #image_pdf_page_xobj.x = 50
+          #print(formatting['dimensions']['page_height'],desired_y,points_per_mm,image_height)
+          image_pdf_page_xobj.y = (self.page_height-desired_y-desired_height)*points_per_mm
+          #image_pdf_page_xobj.y = 50
+          #print('positioned area', image_pdf_page_xobj.x, image_pdf_page_xobj.y, image_pdf_page_xobj.w, image_pdf_page_xobj.h)
+          PageMerge(writer.pagearray[page_no]).add(image_pdf_page_xobj, prepend=False).render()
+          if image_file_pdf != image_file:
+            print('remove(',image_file_pdf,')')
+            os.remove(image_file_pdf)
+      else:
+        # workaround. needed to retain the page size for some reason.
+        PageMerge(writer.pagearray[page_no]).render()
+
+    print('pdfrw writing', output_file)
+    writer.write(output_file)
+
+  def logo_watermark(self, output_file, logo_path):
+    if output_file[-4:] == 'html':
+      pass
+      #backend.logo_watermark(logo_path)
+    else:
+      reader = PdfReader(output_file)
+      writer = PdfWriter()
+      writer.pagearray = reader.Root.Pages.Kids
+
+      backend = FPDF(orientation = 'P', unit = 'mm', format = (formatting['dimensions']['page_width'], formatting['dimensions']['page_height'])) # 16:9
+      backend.add_page()
+      logo_width=23
+      logo_height=30
+      backend.image(logo_path, x=formatting['dimensions']['page_width']-logo_width-formatting['dimensions']['margin_footer'], y=formatting['dimensions']['page_height']-logo_height-formatting['dimensions']['margin_footer'] , w=logo_width, h=logo_height)
+      reader = PdfReader(fdata=bytes(backend.output()))
+      logo_page = reader.pages[0]
+
+      for i in range(len(writer.pagearray)):
+        #print('putting logo on ',i)
+        PageMerge(writer.pagearray[i]).add(logo_page, prepend=False).render()
+
+      print('pdfrw writing', output_file)
+      writer.write(output_file)
+
+
+
+  def output(self, output_file):
+    ret_val = self.pdf.output(output_file)
+    if len(self.vector_graphics):
+      self.put_vector_images_on_pdf(output_file, self.vector_graphics)
+    if self.logo_path and os.path.exists(self.logo_path) and os.path.isfile(self.logo_path):
+      self.logo_watermark(output_file, self.logo_path)
+    return ret_val
 
   def render_internal_link(self, link, x, y, headlines):
     #print(link)
@@ -655,4 +779,6 @@ def find_all(a_str, sub):
         start += len(sub) # use start += 1 to find overlapping matches
     return result
 
+def is_vector_format(filename):
+  return filename.split('#')[0][-3:] in ['pdf', '.ps', 'eps', 'svg']
 

@@ -12,13 +12,16 @@
 # this program. If not, see <https://www.gnu.org/licenses/>.
 
 
-import os, os.path, shutil, re
+import os, os.path, shutil, re, time
 from lxml import etree as ET
 from markdown2 import markdown
 from lxml.html.soupparser import fromstring
 from PIL import Image
 from urllib.parse import urlparse
 import requests
+
+treat_as_raster_images = ['svg']
+
 
 class backend_html:
   def __init__(self, input_file, formatting, script_home, output_file, copy_resources_to=None):
@@ -102,13 +105,18 @@ class backend_html:
         f.write(response.content)
     if self.resources_dir is not None:
       if self.resources_dir == self.output_dir:
-        shutil.copy(mathjax_local_file, os.path.join(self.output_dir, os.path.basename(mathjax_local_file)))
-        mathjax_url = mathjax_local_file
+        target_mathjax_path = os.path.join(self.output_dir, os.path.basename(mathjax_local_file))
+        shutil.copy(mathjax_local_file, target_mathjax_path)
+        print('copy', mathjax_local_file, target_mathjax_path)
+        mathjax_url = os.path.basename(target_mathjax_path)
       else:
-        shutil.copy(mathjax_local_file, os.path.join(self.resources_dir, os.path.basename(mathjax_local_file)))
-        mathjax_url = os.path.join(self.resources_dir, os.path.basename(mathjax_local_file))
+        target_mathjax_path = os.path.join(self.resources_dir, os.path.basename(mathjax_local_file))
+        shutil.copy(mathjax_local_file, target_mathjax_path)
+        mathjax_url = target_mathjax_path
+        print('copy', mathjax_local_file, target_mathjax_path)
     else:
       mathjax_url = mathjax_local_file
+      print('mathjax_url',mathjax_local_file)
       
       
 
@@ -129,26 +137,31 @@ body {{
   overflow: hidden;
   background-color: black;
   font-family: {}, Arial, Sans-Serif;
+  font-weight: normal;
 }}
 h1 {{
   font-family: {}, Arial, Sans-Serif;
   /*font-size: 4cqw;*/
   font-size: {};
+  font-weight: normal;
 }}
 h2 {{
   font-family: {}, Arial, Sans-Serif;
   /*font-size: 2.8cqw;*/
   font-size: {};
+  font-weight: normal;
 }}
 h3 {{
   font-family: {}, Arial, Sans-Serif;
   /*font-size: 2cqw;*/
   font-size: {};
+  font-weight: normal;
 }}
 h4 {{
   font-family: {}, Arial, Sans-Serif;
   /*font-size: 2cqw;*/
   font-size: {};
+  font-weight: normal;
 }}
 .page_visible {{
   visibility: visible;
@@ -219,6 +232,7 @@ div.footer {{
   font-family: {}, Arial, Sans-Serif;
   /*font-size: 1cqw;*/
   font-size: {};
+  font-weight: normal;
 }}
 /*div {{
 border: 1px #ccc solid;
@@ -320,6 +334,10 @@ function nextPage(){
 }
 function goToPage(pageId){
   //alert(pageId);
+  if (!document.getElementById(pageId)){
+    //alert(pageId+": page not found")
+    pageId = "page-1";
+  }
   document.getElementById(currentPageId).classList.remove('page_visible');
   document.getElementById(currentPageId).classList.add('page_hidden');
   document.getElementById(pageId).classList.remove('page_hidden');
@@ -577,7 +595,7 @@ MathJax = {
       element = self.current_page_div
     elif category == 'footer':
       element = self.current_footer_div
-    if font_name is not None:
+    if font_name is not None and font_name.strip() != '':
       self.override_font[category] = font_name
       selector = 'font-family'
       val = font_name
@@ -616,7 +634,8 @@ MathJax = {
       self.override_font_size[category] = font_size
       selector = 'font-size'
       val = font_size
-      self.update_element_css(element, selector, val)
+      if element is not None:
+        self.update_element_css(element, selector, val)
     return True
 
   def get_string_width(self, text):
@@ -914,12 +933,15 @@ MathJax = {
     return False
 
   def image(self, file, x, y, w, h, crop_images=False, copy=True, link=None):
+    original_filename = file
+    current_filename = file
+    current_ext = os.path.splitext(current_filename)[1][1:]
     media_tag = ET.Element('img')
     style = ''
-    new_filename = file
     already_copied = False
-    extension = os.path.splitext(file)[1]
     is_video = is_video_link(file)
+    tmp_files_to_remove = []
+    page_no_is_set = False
 
     if is_video:
       media_tag = ET.Element('iframe')
@@ -929,11 +951,44 @@ MathJax = {
       media_tag.text = ' '
       media_tag.set('src', file)
     else:
+      input_file = current_filename.split('#')[0]
+      extension = os.path.splitext(input_file)[1][1:]
+      page_no = '0'
+      if '#' in current_filename:
+        page_no = current_filename.split('#')[1]
+        page_no_is_set = True
+      if is_vector_format(current_filename) and not extension in treat_as_raster_images:
+        tmp_f = '/tmp/pymdslides_tmp_file'
+        tmp_f += '-'+str(time.time())+'.png'
+        command_is_chosen = False
+        print(extension)
+        if extension == 'pdf' and shutil.which('pdf2svg') is not None:
+          tmp_f = os.path.splitext(tmp_f)[0]+'.svg'
+          command = 'pdf2svg {} {} {}'.format(input_file, tmp_f, int(page_no)+1) # page_no is zero-indexed
+          extension = 'svg'
+          current_ext = extension
+          command_is_chosen = True
+        elif extension == 'eps' and shutil.which('eps2svg') is not None:
+          tmp_f = os.path.splitext(tmp_f)[0]+'.svg'
+          command = 'eps2svg {} {}'.format(input_file, tmp_f)
+          extension = 'svg'
+          current_ext = extension
+          command_is_chosen = True
+        if not command_is_chosen:
+          command = 'convert -density 150 '+input_file+'['+page_no+'] '+tmp_f
+          extension = 'png'
+          current_ext = extension
+          command_is_chosen = True
+        print(command)
+        os.system(command)
+        current_filename = tmp_f
+        tmp_files_to_remove.append(tmp_f)
+
       if self.oversized_images == "DOWNSCALE" and self.resources_dir is not None:
         width = self.html_x(w)
         height = self.html_y(h)
-        if extension != 'svg':
-          with Image.open(file) as im:
+        if current_ext != 'svg':
+          with Image.open(current_filename) as im:
             im_w, im_h = im.size
             im_aspect = im_w/im_h
             box_aspect = w/h
@@ -946,19 +1001,31 @@ MathJax = {
               target_height_pixels = float(height[:-1])*self.downscale_resolution_height
               target_width_pixels = im_aspect*target_height_pixels
             if target_width_pixels < im_w:
-              print('downscaling image',file)
+              print('downscaling image',current_filename)
               im.resize((target_width_pixels, target_height_pixels))
-              new_filename = self.resources_dir+os.path.basename(file)
+              new_filename = self.resources_dir+os.path.basename(current_filename)
               im.save(new_filename)
-              already_copied = False
-      if copy and not already_copied and self.resources_dir is not None:
+              current_filename = new_filename
+              already_copied = True
+      if (copy or current_filename in tmp_files_to_remove) and not already_copied and self.resources_dir is not None:
         if self.resources_dir == self.output_dir:
-          new_filename = os.path.basename(file)
-          shutil.copyfile(file, os.path.join(self.output_dir, new_filename))
+          new_filename = os.path.join(self.output_dir, os.path.splitext(os.path.basename(original_filename))[0])
+          if page_no_is_set:
+            new_filename += '-'+str(page_no)
+          new_filename += '.'+current_ext
+          shutil.copyfile(current_filename, new_filename)
+          current_filename = new_filename
         else:
-          new_filename = self.resources_dir+os.path.basename(file)
-          shutil.copyfile(file, new_filename)
-      media_tag.set('src', new_filename)
+          new_filename = os.path.join(self.resources_dir,os.path.splitext(os.path.basename(original_filename))[0])
+          if page_no_is_set:
+            new_filename += '-'+str(page_no)
+          new_filename += '.'+current_ext
+          shutil.copyfile(current_filename, new_filename)
+          current_filename = new_filename
+      src_filename = current_filename
+      if self.resources_dir == self.output_dir:
+        src_filename = os.path.basename(current_filename)
+      media_tag.set('src', src_filename)
     style += 'position: absolute; left: {}; top: {}; width: {}; height: {};'.format(self.html_x(x), self.html_y(y), self.html_x(w), self.html_y(h))
     #print('image style',style)
     if crop_images == False:
@@ -968,6 +1035,9 @@ MathJax = {
     media_tag.set('style', style)
     self.current_page_div.append(media_tag)
     self.set_xy(self.x, self.y+h)
+    for f in tmp_files_to_remove:
+      print('removing temp file', f)
+      os.remove(f)
     return True
 
   def rect_clip(self, *args, **kwargs):
@@ -1024,14 +1094,17 @@ MathJax = {
 
 def md_to_html(md):
   md_, formulas_ = md_extract_formulas(md)
+  print(md_)
+  print(formulas_)
   #print('md_to_html:',md_)
   html = markdown(md_, extras=['cuddled-lists', 'tables'])
-  finalOutput = md_reconstruct_math(html, formulas_)
-  return finalOutput
+  final_output = md_reconstruct_math(html, formulas_)
+  return final_output
 
 def md_extract_formulas(md):
   md_sane_lines = []
   formulas = []
+  number = 0
   for line in md.split('\n'):
     if '$' in line:
       formula_starts_ends = []
@@ -1045,12 +1118,13 @@ def md_extract_formulas(md):
             formula_start = None
       new_line = ''
       pos = 0
-      number = 0
       for (s,e) in formula_starts_ends:
         new_line += line[pos:s]+'${}$'.format(number)
         formulas.append((number, line[s:e]))
         number += 1
         pos = e
+      if pos < len(line):
+        new_line += line[pos:]
       md_sane_lines.append(new_line)
     else:
       md_sane_lines.append(line)
@@ -1115,3 +1189,6 @@ def change_filename_extension(filename, extension):
 def is_video_link(link):
   parsed_uri = urlparse(link)
   return any([x in parsed_uri.netloc for x in ['youtube', 'youtu.be', 'vimeo', 'dailymotion', 'dai.ly']])
+
+def is_vector_format(filename):
+  return filename.split('#')[0][-3:] in ['pdf', '.ps', 'eps', 'svg']
