@@ -461,7 +461,7 @@ MathJax = {
     loading_span2 = ET.Element('p')
     loading_span2.text = 'PYMD slides requires a javascript-enabled browser.'
     loading_span3 = ET.Element('p')
-    loading_span3.text = 'Usage. Arrow buttons or page up/down to navigate. F for fullscreen. B for blank. Click on leftmost quarter for previous slide, the rest for next.'
+    loading_span3.text = 'Usage. Arrow buttons, page up/down, or space to navigate. F for fullscreen. B for blank. Click on leftmost quarter for previous slide, the rest for next.'
     loading_subdiv.append(loading_span1)
     loading_subdiv.append(loading_span2)
     loading_subdiv.append(loading_span3)
