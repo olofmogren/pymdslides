@@ -47,6 +47,7 @@ class backend_html:
     self.text_color = dec_to_hex_color([0,0,0])
 
     self.oversized_images = "DOWNSCALE"
+    #self.oversized_images = "DONOTDOWNSCALE"
     self.downscale_resolution_width = 3840
     self.downscale_resolution_height = self.downscale_resolution_width*(self.page_height/self.page_width)
     print(self.oversized_images, self.downscale_resolution_width, self.downscale_resolution_height)
@@ -967,7 +968,7 @@ MathJax = {
         tmp_f = '/tmp/pymdslides_tmp_file'
         tmp_f += '-'+str(time.time())+'.png'
         command_is_chosen = False
-        print(extension)
+        #print(extension)
         if extension == 'pdf' and shutil.which('pdf2svg') is not None:
           tmp_f = os.path.splitext(tmp_f)[0]+'.svg'
           command = 'pdf2svg {} {} {}'.format(input_file, tmp_f, int(page_no)+1) # page_no is zero-indexed
@@ -985,13 +986,13 @@ MathJax = {
           extension = 'png'
           current_ext = extension
           command_is_chosen = True
-        print(command)
+        #print(command)
         os.system(command)
         current_filename = tmp_f
         tmp_files_to_remove.append(tmp_f)
 
       if self.oversized_images == "DOWNSCALE" and self.resources_dir is not None:
-        print(self.html_x(w), self.html_y(h))
+        #print(self.html_x(w), self.html_y(h))
         width = float(self.html_x(w)[:-1])*.01
         height = float(self.html_y(h)[:-1])*.01
         if current_ext != 'svg':
