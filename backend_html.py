@@ -234,6 +234,10 @@ div.footer {{
   font-size: {};
   font-weight: normal;
 }}
+li {{
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}}
 /*div {{
 border: 1px #ccc solid;
 }}
