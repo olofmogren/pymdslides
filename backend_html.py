@@ -21,6 +21,7 @@ from urllib.parse import urlparse
 import requests
 
 treat_as_raster_images = ['svg']
+DOWNSCALE_SLACK = 0.75
 
 
 class backend_html:
@@ -496,7 +497,7 @@ MathJax = {
 
   def html_font_size(self, font_size):
     #print(font_size)
-    result = '{:.3f}cqw'.format(35*font_size/self.page_width)
+    result = '{:.3f}cqw'.format(32*font_size/self.page_width)
     #print(result)
     return result
 
@@ -990,8 +991,9 @@ MathJax = {
         tmp_files_to_remove.append(tmp_f)
 
       if self.oversized_images == "DOWNSCALE" and self.resources_dir is not None:
-        width = self.html_x(w)
-        height = self.html_y(h)
+        print(self.html_x(w), self.html_y(h))
+        width = float(self.html_x(w)[:-1])*.01
+        height = float(self.html_y(h)[:-1])*.01
         if current_ext != 'svg':
           with Image.open(current_filename) as im:
             im_w, im_h = im.size
@@ -999,17 +1001,23 @@ MathJax = {
             box_aspect = w/h
             if im_aspect > box_aspect:
               # image will be its own width
-              target_width_pixels = float(width[:-1])*self.downscale_resolution_width
-              target_height_pixels = (1/im_aspect)*target_width_pixels
+              #print('im_aspect > box_aspect')
+              target_width_pixels = round(width*self.downscale_resolution_width)
+              target_height_pixels = round((1/im_aspect)*target_width_pixels)
             else:
               # image will be its own height
-              target_height_pixels = float(height[:-1])*self.downscale_resolution_height
-              target_width_pixels = im_aspect*target_height_pixels
-            if target_width_pixels < im_w:
-              print('downscaling image',current_filename)
-              im.resize((target_width_pixels, target_height_pixels))
-              new_filename = self.resources_dir+os.path.basename(current_filename)
+              #print('im_aspect <= box_aspect')
+              target_height_pixels = round(height*self.downscale_resolution_height)
+              target_width_pixels = round(im_aspect*target_height_pixels)
+            #print('target_width_pixels, im_w', target_width_pixels, im_w)
+            if target_width_pixels < im_w*DOWNSCALE_SLACK:
+              #print('downscaling image',current_filename, target_width_pixels, target_height_pixels)
+              im = im.resize((target_width_pixels, target_height_pixels))
+              new_filename = os.path.join(self.resources_dir,os.path.basename(current_filename))
+              new_fn_no_ext,new_fn_ext = os.path.splitext(new_filename)
+              new_filename = new_fn_no_ext + '-{}-{}'.format(target_width_pixels, target_height_pixels)+new_fn_ext
               im.save(new_filename)
+              #print('saved image at ', new_filename)
               current_filename = new_filename
               already_copied = True
       if (copy or current_filename in tmp_files_to_remove) and not already_copied and self.resources_dir is not None:
