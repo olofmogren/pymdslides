@@ -235,8 +235,8 @@ div.footer {{
   font-weight: normal;
 }}
 li {{
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
+  margin-top: 0.4em;
+  margin-bottom: 0.4em;
 }}
 /*div {{
 border: 1px #ccc solid;
@@ -460,10 +460,11 @@ MathJax = {
     loading_span1.text = 'Loading.'
     loading_span2 = ET.Element('p')
     loading_span2.text = 'PYMD slides requires a javascript-enabled browser.'
-    #br = ET.element('br')
+    loading_span3 = ET.Element('p')
+    loading_span3.text = 'Usage. Arrow buttons or page up/down to navigate. F for fullscreen. B for blank. Click on leftmost quarter for previous slide, the rest for next.'
     loading_subdiv.append(loading_span1)
-    #loading_div.append(br)
     loading_subdiv.append(loading_span2)
+    loading_subdiv.append(loading_span3)
     self.body.append(loading_div)
 
 
