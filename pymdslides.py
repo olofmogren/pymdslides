@@ -230,7 +230,7 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
     x = formatting['dimensions']['margin_footer']
     footer_text = formatting['footer']
     if 'page_numbering' in formatting and formatting['page_numbering']:
-      footer_text = str(page_number)+' - '+footer_text
+      footer_text = str(page_number)+(' - ' if len(footer_text) > 0 else '')+footer_text
     backend.text(txt=footer_text, x=x, y=formatting['dimensions']['page_height']-formatting['dimensions']['margin_footer']-formatting['dimensions']['em_footer'], em=formatting['dimensions']['em_footer'], footer=True) #, w=offsets['w'], align='L')
 
   if len(l4_boxes):
