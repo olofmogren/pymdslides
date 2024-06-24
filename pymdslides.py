@@ -75,11 +75,12 @@ def dump_page_content(backend, content, formatting, headlines, raster_images, tr
     l4_boxes = []
     l4_subtitle = None
     l4_lines = []
+    #print('content', content)
     for line in content:
       #print('line:', line)
       if l4_subtitle is not None and line.startswith('#'):
         if l4_subtitle != '':
-          l4_lines = ['**'+l4_subtitle+'**']+strip_lines(l4_lines)
+          l4_lines = ['**'+l4_subtitle+'**\n\n']+strip_lines(l4_lines)
         else:
           l4_lines = strip_lines(l4_lines)
         l4_boxes.append(l4_lines)
@@ -87,6 +88,7 @@ def dump_page_content(backend, content, formatting, headlines, raster_images, tr
         l4_lines = []
       if line.startswith('#') and (len(line) <= 1 or line[1] != '#'):
         title = line[2:]
+        #print('title', title, '"', line, '"')
       elif line.startswith('##') and (len(line) <= 2 or line[2] != '#'):
         subtitle = line[3:]
         #l3 headlines will go as lines.
@@ -230,17 +232,22 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
     x = formatting['dimensions']['margin_footer']
     footer_text = formatting['footer']
     if 'page_numbering' in formatting and formatting['page_numbering']:
-      footer_text = str(page_number)+(' - ' if len(footer_text) > 0 else '')+footer_text
-    backend.text(txt=footer_text, x=x, y=formatting['dimensions']['page_height']-formatting['dimensions']['margin_footer']-formatting['dimensions']['em_footer'], em=formatting['dimensions']['em_footer'], footer=True) #, w=offsets['w'], align='L')
+      footer_text = str(page_number)+('&nbsp;&nbsp;&nbsp;' if len(footer_text) > 0 else '')+footer_text
+    backend.text(txt=footer_text, x=x, y=formatting['dimensions']['page_height']-formatting['dimensions']['margin_footer']-formatting['dimensions']['em_footer'], headlines=headlines, em=formatting['dimensions']['em_footer'], footer=True, markdown_format=True) #, w=offsets['w'], align='L')
 
   if len(l4_boxes):
     print('{}:{}: l4_boxes: \n  {}'.format(md_file_stripped, line_number, yaml.dump(l4_boxes).replace('\n', '\n  ')))
+  if 'fonts' in formatting and 'font_file_standard' in formatting['fonts']:
+    backend.set_font('standard', '', formatting['dimensions']['font_size_standard'])
+  else:
+    backend.set_font_size('standard', formatting['dimensions']['font_size_standard'])
   box_offsets_list = []
   for i,lines in enumerate(l4_boxes):
-    box_width = int(.5*formatting['dimensions']['page_width'])
+    box_width = int(.6*formatting['dimensions']['page_width'])
     box_x = formatting['dimensions']['page_width']//2-box_width//2
     box_height = formatting['dimensions']['em']*(len(lines))+formatting['dimensions']['internal_margin']*2
-    box_y = formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']-box_height
+    #box_y = formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']-box_height
+    box_y = offsets['y0']
     box_offsets_list.append({'x0': box_x, 'y0': box_y, 'w': box_width, 'h': box_height})
   for i in range(len(box_offsets_list)):
     i_box_offset = box_offsets_list[i]
@@ -381,8 +388,8 @@ def get_column_offsets(offsets, num_columns, column):
 
 def get_offsets_for_text(layout, images=True):
   # returns offsets for text area.
-  # layouts = ['image_left_half', 'image_left_small', 'image_right_half', 'image_right_small', 'center', 'image_center', 'image_fill']
-  if layout in ['center', 'image_center']:
+  # layouts = ['image_left_half', 'image_left_small', 'image_right_half', 'image_right_small', 'image_center', 'image_fill']
+  if layout in ['image_center']:
     y = formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2
     drawable_height = formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y0']-formatting['dimensions']['em_title']-formatting['dimensions']['page_margins']['y1']
     if images:
@@ -391,13 +398,13 @@ def get_offsets_for_text(layout, images=True):
       y += drawable_height
     offsets = {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': y, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
   elif layout == 'image_left_half':
-    offsets =  {'x0': (formatting['dimensions']['page_width']//2)+formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
+    offsets =  {'x0': (formatting['dimensions']['page_width']//2)+formatting['dimensions']['internal_margin']//2, 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
   elif layout == 'image_left_small':
-    offsets =  {'x0': (formatting['dimensions']['page_width']//2)+formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
+    offsets =  {'x0': (formatting['dimensions']['page_width']//2)+formatting['dimensions']['internal_margin']//2, 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
   elif layout == 'image_right_half':
-    offsets =  {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': (formatting['dimensions']['page_width']//2)-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
+    offsets =  {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': (formatting['dimensions']['page_width']//2)-formatting['dimensions']['internal_margin']//2, 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
   elif layout == 'image_right_small':
-    offsets =  {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': (formatting['dimensions']['page_width']//2)-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
+    offsets =  {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': (formatting['dimensions']['page_width']//2)-formatting['dimensions']['internal_margin']//2, 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
   else: #image_fill
     offsets = {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
     #offsets =  {'x0': 0, 'y0': 0, 'x1': formatting['dimensions']['page_width'], 'y1': formatting['dimensions']['page_height']}
@@ -407,8 +414,8 @@ def get_offsets_for_text(layout, images=True):
 
 def get_offsets(layout):
   # returns offsets for text area.
-  # layouts = ['image_left_half', 'image_left_small', 'image_right_half', 'image_right_small', 'center', 'image_center','image_fill']
-  if layout in ['center', 'image_center']:
+  # layouts = ['image_left_half', 'image_left_small', 'image_right_half', 'image_right_small', 'image_center','image_fill']
+  if layout in ['image_center']:
     offsets = {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0'], 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
   elif layout == 'image_left_half':
     offsets =  {'x0': (formatting['dimensions']['page_width']//2)+formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0'], 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
@@ -467,7 +474,7 @@ def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout,
   return 
 
 def get_images_locations(images, layout, has_text, packed_images=False, cred=False):
-  # layouts = ['image_left_half', 'image_left_small', 'image_right_half', 'image_right_small', 'center', 'image_center', 'image_fill']
+  # layouts = ['image_left_half', 'image_left_small', 'image_right_half', 'image_right_small', 'image_center', 'image_fill']
   #print('get_images_locations()', 'layout', layout)
   locations = []
   image_area = [0,0,formatting['dimensions']['page_width'],formatting['dimensions']['page_height']]
@@ -491,7 +498,7 @@ def get_images_locations(images, layout, has_text, packed_images=False, cred=Fal
   if cred:
     grid_width = len(images)
     grid_height = 1
-  elif layout in ['center', 'image_center']:
+  elif layout in ['image_center']:
     grid_width = len(images)
     grid_height = 1
   else:
@@ -548,7 +555,7 @@ def get_images_locations(images, layout, has_text, packed_images=False, cred=Fal
   return locations
 
 def get_image_area(layout, has_text):
-  if layout in ['center', 'image_center']:
+  if layout in ['image_center']:
     drawable_height = formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y0']-formatting['dimensions']['em_title']-formatting['dimensions']['page_margins']['y1']
     if has_text:
       image_area = {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': drawable_height//2+formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']-formatting['dimensions']['internal_margin']//2}
@@ -611,10 +618,13 @@ def preprocess_md_page(content, line_number, config):
       print('{}:{}: Ignoring markdown comment: {}'.format(md_file_stripped, line_number, line[9:-1]))
       content[i] = '' # needed to not mess up line numbers.
     #print(content[i])
-    if line.strip().startswith('# '):
-      page['headline'] = line[2:]
-    elif line.strip().startswith('## '):
-      page['headline_l2'] = line[3:]
+          
+      
+    stripped_line = line.strip()
+    if stripped_line.startswith('#') and (len(stripped_line) <= 1 or stripped_line[1] != '#'):
+      page['headline'] = stripped_line[2:]
+    elif stripped_line.startswith('##') and (len(stripped_line) <= 2 or stripped_line[2] != '#'):
+      page['headline_l2'] = stripped_line[3:]
 
   image_lines = []
   image_line_numbers = []
@@ -668,7 +678,9 @@ if __name__ == "__main__":
   md_file = sys.argv[1]
   print('md_file:',md_file)
   output_format = 'html'
-  if len(sys.argv) > 2:
+  if not md_file.endswith('.md'):
+    md_file += '.md'
+  if len(sys.argv) > 2 and not sys.argv[2].startswith('-'):
     output_format = sys.argv[2]
   output_file = '.'.join(md_file.split('.')[:-1])+'.'+output_format
   if output_format == 'html':
@@ -683,6 +695,9 @@ if __name__ == "__main__":
   else:
     treat_as_raster_images = []
     
+  overwrite_images = False
+  if '--overwrite-images' in sys.argv or '-o' in sys.argv:
+    overwrite_images = True
   
   script_home = os.path.dirname(os.path.realpath(__file__))
   print('script_home', script_home)
@@ -727,7 +742,7 @@ if __name__ == "__main__":
       # this line contains a continuation of yaml content. Parsing later.
       current_yaml += '\n'+line
       #print('current_yaml',current_yaml)
-    elif line.startswith('# '):
+    elif line.startswith('#') and (len(line) <= 1 or line[1] != '#'):
       if preamble:
         # formatting from preamble is global for whole document:
         #print('preamble. setting global formatting')
@@ -791,9 +806,9 @@ if __name__ == "__main__":
   # INITIALIZE FPDF:
 
   if output_format == 'pdf':
-    backend = backend_pdf(md_file_stripped, formatting, script_home, output_file)
+    backend = backend_pdf(md_file_stripped, formatting, script_home)
   elif output_format == 'html':
-    backend = backend_html(md_file_stripped, formatting, script_home, output_file, copy_resources_to='same_dir')
+    backend = backend_html(md_file_stripped, formatting, script_home, overwrite_images=overwrite_images)
   else:
     raise Exception('Dude! Unknown output format: '+output_format)
 
@@ -838,7 +853,6 @@ if __name__ == "__main__":
   backend.set_creator('pymdslides, git commit: '+git_commit+' https://github.com/olofmogren/pymdslides/')
   backend.set_creation_date(datetime.now(datetime.utcnow().astimezone().tzinfo))
 
-  print('writing file:',output_file)
-  backend.output(output_file)
+  backend.output()
 
 

@@ -25,22 +25,25 @@ DOWNSCALE_SLACK = 0.75
 
 
 class backend_html:
-  def __init__(self, input_file, formatting, script_home, output_file, copy_resources_to=None):
-    self.output_file = output_file
-    self.output_dir = os.path.dirname(output_file)
-    if len(self.output_dir) > 0:
+  def __init__(self, input_file, formatting, script_home, overwrite_images=False):
+    self.html_output_filename = os.path.join(os.path.splitext(input_file)[0],'index.html')
+    self.output_dir = os.path.dirname(self.html_output_filename)
+    #print('output_dir',self.output_dir)
+    if len(self.output_dir) > 0 and self.output_dir[-1] != '/':
       self.output_dir += '/'
-    if copy_resources_to == 'sub_dir':
-      self.resources_dir = os.path.join(self.output_dir,os.path.splitext(os.path.basename(output_file))[0]+'_pymd_resources/')
-    elif copy_resources_to == 'same_dir':
-      self.resources_dir = self.output_dir
-    else:
-      self.resources_dir = None
-    if self.resources_dir is not None:
-      try:
-        os.makedirs(self.resources_dir)
-      except FileExistsError:
-        pass
+    self.graphics_dir = os.path.join(self.output_dir,'graphics')
+    self.resources_dir = os.path.join(self.output_dir,'resources')
+    try:
+      os.makedirs(self.graphics_dir)
+    except FileExistsError:
+      pass
+    try:
+      os.makedirs(self.resources_dir)
+    except FileExistsError:
+      pass
+    #print('graphics_dir',self.graphics_dir)
+    #print('resources_dir',self.resources_dir)
+
     self.page_width = formatting['dimensions']['page_width']
     self.page_height = formatting['dimensions']['page_height']
 
@@ -82,10 +85,9 @@ class backend_html:
           f.save(os.path.join(script_home,woff2_file))
         if self.resources_dir is not None:
           shutil.copy(os.path.join(script_home,woff2_file), self.resources_dir)
-          if self.resources_dir == self.output_dir:
-            self.font_files[font_cat] = os.path.basename(woff2_file)
-          else:
-            self.font_files[font_cat] = self.resources_dir+os.path.basename(woff2_file)
+          self.font_files[font_cat] = os.path.join(self.resources_dir,os.path.basename(woff2_file))
+          # strip base dir (container of index file):
+          self.font_files[font_cat] = '/'.join(self.font_files[font_cat].split('/')[1:])
         else:
           self.font_files[font_cat] = woff2_file
         self.font_names[font_cat] = fontname
@@ -106,16 +108,12 @@ class backend_html:
       with open(mathjax_local_file, 'wb') as f:
         f.write(response.content)
     if self.resources_dir is not None:
-      if self.resources_dir == self.output_dir:
-        target_mathjax_path = os.path.join(self.output_dir, os.path.basename(mathjax_local_file))
-        shutil.copy(mathjax_local_file, target_mathjax_path)
-        print('copy', mathjax_local_file, target_mathjax_path)
-        mathjax_url = os.path.basename(target_mathjax_path)
-      else:
-        target_mathjax_path = os.path.join(self.resources_dir, os.path.basename(mathjax_local_file))
-        shutil.copy(mathjax_local_file, target_mathjax_path)
-        mathjax_url = target_mathjax_path
-        print('copy', mathjax_local_file, target_mathjax_path)
+      target_mathjax_path = os.path.join(self.resources_dir, os.path.basename(mathjax_local_file))
+      shutil.copy(mathjax_local_file, target_mathjax_path)
+      print('copy', mathjax_local_file, target_mathjax_path)
+      # strip base dir (container of index file):
+      target_mathjax_path = '/'.join(target_mathjax_path.split('/')[1:])
+      mathjax_url = target_mathjax_path
     else:
       mathjax_url = mathjax_local_file
       print('mathjax_url',mathjax_local_file)
@@ -225,7 +223,7 @@ div.loading_div {{
 div.l4_box {{
   position: absolute;
   border-radius: 1cqw;
-  overflow: hidden; 
+  overflow: hidden;
 }}
 div.l4_box p {{
   margin: 1.2cqw;
@@ -236,12 +234,21 @@ div.footer {{
   font-size: {};
   font-weight: normal;
 }}
+ul {{
+  margin-top: 0;
+  border: 1px;
+}}
 li {{
-  margin-top: 0.4em;
-  margin-bottom: 0.4em;
+  margin-top: 0em;
+  margin-bottom: 0.3em;
+}}
+p {{
+  margin-top: 0;
+  margin-bottom: 0.3em;
 }}
 /*div {{
 border: 1px #ccc solid;
+/* for debugging: borders for all divs */
 }}
 p {{
 border: 1px #ccc solid;
@@ -294,7 +301,7 @@ function mouseuphandler(e) {
     nextPage()
   }
 }
-function pageLoad(){
+function gotoHash(){
   var currentPageId = "page-1";
   newPageId = window.location.hash.substring(1);
   if (newPageId == "") {
@@ -445,7 +452,8 @@ MathJax = {
     self.head.append(mathjax2)
 
     self.body = ET.Element('body')
-    self.body.set('onload', 'pageLoad();')
+    #self.body.set('onload', 'gotoHash();')
+    self.body.set('onhashchange', 'gotoHash();')
     self.html.append(self.body)
     self.current_page_div = None
 
@@ -468,18 +476,19 @@ MathJax = {
     loading_subdiv.append(loading_span2)
     loading_subdiv.append(loading_span3)
     self.body.append(loading_div)
+    self.overwrite_images = overwrite_images
+    self.onload_added = False
 
 
-  def set_logo(self, logo, x, y, w, h, copy=True):
+  def set_logo(self, logo, x, y, w, h):
     #print('setting_logo', str(logo))
     new_filename = logo
-    if copy and self.resources_dir is not None:
-      if self.resources_dir == self.output_dir:
-        new_filename = os.path.basename(logo)
-        shutil.copyfile(logo, os.path.join(self.output_dir, new_filename))
-      else:
-        new_filename = os.path.join(self.resources_dir,os.path.basename(logo))
-        shutil.copyfile(logo, new_filename)
+    #if self.graphics_dir is not None:
+    new_filename = os.path.join(self.graphics_dir,os.path.basename(logo))
+    shutil.copyfile(logo, new_filename)
+
+    # strip base dir (container of index file):
+    new_filename = '/'.join(new_filename.split('/')[1:])
     self.logo = new_filename
     self.logo_x = x
     self.logo_y = y
@@ -686,6 +695,7 @@ MathJax = {
     return True
 
   def textbox(self, lines, x, y, w, h, headlines, h_level=None, align='left', markdown_format=True, text_color=None):
+    #print('textbox', h_level, lines)
     formatted_lines = lines
     if align == 'left':
       align = 'start'
@@ -698,7 +708,7 @@ MathJax = {
       text_color = dec_to_hex_color(text_color)
     else:
       text_color = self.text_color
-    style = 'position: absolute; left: {}; top: {}; width: {}; height: {}; text-align: {}; overflow: hidden; text-wrap: nowrap; color: {}; '.format(self.html_x(x), self.html_y(y), self.html_x(w), self.html_y(h), align, text_color)
+    style = 'position: absolute; left: {}; top: {}; width: {}; height: {}; text-align: {}; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: {}; '.format(self.html_x(x), self.html_y(y), self.html_x(w), self.html_y(h), align, text_color)
     #print('textbox div style', style)
     if h_level is not None:
       text_div.set('style', style)
@@ -779,19 +789,8 @@ MathJax = {
     text_div.set('class', 'l4_box')
     text_div.set('style', style)
     if markdown_format:
-      #new_lines = []
-      #for line in lines:
-      #   if len(line) > 3 and all([c == '-' for c in line]):
-      #      new_lines.append('')
-      #   new_lines.append(line)
-      #lines = new_lines
       formatted_lines = md_to_html('\n'.join(lines))
-      #formatted_lines = formatted_lines.replace('\n', '<br />\n')
-      #if len(lines) > 0 and 'A small one' in lines[0]:
-      #  print(lines)
-      #  print(formatted_lines)
       tree = fromstring(formatted_lines)
-      #print(trees)
       for subtree in tree: # parser puts everything in an <html> root
         text_tag.append(subtree)
       self.align_tables([text_tag], align)
@@ -800,6 +799,7 @@ MathJax = {
     if len(text_div) == 0 and text_div.text == '':
       text_div.text = ' ' # no break sspace
     #self.style_p([text_div])
+    self.fix_all_links([text_div], headlines)
     self.x = x
     self.y = y+h
     return True
@@ -828,7 +828,9 @@ MathJax = {
       if child.tag == 'a':
         href = child.get('href')
         if len(href) > 0 and href[0] == '#':
+          print('looking for local link',href)
           page_no = int(headlines.index(href[1:].strip()))+1
+          print('found local link', page_no)
           child.set('href', '#')
           child.set('onclick', 'localPageLink("page-{}", event); return false;'.format(page_no))
           child.set('onmouseup', 'stopProp(event);')
@@ -852,7 +854,7 @@ MathJax = {
   #      child.set('style', style)
   #    self.style_p(child)
     
-  def text(self, txt, x, y, h_level=None, em=10, footer=False, text_color=None):
+  def text(self, txt, x, y, headlines, h_level=None, em=10, footer=False, text_color=None, markdown_format=False):
     text_div = ET.Element('div')
     self.current_page_div.append(text_div)
     self.x = x
@@ -897,10 +899,17 @@ MathJax = {
         if 'subtitle' in self.override_font_size:
           style = self.update_css_string(style, 'font-size', self.override_font_size['subtitle'])
       h_tag.set('style', style)
-    text_tag.text = txt
+    if markdown_format:
+      formatted = md_to_html(txt)
+      tree = fromstring(formatted)
+      for subtree in tree: # parser puts everything in an <html> root
+        text_tag.append(subtree)
+    else:
+      text_tag.text = txt
     if len(text_div) == 0 and text_div.text == '':
       text_div.text = ' ' # no break sspace
     self.y = self.y+em
+    self.fix_all_links([text_div], headlines)
     return True
 
   def add_link(self, *args, **kwargs):
@@ -939,7 +948,9 @@ MathJax = {
   def will_page_break(self, *args, **kwargs):
     return False
 
-  def image(self, file, x, y, w, h, crop_images=False, copy=True, link=None):
+  def image(self, file, x, y, w, h, crop_images=False, link=None):
+    print('crop', crop_images)
+    print('image', x, y, w, h, self.html_x(x), self.html_y(y), self.html_x(w), self.html_y(h))
     original_filename = file
     current_filename = file
     current_ext = os.path.splitext(current_filename)[1][1:]
@@ -947,7 +958,6 @@ MathJax = {
     style = ''
     already_copied = False
     is_video = is_video_link(file)
-    tmp_files_to_remove = []
     page_no_is_set = False
 
     if is_video:
@@ -959,87 +969,93 @@ MathJax = {
       media_tag.set('src', file)
     else:
       input_file = current_filename.split('#')[0]
-      extension = os.path.splitext(input_file)[1][1:]
+      target_filename_no_ext = os.path.join(self.graphics_dir,os.path.splitext(os.path.basename(original_filename))[0])
+      if page_no_is_set:
+        target_filename_no_ext += '-'+str(page_no)
       page_no = '0'
       if '#' in current_filename:
         page_no = current_filename.split('#')[1]
         page_no_is_set = True
-      if is_vector_format(current_filename) and not extension in treat_as_raster_images:
-        tmp_f = '/tmp/pymdslides_tmp_file'
-        tmp_f += '-'+str(time.time())+'.png'
+      if is_vector_format(current_filename) and not current_ext in treat_as_raster_images:
         command_is_chosen = False
-        #print(extension)
-        if extension == 'pdf' and shutil.which('pdf2svg') is not None:
-          tmp_f = os.path.splitext(tmp_f)[0]+'.svg'
-          command = 'pdf2svg {} {} {}'.format(input_file, tmp_f, int(page_no)+1) # page_no is zero-indexed
-          extension = 'svg'
-          current_ext = extension
+        #print(current_ext)
+        if current_ext == 'pdf' and shutil.which('pdf2svg') is not None:
+          target_extension = 'svg'
+          target_filename = target_filename_no_ext+'.'+current_ext
+          command = 'pdf2svg {} {} {}'.format(input_file, target_filename, int(page_no)+1) # page_no is zero-indexed
+          current_ext = target_extension
           command_is_chosen = True
-        elif extension == 'eps' and shutil.which('eps2svg') is not None:
-          tmp_f = os.path.splitext(tmp_f)[0]+'.svg'
-          command = 'eps2svg {} {}'.format(input_file, tmp_f)
-          extension = 'svg'
-          current_ext = extension
+        elif current_ext == 'eps' and shutil.which('eps2svg') is not None:
+          target_extension = 'svg'
+          target_filename = target_filename_no_ext+'.'+current_ext
+          command = 'eps2svg {} {}'.format(input_file, target_filename)
+          current_ext = target_extension
           command_is_chosen = True
         if not command_is_chosen:
-          command = 'convert -density 150 '+input_file+'['+page_no+'] '+tmp_f
-          extension = 'png'
-          current_ext = extension
+          target_extension = 'png'
+          target_filename = target_filename_no_ext+'.'+current_ext
+          command = 'convert -density 150 '+input_file+'['+page_no+'] '+target_filename
+          current_ext = target_extension
           command_is_chosen = True
         #print(command)
         os.system(command)
-        current_filename = tmp_f
-        tmp_files_to_remove.append(tmp_f)
-
-      if self.oversized_images == "DOWNSCALE" and self.resources_dir is not None:
-        #print(self.html_x(w), self.html_y(h))
-        width = float(self.html_x(w)[:-1])*.01
-        height = float(self.html_y(h)[:-1])*.01
-        if current_ext != 'svg':
-          with Image.open(current_filename) as im:
-            im_w, im_h = im.size
-            im_aspect = im_w/im_h
-            box_aspect = w/h
-            if im_aspect > box_aspect:
-              # image will be its own width
-              #print('im_aspect > box_aspect')
-              target_width_pixels = round(width*self.downscale_resolution_width)
-              target_height_pixels = round((1/im_aspect)*target_width_pixels)
+      else:
+        target_extension = current_ext
+        if current_ext in ['png', 'gif']:
+          target_extension = 'webp'
+        target_filename = target_filename_no_ext+'.'+target_extension
+        if self.oversized_images == "DOWNSCALE": # and self.graphics_dir is not None:
+          #print(self.html_x(w), self.html_y(h))
+          width = float(self.html_x(w)[:-1])*.01
+          height = float(self.html_y(h)[:-1])*.01
+          if current_ext not in ['svg', 'gif']:
+            with Image.open(current_filename) as im:
+              im_w, im_h = im.size
+              im_aspect = im_w/im_h
+              box_aspect = w/h
+              if im_aspect > box_aspect:
+                # image will be its own width
+                #print('im_aspect > box_aspect')
+                target_width_pixels = round(width*self.downscale_resolution_width)
+                target_height_pixels = round((1/im_aspect)*target_width_pixels)
+              else:
+                # image will be its own height
+                #print('im_aspect <= box_aspect')
+                target_height_pixels = round(height*self.downscale_resolution_height)
+                target_width_pixels = round(im_aspect*target_height_pixels)
+              #print('target_width_pixels, im_w', target_width_pixels, im_w)
+              if target_width_pixels < im_w*DOWNSCALE_SLACK:
+                print('image requires downscaling {}, {}x{} pixels'.format(os.path.basename(current_filename), target_width_pixels, target_height_pixels))
+                im = im.resize((target_width_pixels, target_height_pixels))
+                target_filename = target_filename_no_ext+ '-{}x{}'.format(target_width_pixels, target_height_pixels)+'.'+target_extension
+                print('target_filename', target_filename)
+                print('exists', os.path.exists(target_filename), 'overwrite', self.overwrite_images)
+                if not os.path.exists(target_filename) or self.overwrite_images:
+                  im.save(target_filename)
+                  print('saved image at ', target_filename)
+                else:
+                  print('reusing image at ',target_filename)
+                already_copied = True
+        if not already_copied:
+          print('exists', os.path.exists(target_filename), 'overwrite', self.overwrite_images)
+          if not os.path.exists(target_filename) or self.overwrite_images:
+            if target_extension != current_ext:
+              command = 'convert -define webp:lossless=false '+current_filename+' '+target_filename
+              #if target_extension == 'webp':
+              #  command = 'cwebp {} -o {}'.format(current_filename, target_filename)
+              if current_ext == 'gif' and target_extension == 'webp':
+                command = 'gif2webp {} -o {}'.format(current_filename, target_filename)
+              print(command)
+              os.system(command)
             else:
-              # image will be its own height
-              #print('im_aspect <= box_aspect')
-              target_height_pixels = round(height*self.downscale_resolution_height)
-              target_width_pixels = round(im_aspect*target_height_pixels)
-            #print('target_width_pixels, im_w', target_width_pixels, im_w)
-            if target_width_pixels < im_w*DOWNSCALE_SLACK:
-              #print('downscaling image',current_filename, target_width_pixels, target_height_pixels)
-              im = im.resize((target_width_pixels, target_height_pixels))
-              new_filename = os.path.join(self.resources_dir,os.path.basename(current_filename))
-              new_fn_no_ext,new_fn_ext = os.path.splitext(new_filename)
-              new_filename = new_fn_no_ext + '-{}-{}'.format(target_width_pixels, target_height_pixels)+new_fn_ext
-              im.save(new_filename)
-              #print('saved image at ', new_filename)
-              current_filename = new_filename
-              already_copied = True
-      if (copy or current_filename in tmp_files_to_remove) and not already_copied and self.resources_dir is not None:
-        if self.resources_dir == self.output_dir:
-          new_filename = os.path.join(self.output_dir, os.path.splitext(os.path.basename(original_filename))[0])
-          if page_no_is_set:
-            new_filename += '-'+str(page_no)
-          new_filename += '.'+current_ext
-          shutil.copyfile(current_filename, new_filename)
-          current_filename = new_filename
-        else:
-          new_filename = os.path.join(self.resources_dir,os.path.splitext(os.path.basename(original_filename))[0])
-          if page_no_is_set:
-            new_filename += '-'+str(page_no)
-          new_filename += '.'+current_ext
-          shutil.copyfile(current_filename, new_filename)
-          current_filename = new_filename
-      src_filename = current_filename
-      if self.resources_dir == self.output_dir:
-        src_filename = os.path.basename(current_filename)
-      media_tag.set('src', src_filename)
+              shutil.copyfile(current_filename, target_filename)
+              print('copied image to ', target_filename)
+          else:
+            print('reusing image at ',target_filename)
+        # strip base dir (container of index file):
+        src_filename = '/'.join(target_filename.split('/')[1:])
+        print('src_filename', src_filename)
+        media_tag.set('src', src_filename)
     style += 'position: absolute; left: {}; top: {}; width: {}; height: {};'.format(self.html_x(x), self.html_y(y), self.html_x(w), self.html_y(h))
     #print('image style',style)
     if crop_images == False:
@@ -1049,9 +1065,6 @@ MathJax = {
     media_tag.set('style', style)
     self.current_page_div.append(media_tag)
     self.set_xy(self.x, self.y+h)
-    for f in tmp_files_to_remove:
-      print('removing temp file', f)
-      os.remove(f)
     return True
 
   def rect_clip(self, *args, **kwargs):
@@ -1087,29 +1100,41 @@ MathJax = {
     for c in T:
       self.ensure_closing_tags(c)
 
-  def output(self, filename):
+  def set_onload(self):
+    if not self.onload_added:
+      loading_event_element = ET.Element('img')
+      loading_event_element.set('src', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z/C/HgAGgwJ/lK3Q6wAAAABJRU5ErkJggg==')
+      loading_event_element.set('style', 'visibility: hidden;')
+      loading_event_element.set('onload', 'gotoHash()')
+      self.body.append(loading_event_element)
+      self.onload_added = True
+
+  def output(self):
     #with open(args[0], 'w') as f:
     #  f.write(ET.tostring(self.html, encoding="unicode"))
     #tree = ET.ElementTree(self.html)
     #ET.indent(tree, space="\t", level=0)
 
     self.ensure_closing_tags(self.html)
+    self.set_onload()
 
-    with open(filename, 'w') as f:
+    print('writing file',self.html_output_filename)
+
+    with open(self.html_output_filename, 'w') as f:
       #s = ET.tostring(tree, xml_declaration=True, encoding="UTF-8", doctype="<!DOCTYPE html>")
       ET.indent(self.html, space="\t", level=0)
       s = ET.tostring(self.html, method='html', encoding="unicode")
       s = '<!DOCTYPE html>\n\n'+s
       f.write(s)
-    # TODO: index.html shutil.copyfile(filename, os.path.join(resources_dir, 'index.html'))
+    # TODO: index.html shutil.copyfile(filename, os.path.join(graphics_dir, 'index.html'))
     #tree.docinfo.doctype = '<!DOCTYPE html>'
     #tree.write(args[0], encoding="utf-8", xml_declaration=True)
     return True
 
 def md_to_html(md):
   md_, formulas_ = md_extract_formulas(md)
-  print(md_)
-  print(formulas_)
+  #print(md_)
+  #print(formulas_)
   #print('md_to_html:',md_)
   html = markdown(md_, extras=['cuddled-lists', 'tables'])
   final_output = md_reconstruct_math(html, formulas_)

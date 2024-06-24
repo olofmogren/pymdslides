@@ -29,9 +29,12 @@ rcParams['text.usetex'] = True
 
 pixel_per_mm = .15
 treat_as_raster_images = []
+image_formats_to_convert = {'svg':{'target_format':'jpg', 'command':'convert -density 150'}, 'gif': {'target_format':'jpg', 'command':'convert -density 150'}, 'png': {'target_format':'jpg', 'command':'convert -density 150'}}
+DOWNSCALE_SLACK = 0.75
+
 
 class backend_pdf:
-  def __init__(self, input_file, formatting, script_home, output_file):
+  def __init__(self, input_file, formatting, script_home):
     self.pdf = FPDF(orientation = 'P', unit = 'mm', format = (formatting['dimensions']['page_width'], formatting['dimensions']['page_height']))
     self.pdf.set_font('Helvetica', '', formatting['dimensions']['font_size_standard'])
     if 'fonts' in formatting:
@@ -67,6 +70,9 @@ class backend_pdf:
           fname = os.path.join(script_home, fname)
         print('self.pdf.add_font(footer',fname,')')
         self.pdf.add_font('footer', '', fname)
+        self.pdf.add_font('footer', 'b', fname)
+        self.pdf.add_font('footer', 'i', fname)
+        self.pdf.add_font('footer', 'bi', fname)
       if formatting['fonts']['font_file_title']:
         fname = formatting['fonts']['font_file_title']
         if os.path.exists(os.path.join(script_home, fname)):
@@ -78,8 +84,6 @@ class backend_pdf:
         self.pdf.add_font('title', 'bi', fname)
     self.pdf.set_text_color(0,0,0)
     #self.pdf.set_image_filter("FlatDecode")
-    self.pdf.oversized_images = "DOWNSCALE"
-    print('{}: self.pdf.oversized_images_ratio {}'.format(input_file, self.pdf.oversized_images_ratio))
 
     self.input_file_name = input_file
     #self.x = formatting['dimensions']['page_margins']['x0']
@@ -90,6 +94,12 @@ class backend_pdf:
     self.logo_path = None
     self.page_width = formatting['dimensions']['page_width']
     self.page_height = formatting['dimensions']['page_height']
+
+    self.pdf.oversized_images = "DOWNSCALE"
+    self.oversized_images = "DOWNSCALE"
+    self.downscale_resolution_width = 3840
+    self.downscale_resolution_height = self.downscale_resolution_width*(self.page_height/self.page_width)
+    print(self.oversized_images, self.downscale_resolution_width, self.downscale_resolution_height)
 
   def set_logo(self, logo):
     self.logo_path = logo
@@ -125,11 +135,12 @@ class backend_pdf:
   def set_fill_color(self, color):
     return self.pdf.set_fill_color(color)
 
-  def set_font(self, *args, **kwargs):
-    return self.pdf.set_font(*args, **kwargs)
+  def set_font(self, category, style, font_file):
+    print('set_font',category, style, font_file)
+    return self.pdf.set_font(category, style, font_file)
 
-  def set_font_size(self, size):
-    return self.pdf.set_font(size)
+  def set_font_size(self, category, size):
+    return self.pdf.set_font_size(size)
 
   def get_string_width(self, text):
     return self.pdf.get_string_width(text)
@@ -198,10 +209,10 @@ class backend_pdf:
     with self.pdf.local_context(fill_opacity=background_opacity, stroke_opacity=border_opacity):
       self.pdf.rect(x, y, w, h, round_corners=True, style="DF", corner_radius=10)
     #print('self.pdf.rect(',box_offsets['x0'], box_offsets['y0'], box_offsets['w'], box_offsets['h'], 'round_corners=True', 'style="D"',')')
-    x_line = x+10 # internal_margin.
-    y_line = y+10 # internal_margin.
+    x = x+10 # internal_margin.
+    y = y+10 # internal_margin.
     for line in lines:
-      x, y = self.position_and_render_text_line(line, x_line, y_line, offsets, headlines, text_color, align, column_divider=False)
+      x, y = self.position_and_render_text_line(line, x, y, offsets, headlines, text_color, align, column_divider=False)
     return x, y+h
 
 
@@ -222,7 +233,7 @@ class backend_pdf:
     return x, y
 
   def position_and_render_text_line(self, line, x, y, offsets, headlines, text_color, align='left', column_divider=False):
-    origin_x = x
+    origin_y = y
     if align == 'center':
       # CENTERING LINE:
       width = self.get_text_line_width(line, x, y, offsets, headlines, text_color, column_divider)
@@ -233,7 +244,9 @@ class backend_pdf:
       print('offsets', offsets)
       x = x+centering_offset
     x, y, width = self.render_text_line(line, x, y, offsets, headlines, text_color, align, column_divider)
-    x = origin_x
+    diff_y = y-origin_y
+    line_spacing = round(diff_y*0.8)
+    y = y+line_spacing
     return x, y
 
   def render_text_line(self, line, x, y, offsets, headlines, text_color, align='left', column_divider=False):
@@ -484,8 +497,14 @@ class backend_pdf:
     y += height_mm-y_offset # TODO: also give the y_offset space above the line
     return x,y,width_mm
 
-  def text(self, txt, x, y, h_level=None, em=10, footer=False):
+  def text(self, txt, x, y, h_level=None, headlines=[], markdown_format=False, em=10, footer=False):
     #self.pdf.set_font() set footer font?
+    if markdown_format:
+      txt = markdown_to_text(txt)
+      #self.pdf.set_xy(x,y)
+      #return self.pdf.cell(txt=txt, markdown=True)
+    #else:
+      #return self.pdf.text(txt=txt, x=x, y=y+em)
     return self.pdf.text(txt=txt, x=x, y=y+em)
 
   def add_link(self, *args, **kwargs):
@@ -508,18 +527,53 @@ class backend_pdf:
 
   def image(self, image, x, y, w, h, crop_images=False, *args, **kwargs):
     raster_images = False
+    w_frac = w/self.page_width
+    h_frac = h/self.page_height
     ret_val = False
     image_to_display = image
     location = {'x0': x, 'y0': y, 'w': w, 'h': h}
-    if is_vector_format(image) and not os.path.splitext(image)[1] in treat_as_raster_images:
-      if raster_images:
+    extension = os.path.splitext(image)[1][1:]
+    extension = extension.split('#')[0]
+    if not is_vector_format(image_to_display) and self.oversized_images == "DOWNSCALE":
+      with Image.open(image_to_display) as im:
+        im_w, im_h = im.size
+        im_aspect = im_w/im_h
+        box_aspect = w/h
+        if im_aspect > box_aspect:
+          # image will be its own width
+          #print('im_aspect > box_aspect')
+          target_width_pixels = round(w_frac*self.downscale_resolution_width)
+          target_height_pixels = round((1/im_aspect)*target_width_pixels)
+        else:
+          # image will be its own height
+          #print('im_aspect <= box_aspect')
+          target_height_pixels = round(h_frac*self.downscale_resolution_height)
+          target_width_pixels = round(im_aspect*target_height_pixels)
+        #print('target_width_pixels, im_w', target_width_pixels, im_w)
+        if target_width_pixels < im_w*DOWNSCALE_SLACK:
+          print('image requires downscaling {}, {}x{} pixels'.format(os.path.basename(image_to_display), target_width_pixels, target_height_pixels))
+          im = im.resize((target_width_pixels, target_height_pixels))
+          tmp_f = '/tmp/pymdslides_tmp_file'
+          tmp_f += '-'+str(time.time())+'.'
+          if extension in image_formats_to_convert.keys():
+            extension = image_formats_to_convert[extension]['target_format']
+          tmp_f += extension
+          print(im.mode)
+          if (im.mode == 'RGBA' or im.mode == 'P') and extension == 'jpg':
+            im = im.convert('RGB')
+          im.save(tmp_f)
+          print('saved tmp image at ', tmp_f)
+          image_to_display = tmp_f
+    if is_vector_format(image_to_display) and not extension in treat_as_raster_images:
+      if raster_images or extension in image_formats_to_convert.keys():
         tmp_f = '/tmp/pymdslides_tmp_file'
-        tmp_f += '-'+str(time.time())+'.png'
+        tmp_f += '-'+str(time.time())+'.'+image_formats_to_convert[extension]['target_format']
         input_file = image.split('#')[0]
         page_no = '0'
         if '#' in image:
           page_no = image.split('#')[1]
-        command = 'convert -density 150 '+input_file+'['+page_no+'] '+tmp_f
+        command = image_formats_to_convert[extension]['command']+' '+input_file+'['+page_no+'] '+tmp_f
+        #command = 'convert -density 150 '+input_file+'['+page_no+'] '+tmp_f
         print(command)
         os.system(command)
         image_to_display = tmp_f
@@ -527,7 +581,7 @@ class backend_pdf:
         # this will be postponed as we need a workaround using pdfrw and cairosvg.
         self.vector_graphics.setdefault(self.pages_count-1, [])
         self.vector_graphics[self.pages_count-1].append((image, location))
-    if is_vector_format(image):
+    if is_vector_format(image_to_display):
       return ret_val
 
     if crop_images:
@@ -683,7 +737,11 @@ class backend_pdf:
 
 
 
-  def output(self, output_file):
+  def output(self):
+    output_file = '.'.join(self.input_file_name.split('.')[:-1])+'.pdf'
+
+    print('writing file',output_file)
+
     ret_val = self.pdf.output(output_file)
     if len(self.vector_graphics):
       self.put_vector_images_on_pdf(output_file, self.vector_graphics)
