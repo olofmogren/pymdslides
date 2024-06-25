@@ -29,7 +29,8 @@ rcParams['text.usetex'] = True
 
 pixel_per_mm = .15
 treat_as_raster_images = []
-image_formats_to_convert = {'svg':{'target_format':'jpg', 'command':'convert -density 150'}, 'gif': {'target_format':'jpg', 'command':'convert -density 150'}, 'png': {'target_format':'jpg', 'command':'convert -density 150'}}
+image_formats_to_convert = {'svg':{'target_format':'png', 'command':'convert -density 150'}}
+#image_formats_to_convert = {'svg':{'target_format':'png', 'command':'convert -density 150'}, 'gif': {'target_format':'jpg', 'command':'convert -density 150'}, 'png': {'target_format':'jpg', 'command':'convert -density 150'}}
 DOWNSCALE_SLACK = 0.75
 
 
@@ -96,7 +97,7 @@ class backend_pdf:
     self.page_height = formatting['dimensions']['page_height']
 
     self.pdf.oversized_images = "DOWNSCALE"
-    self.oversized_images = "DOWNSCALE"
+    #self.oversized_images = "DOWNSCALE"
     self.downscale_resolution_width = 3840
     self.downscale_resolution_height = self.downscale_resolution_width*(self.page_height/self.page_width)
     print(self.oversized_images, self.downscale_resolution_width, self.downscale_resolution_height)
@@ -534,7 +535,9 @@ class backend_pdf:
     location = {'x0': x, 'y0': y, 'w': w, 'h': h}
     extension = os.path.splitext(image)[1][1:]
     extension = extension.split('#')[0]
-    if not is_vector_format(image_to_display) and self.oversized_images == "DOWNSCALE":
+    #if not is_vector_format(image_to_display) and self.oversized_images == "DOWNSCALE":
+    # doesn't seem to improve file size.
+    if False:
       with Image.open(image_to_display) as im:
         im_w, im_h = im.size
         im_aspect = im_w/im_h
