@@ -279,8 +279,6 @@ border: 1px #ccc solid;
     default_javascript = '''
 var currentPageId = "page-1";
 var blackPageVar = false;
-var lastPage = 0;
-
 function blackPage() {
   if (blackPageVar) {
     document.getElementById('black_div').style.visibility = 'hidden';
@@ -379,14 +377,6 @@ document.onkeydown = function(event) {
     case 34:
       // page down
       nextPage();
-    break;
-    case 35:
-      // end
-      goToPage('page-'+lastPage);
-    break;
-    case 36:
-      // home
-      goToPage('page-0');
     break;
     case 37:
       // left arrow
@@ -1110,9 +1100,6 @@ MathJax = {
     for c in T:
       self.ensure_closing_tags(c)
 
-  def set_last_page_js(self, html_source_code):
-    return html_source_code.replace('var lastPage = 0;', 'var lastPage = {};'.format(self.pages_count));
-
   def set_onload(self):
     if not self.onload_added:
       loading_event_element = ET.Element('img')
@@ -1138,7 +1125,6 @@ MathJax = {
       ET.indent(self.html, space="\t", level=0)
       s = ET.tostring(self.html, method='html', encoding="unicode")
       s = '<!DOCTYPE html>\n\n'+s
-      s = self.set_last_page_js(s)
       f.write(s)
     # TODO: index.html shutil.copyfile(filename, os.path.join(graphics_dir, 'index.html'))
     #tree.docinfo.doctype = '<!DOCTYPE html>'
