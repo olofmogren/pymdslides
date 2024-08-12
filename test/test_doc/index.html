@@ -5,40 +5,45 @@
 		<style>
 @font-face {
   font-family: Code Pro Bold;
-  src: url('CodePro-Bold.woff2') format('woff2');
+  src: url('resources/CodePro-Bold.woff2') format('woff2');
 }
 @font-face {
   font-family: Lato Regular;
-  src: url('Lato-Regular.woff2') format('woff2');
+  src: url('resources/Lato-Regular.woff2') format('woff2');
 }
 @font-face {
   font-family: Roboto Mono Regular;
-  src: url('RobotoMono-Regular.woff2') format('woff2');
+  src: url('resources/RobotoMono-Regular.woff2') format('woff2');
 }
 body {
   overflow: hidden;
   background-color: black;
   font-family: Lato Regular, Arial, Sans-Serif;
+  font-weight: normal;
 }
 h1 {
   font-family: Code Pro Bold, Arial, Sans-Serif;
   /*font-size: 4cqw;*/
-  font-size: 5.250cqw;
+  font-size: 4.800cqw;
+  font-weight: normal;
 }
 h2 {
   font-family: Code Pro Bold, Arial, Sans-Serif;
   /*font-size: 2.8cqw;*/
-  font-size: 2.917cqw;
+  font-size: 2.667cqw;
+  font-weight: normal;
 }
 h3 {
   font-family: Code Pro Bold, Arial, Sans-Serif;
   /*font-size: 2cqw;*/
-  font-size: 2.083cqw;
+  font-size: 1.905cqw;
+  font-weight: normal;
 }
 h4 {
   font-family: Code Pro Bold, Arial, Sans-Serif;
   /*font-size: 2cqw;*/
-  font-size: 2.083cqw;
+  font-size: 1.905cqw;
+  font-weight: normal;
 }
 .page_visible {
   visibility: visible;
@@ -69,7 +74,7 @@ div.subcontainer {
   container-type: size;
   width: 100%;
   height: 100%;
-  font-size: 2.479cqw;
+  font-size: 2.267cqw;
 }
 div.black_div {
   background-color: #000;
@@ -100,7 +105,7 @@ div.loading_div {
 div.l4_box {
   position: absolute;
   border-radius: 1cqw;
-  overflow: hidden; 
+  overflow: hidden;
 }
 div.l4_box p {
   margin: 1.2cqw;
@@ -108,10 +113,24 @@ div.l4_box p {
 div.footer {
   font-family: Roboto Mono Regular, Arial, Sans-Serif;
   /*font-size: 1cqw;*/
-  font-size: 1.021cqw;
+  font-size: 0.933cqw;
+  font-weight: normal;
+}
+ul {
+  margin-top: 0;
+  border: 1px;
+}
+li {
+  margin-top: 0em;
+  margin-bottom: 0.3em;
+}
+p {
+  margin-top: 0;
+  margin-bottom: 0.3em;
 }
 /*div {
 border: 1px #ccc solid;
+/* for debugging: borders for all divs */
 }
 p {
 border: 1px #ccc solid;
@@ -139,6 +158,8 @@ border: 1px #ccc solid;
 		<script>
 var currentPageId = "page-1";
 var blackPageVar = false;
+var lastPage = 19;
+
 function blackPage() {
   if (blackPageVar) {
     document.getElementById('black_div').style.visibility = 'hidden';
@@ -161,7 +182,7 @@ function mouseuphandler(e) {
     nextPage()
   }
 }
-function pageLoad(){
+function gotoHash(){
   var currentPageId = "page-1";
   newPageId = window.location.hash.substring(1);
   if (newPageId == "") {
@@ -207,6 +228,10 @@ function nextPage(){
 }
 function goToPage(pageId){
   //alert(pageId);
+  if (!document.getElementById(pageId)){
+    //alert(pageId+": page not found")
+    pageId = "page-1";
+  }
   document.getElementById(currentPageId).classList.remove('page_visible');
   document.getElementById(currentPageId).classList.add('page_hidden');
   document.getElementById(pageId).classList.remove('page_hidden');
@@ -233,6 +258,14 @@ document.onkeydown = function(event) {
     case 34:
       // page down
       nextPage();
+    break;
+    case 35:
+      // end
+      goToPage('page-'+lastPage);
+    break;
+    case 36:
+      // home
+      goToPage('page-0');
     break;
     case 37:
       // left arrow
@@ -280,46 +313,49 @@ MathJax = {
   }
 };
 </script>
-		<script id="MathJax-script" async="true" src="/home/mogren/sync/code/mogren/pymdslides/mathjax/tex-mml-svg.js"> </script>
-		<meta generator='pymdslides, git commit: "2800e782bf09edb2d15dec65926c390456a46709" https://github.com/olofmogren/pymdslides/'>
-		<meta generation-date="2024-06-11 11:36:06.507623+02:00">
+		<script id="MathJax-script" async="true" src="resources/tex-mml-svg.js"> </script>
+		<meta generator='pymdslides, git commit: "0dacd7d23af649aee71236f79be8ab567abc7b33" https://github.com/olofmogren/pymdslides/'>
+		<meta generation-date="2024-08-12 13:53:07.119480+02:00">
 	</head>
-	<body onload="pageLoad();">
+	<body onhashchange="gotoHash();">
 		<div class="black_div" id="black_div"> </div>
 		<div class="loading_div">
 			<div>
 				<p>Loading.</p>
 				<p>PYMD slides requires a javascript-enabled browser.</p>
+				<p>Usage. Arrow buttons, page up/down, or space to navigate. F for fullscreen. B for blank. Click on leftmost quarter for previous slide, the rest for next.</p>
 			</div>
 		</div>
 		<div id="page-1" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<img src="neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 6.250%; top: 24.444%; width: 27.708%; height: 28.148%; object-fit: contain;">
-				<img src="testing_image.jpg" style="position: absolute; left: 36.042%; top: 24.444%; width: 27.708%; height: 28.148%; object-fit: contain;">
-				<img src="neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 65.833%; top: 24.444%; width: 27.708%; height: 28.148%; object-fit: contain;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;  font-family: ; font-size: 5.250cqw; ">Test doc</h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff; font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<img src="graphics/neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 0.000%; top: 0.000%; width: 48.958%; height: 48.148%; object-fit: contain;">
+				<img src="graphics/testing_image.jpg" style="position: absolute; left: 51.042%; top: 0.000%; width: 48.958%; height: 48.148%; object-fit: contain;">
+				<img src="graphics/neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 0.000%; top: 51.852%; width: 48.958%; height: 48.148%; object-fit: contain;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">Test doc</h1>
 				</div>
-				<div style="position: absolute; left: 6.250%; top: 63.704%; width: 87.500%; height: 28.148%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<ul>
 						<li>layout: center</li>
 						<li>Three images</li>
 						<li>And the final bullet</li>
 					</ul>
 				</div>
-				<div class="footer" id="footer" style="position: absolute; left: 0.833%; top: 96.296%; color: #646464ff; font-size: 1.021cqw; ">Nice footer about the author and event.</div>
+				<div class="footer" id="footer" style="position: absolute; left: 0.833%; top: 96.296%; color: #646464ff;font-size: 0.933cqw; ">
+					<p>Nice footer about the author and event.</p>
+				</div>
 			</div>
 		</div>
 		<div id="page-2" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<img src="monamie.jpg" style="position: absolute; left: 0.000%; top: 0.000%; width: 50.000%; height: 50.000%; object-fit: cover;">
-				<img src="testing_image.jpg" style="position: absolute; left: 0.000%; top: 50.000%; width: 50.000%; height: 50.000%; object-fit: cover;">
-				<div style="position: absolute; left: 56.250%; top: 8.148%; width: 37.500%; height: 11.481%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;  font-family: ; font-size: 5.250cqw; ">Image left</h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff; font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<img src="graphics/monamie.jpg" style="position: absolute; left: 0.000%; top: 0.000%; width: 50.000%; height: 50.000%; object-fit: cover;">
+				<img src="graphics/testing_image.jpg" style="position: absolute; left: 0.000%; top: 50.000%; width: 50.000%; height: 50.000%; object-fit: cover;">
+				<div style="position: absolute; left: 56.250%; top: 8.148%; width: 37.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">Image left</h1>
 				</div>
-				<div style="position: absolute; left: 56.250%; top: 24.444%; width: 37.500%; height: 67.407%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 51.042%; top: 24.444%; width: 42.708%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<ul>
 						<li>layout: image<em>left</em>half</li>
 						<li>packed_images: true</li>
@@ -329,13 +365,13 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-3" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<img src="testing_image.jpg" style="position: absolute; left: 6.250%; top: 24.444%; width: 37.500%; height: 67.407%; object-fit: cover;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;  font-family: ; font-size: 5.250cqw; ">Image left small</h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff; font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<img src="graphics/testing_image.jpg" style="position: absolute; left: 6.250%; top: 24.444%; width: 37.500%; height: 67.407%; object-fit: cover;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">Image left small</h1>
 				</div>
-				<div style="position: absolute; left: 56.250%; top: 24.444%; width: 37.500%; height: 67.407%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 51.042%; top: 24.444%; width: 42.708%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<ul>
 						<li>layout: image<em>left</em>small</li>
 						<li>Another bullet</li>
@@ -345,13 +381,13 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-4" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<img src="testing_image.jpg" style="position: absolute; left: 50.000%; top: 0.000%; width: 50.000%; height: 100.000%; object-fit: cover;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 37.500%; height: 11.481%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;  font-family: ; font-size: 5.250cqw; ">Image right</h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff; font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<img src="graphics/testing_image.jpg" style="position: absolute; left: 50.000%; top: 0.000%; width: 50.000%; height: 100.000%; object-fit: cover;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 37.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">Image right</h1>
 				</div>
-				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 37.500%; height: 67.407%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 42.708%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<ul>
 						<li>One bullet</li>
 						<li>Another bullet</li>
@@ -361,13 +397,13 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-5" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<img src="testing_image.jpg" style="position: absolute; left: 56.250%; top: 24.444%; width: 37.500%; height: 67.407%; object-fit: cover;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;  font-family: ; font-size: 5.250cqw; ">Image right small</h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff; font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<img src="graphics/testing_image.jpg" style="position: absolute; left: 56.250%; top: 24.444%; width: 37.500%; height: 67.407%; object-fit: cover;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">Image right small</h1>
 				</div>
-				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 37.500%; height: 67.407%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 42.708%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<ul>
 						<li>One bullet</li>
 						<li>Another bullet</li>
@@ -377,13 +413,13 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-6" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<img src="testing_image.jpg" style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 28.148%; object-fit: contain;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;  font-family: ; font-size: 5.250cqw; ">Center again, not cropping</h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff; font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<img src="graphics/testing_image.jpg" style="position: absolute; left: 0.000%; top: 0.000%; width: 100.000%; height: 100.000%; object-fit: contain;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">Center again, not cropping</h1>
 				</div>
-				<div style="position: absolute; left: 6.250%; top: 63.704%; width: 87.500%; height: 28.148%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<ul>
 						<li>One bullet</li>
 						<li>Another bullet</li>
@@ -393,13 +429,13 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-7" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<img src="testing_image.jpg" style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 28.148%; object-fit: cover;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;  font-family: ; font-size: 5.250cqw; ">Image center</h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff; font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<img src="graphics/testing_image-608x608.jpg" style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 28.148%; object-fit: cover;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">Image center</h1>
 				</div>
-				<div style="position: absolute; left: 6.250%; top: 63.704%; width: 87.500%; height: 28.148%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 6.250%; top: 63.704%; width: 87.500%; height: 28.148%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<ul>
 						<li>Default cropping</li>
 						<li>Another bullet</li>
@@ -409,13 +445,13 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-8" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<img src="testing_image.jpg" style="position: absolute; left: 0.000%; top: 0.000%; width: 100.000%; height: 100.000%; object-fit: cover;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #00008cff; ">
-					<h1 style="margin: 0; padding: 0;  font-family: ; font-size: 5.250cqw; ">Image fill</h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff; font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<img src="graphics/testing_image.jpg" style="position: absolute; left: 0.000%; top: 0.000%; width: 100.000%; height: 100.000%; object-fit: cover;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #00008cff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">Image fill</h1>
 				</div>
-				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #00008cff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #00008cff; font-size: 2.267cqw; ">
 					<ul>
 						<li>The image_fill layout puts image as background, with or without text.</li>
 						<li>Another bullet: $a = \frac{b}{c}$</li>
@@ -425,12 +461,12 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-9" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #000000ff;font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #ffffffff; ">
-					<h1 style="margin: 0; padding: 0;  font-family: ; font-size: 5.250cqw; ">Black slide</h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #000000ff; font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #ffffffff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">Black slide</h1>
 				</div>
-				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #ffffffff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #ffffffff; font-size: 2.267cqw; ">
 					<ul>
 						<li>Only bullet</li>
 					</ul>
@@ -438,28 +474,28 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-10" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;  font-family: ; font-size: 5.250cqw; ">Latex and formatting</h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff; font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">Latex and formatting</h1>
 				</div>
-				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<p>A bit <strong>of italic</strong>
 					</p>
 					<p>$a = \frac{b}{c}$</p>
 					<p>And <strong>a bold thing</strong>, too.</p>
 					<p>Testing <a href="http://mogren.one/" onmouseup="stopProp(event);">linking (mogren.one)</a>, too.</p>
-					<p>A text, following with a $a = \frac{b}{c}$</p>
+					<p>A text, following with a $\frac{formula}{divisor}$</p>
 				</div>
 			</div>
 		</div>
 		<div id="page-11" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #00008cff; ">
-					<h1 style="margin: 0; padding: 0;  font-family: ; font-size: 5.250cqw; ">Some more strangeness</h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff; font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #00008cff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">Some more strangeness</h1>
 				</div>
-				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #00008cff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #00008cff; font-size: 2.267cqw; ">
 					<p>$a = \left(\frac{\frac{\sum_i^N X_i^2}{y}}{c}\right)$</p>
 					<ul>
 						<li>
@@ -470,14 +506,14 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-12" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;  font-family: ; font-size: 5.250cqw; ">Another formula</h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff; font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">Another formula</h1>
 				</div>
-				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<ul>
-						<li>A small one $a = b * c$</li>
+						<li>A small one $a = b * c$ this time.</li>
 					</ul>
 					<hr>
 					<ul>
@@ -487,18 +523,18 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-13" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;  font-family: ; font-size: 5.250cqw; ">Two column layout</h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;  font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">Two column layout</h1>
 				</div>
-				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 41.667%; height: 67.407%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 41.667%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<ul>
 						<li>First bullet</li>
 						<li>Second bullet</li>
 					</ul>
 				</div>
-				<div style="position: absolute; left: 50.000%; top: 24.444%; width: 41.667%; height: 67.407%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 50.000%; top: 24.444%; width: 41.667%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<ul>
 						<li>Third bullet</li>
 						<li>Fourth bullet</li>
@@ -507,27 +543,27 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-14" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;    font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<img src="neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 6.250%; top: 24.444%; width: 29.167%; height: 28.148%; object-fit: contain;">
-				<img src="testing_image.jpg" style="position: absolute; left: 35.417%; top: 24.444%; width: 29.167%; height: 28.148%; object-fit: contain;">
-				<img src="neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 64.583%; top: 24.444%; width: 29.167%; height: 28.148%; object-fit: contain;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;  font-family: ; font-size: 5.250cqw; ">Three column layout</h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;   font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<img src="graphics/neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 0.000%; top: 0.000%; width: 50.000%; height: 50.000%; object-fit: contain;">
+				<img src="graphics/testing_image.jpg" style="position: absolute; left: 50.000%; top: 0.000%; width: 50.000%; height: 50.000%; object-fit: contain;">
+				<img src="graphics/neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 0.000%; top: 50.000%; width: 50.000%; height: 50.000%; object-fit: contain;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">Three column layout</h1>
 				</div>
-				<div style="position: absolute; left: 6.250%; top: 63.704%; width: 27.083%; height: 28.148%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 27.083%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<ul>
 						<li>First bullet</li>
 						<li>Second bullet</li>
 					</ul>
 				</div>
-				<div style="position: absolute; left: 35.417%; top: 63.704%; width: 27.083%; height: 28.148%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 35.417%; top: 24.444%; width: 27.083%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<ul>
 						<li>Third bullet</li>
 						<li>Fourth bullet</li>
 					</ul>
 				</div>
-				<div style="position: absolute; left: 64.583%; top: 63.704%; width: 27.083%; height: 28.148%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 64.583%; top: 24.444%; width: 27.083%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<ul>
 						<li>Fifth bullet</li>
 						<li>Sixth bullet</li>
@@ -536,37 +572,37 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-15" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 37.500%; height: 11.481%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;  font-family: ; font-size: 5.250cqw; ">Thank you </h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff; font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 37.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">Thank you </h1>
 				</div>
-				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 37.500%; height: 67.407%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 42.708%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<p> </p>
 				</div>
 			</div>
 		</div>
 		<div id="page-16" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<img src="testing_image.jpg" style="position: absolute; left: 50.000%; top: 0.000%; width: 50.000%; height: 100.000%; object-fit: cover;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 37.500%; height: 11.481%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;    font-family: ; font-size: 5.250cqw; ">Level four headlines</h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff; font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<img src="graphics/testing_image.jpg" style="position: absolute; left: 50.000%; top: 0.000%; width: 50.000%; height: 100.000%; object-fit: cover;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 37.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">Level four headlines</h1>
 				</div>
-				<div style="position: absolute; left: 9.583%; top: 15.556%; width: 37.500%; height: 7.778%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h2 style="margin: 0; padding: 0;">create boxes</h2>
+				<div style="position: absolute; left: 9.583%; top: 15.556%; width: 37.500%; height: 7.778%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; ">
+					<h2 style="margin: 0; padding: 0;font-size: 2.667cqw; ">create boxes</h2>
 				</div>
-				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 37.500%; height: 67.407%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 42.708%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<p> </p>
 				</div>
-				<div class="l4_box" style="left: 25.000%; top: 32.593%; width: 50.000%; text-align: start; z-index: 4; margin: 0; padding: -1cqw .5cqw .5cqw .5cqw; background-color: #e6f0ffbf; border: 1px #c8c8c8bf solid; color: #000000ff; ">
+				<div class="l4_box" style="left: 20.000%; top: -9.630%; width: 60.000%; text-align: start; z-index: 4; margin: 0; padding: -1cqw .5cqw .5cqw .5cqw; background-color: #e6f0ffbf; border: 1px #c8c8c8bf solid; color: #000000ff; ">
 					<p>Writing a lot of cool things in a box.</p>
 					<p>Maths: $\mathbf{x} = \sum_{i=0}^N x_i$</p>
 				</div>
-				<div class="l4_box" style="left: 25.000%; top: 61.481%; width: 50.000%; text-align: start; z-index: 4; margin: 0; padding: -1cqw .5cqw .5cqw .5cqw; background-color: #e6f0ffbf; border: 1px #c8c8c8bf solid; color: #000000ff; ">
+				<div class="l4_box" style="left: 20.000%; top: 7.407%; width: 60.000%; text-align: start; z-index: 4; margin: 0; padding: -1cqw .5cqw .5cqw .5cqw; background-color: #e6f0ffbf; border: 1px #c8c8c8bf solid; color: #000000ff; ">
 					<p>We can fill a page with boxes.</p>
 				</div>
-				<div class="l4_box" style="left: 25.000%; top: 78.519%; width: 50.000%; text-align: start; z-index: 4; margin: 0; padding: -1cqw .5cqw .5cqw .5cqw; background-color: #e6f0ffbf; border: 1px #c8c8c8bf solid; color: #000000ff; ">
+				<div class="l4_box" style="left: 20.000%; top: 24.444%; width: 60.000%; text-align: start; z-index: 4; margin: 0; padding: -1cqw .5cqw .5cqw .5cqw; background-color: #e6f0ffbf; border: 1px #c8c8c8bf solid; color: #000000ff; ">
 					<p>
 						<strong>Really fill.</strong>
 					</p>
@@ -574,12 +610,12 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-17" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;  font-family: ; font-size: 5.250cqw; ">And a page can overflow</h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff; font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">And a page can overflow</h1>
 				</div>
-				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<ul>
 						<li>But</li>
 						<li>Then</li>
@@ -600,30 +636,31 @@ MathJax = {
 			</div>
 		</div>
 		<div id="page-18" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<img src="testing_image.jpg" style="position: absolute; left: 0.000%; top: 0.000%; width: 50.000%; height: 100.000%; object-fit: cover;">
-				<img src="neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 50.000%; top: 0.000%; width: 50.000%; height: 100.000%; object-fit: cover;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #ff6464ff; ">
-					<h1 style="margin: 0; padding: 0;  font-family: ; font-size: 5.250cqw; ">Images side-by-side</h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff; font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<img src="graphics/testing_image.jpg" style="position: absolute; left: 0.000%; top: 0.000%; width: 50.000%; height: 100.000%; object-fit: cover;">
+				<img src="graphics/neurons-in-space-explosion-detailed.jpg" style="position: absolute; left: 50.000%; top: 0.000%; width: 50.000%; height: 100.000%; object-fit: cover;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #ff6464ff; ">
+					<h1 style="margin: 0; padding: 0; font-size: 4.800cqw; ">Images side-by-side</h1>
 				</div>
-				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: start; overflow: hidden; text-wrap: nowrap; color: #ff6464ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #ff6464ff; font-size: 2.267cqw; ">
 					<p> </p>
 				</div>
 			</div>
 		</div>
 		<div id="page-19" class="page_div page_hidden" style="background-color: white; ">
-			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff;font-family: ; font-size: 2.479cqw; ">
-				<img src="rise.png" style="position: absolute; left: 94.375%; top: 87.407%; width: 4.792%; height: 11.111%; z-index: 5;">
-				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff; ">
-					<h1 style="margin: 0; padding: 0;font-family: ; font-size: 5.250cqw; "> </h1>
+			<div class="subcontainer" onmouseup="mouseuphandler(event);" style=" background-color: #ffffffff; font-size: 2.267cqw; ">
+				<img src="graphics/rise.png" style="position: absolute; left: 95.000%; top: 88.889%; width: 4.167%; height: 9.630%; z-index: 5;">
+				<div style="position: absolute; left: 6.250%; top: 8.148%; width: 87.500%; height: 11.481%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; ">
+					<h1 style="margin: 0; padding: 0;font-size: 4.800cqw; "> </h1>
 				</div>
-				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: center; overflow: hidden; text-wrap: nowrap; color: #000000ff;  font-size: 2.479cqw; ">
+				<div style="position: absolute; left: 6.250%; top: 24.444%; width: 87.500%; height: 67.407%; text-align: start; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: #000000ff; font-size: 2.267cqw; ">
 					<p>
 						<a href="#" onclick='localPageLink("page-10", event); return false;' onmouseup="stopProp(event);">Thank you!</a>
 					</p>
 				</div>
 			</div>
 		</div>
+		<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z/C/HgAGgwJ/lK3Q6wAAAABJRU5ErkJggg==" style="visibility: hidden;" onload="gotoHash()">
 	</body>
 </html>
