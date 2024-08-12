@@ -851,7 +851,7 @@ if __name__ == "__main__":
   backend.set_title(document_title)
   backend.set_producer('pymdslides, git commit: '+git_commit+' https://github.com/olofmogren/pymdslides/')
   backend.set_creator('pymdslides, git commit: '+git_commit+' https://github.com/olofmogren/pymdslides/')
-  backend.set_creation_date(datetime.now(datetime.utcnow().astimezone().tzinfo))
+  backend.set_creation_date(datetime.now(datetime.now().astimezone().tzinfo))
 
   backend.output()
 
