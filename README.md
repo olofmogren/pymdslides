@@ -82,6 +82,10 @@ All colors can also take color shorthands in place of the RGB list mentioned abo
 
 Also supported is html hex syntax: "#ffffff" (quotes required; forgetting them leads to cryptic error message).
 
+## Dependencies
+
+* For eps support with html output: svg2eps in the geg package
+
 ## Why another tool
 
 Because it's fun. And because it helps me make slides in somewhat clean markdown that looks the way I need them to. **Why not Beamer with Markdown?** - Because, even though it was easy to create clean Markdown files for simple presentations, when you wanted images or other layout, the Markdown is soon cluttered with layout formatting, and sections of Latex syntax.
