@@ -991,23 +991,23 @@ MathJax = {
         #print(current_ext)
         if current_ext == 'pdf' and shutil.which('pdf2svg') is not None:
           target_extension = 'svg'
-          target_filename = target_filename_no_ext+'.'+current_ext
+          target_filename = target_filename_no_ext+'.'+target_extension
           command = 'pdf2svg {} {} {}'.format(input_file, target_filename, int(page_no)+1) # page_no is zero-indexed
           current_ext = target_extension
           command_is_chosen = True
         elif current_ext == 'eps' and shutil.which('eps2svg') is not None:
           target_extension = 'svg'
-          target_filename = target_filename_no_ext+'.'+current_ext
+          target_filename = target_filename_no_ext+'.'+target_extension
           command = 'eps2svg {} {}'.format(input_file, target_filename)
           current_ext = target_extension
           command_is_chosen = True
         if not command_is_chosen:
           target_extension = 'png'
-          target_filename = target_filename_no_ext+'.'+current_ext
+          target_filename = target_filename_no_ext+'.'+target_extension
           command = 'convert -density 150 '+input_file+'['+page_no+'] '+target_filename
           current_ext = target_extension
           command_is_chosen = True
-        #print(command)
+        print('converting image:',command)
         os.system(command)
       else:
         target_extension = current_ext
@@ -1062,10 +1062,10 @@ MathJax = {
               print('copied image to ', target_filename)
           else:
             print('reusing image at ',target_filename)
-        # strip base dir (container of index file):
-        src_filename = '/'.join(target_filename.split('/')[1:])
-        print('src_filename', src_filename)
-        media_tag.set('src', src_filename)
+      # strip base dir (container of index file):
+      src_filename = '/'.join(target_filename.split('/')[1:])
+      print('src_filename', src_filename)
+      media_tag.set('src', src_filename)
     style += 'position: absolute; left: {}; top: {}; width: {}; height: {};'.format(self.html_x(x), self.html_y(y), self.html_x(w), self.html_y(h))
     #print('image style',style)
     if crop_images == False:

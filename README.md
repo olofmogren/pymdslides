@@ -1,6 +1,6 @@
 # pymdslides
 
-Script to generate slides in html or pdf from markdown input. Can be configured with custom fonts and has a number of built in layouts. Supports Latex formulas via mathjax or matplotlib. pymdslides is built with lxml and pyfpdf as backends. For other dependencies, look at dependencies.txt.
+Script to generate slides in html from markdown input. Can be configured with custom fonts and has a number of built in layouts. Supports Latex formulas via mathjax or matplotlib. pymdslides is built with lxml as backend. For other dependencies, look at dependencies.txt. The option to output pdf using a pyfpdf backend exists but is not actively maintained.
 
 Level 1 headlines generates a new page. Each document can have a configuration inside a yaml section, and each page can have one specific configuration which is specified insida a yaml section after the headline.
 
