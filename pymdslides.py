@@ -675,13 +675,19 @@ def get_alignment(formatting, section='text'):
   return formatting.get(key, 'left')  
 
 if __name__ == "__main__":
-  md_file = sys.argv[1]
+  md_file = ''
+  for i in range(len(sys.argv)-1, 0, -1):
+    md_file = sys.argv[i]
+    if md_file.startswith('--') or md_file == 'pdf' or md_file == 'html':
+      continue
+    else:
+      break
   print('md_file:',md_file)
   output_format = 'html'
   if not md_file.endswith('.md'):
     md_file += '.md'
-  if len(sys.argv) > 2 and not sys.argv[2].startswith('-'):
-    output_format = sys.argv[2]
+  if len(sys.argv) > 2 and sys.argv[len(sys.argv)-1] in ['pdf', 'html']:
+    output_format = sys.argv[len(sys.argv)-1]
   output_file = '.'.join(md_file.split('.')[:-1])+'.'+output_format
   if output_format == 'html':
     output_file = os.path.join('.'.join(md_file.split('.')[:-1]),'index.'+output_format)

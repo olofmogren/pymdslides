@@ -85,6 +85,7 @@ Also supported is html hex syntax: "#ffffff" (quotes required; forgetting them l
 ## Dependencies
 
 * For eps support with html output: svg2eps in the geg package
+* For animated gifs etc with html output, you should install the webp package.
 
 ## Why another tool
 

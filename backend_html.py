@@ -259,17 +259,25 @@ border: 1px #ccc solid;
     margin: 0;
 }}
 @media print {{
+  @page {{
+    size: 160mm 90mm;
+  }}
+  body {{ margin:0px; }}
   div.page_div {{
     position: relative;
     visibility: visible;
-    page-break-after: always;
+    break-after: always;
+    break-inside: avoid;
+    display: table;
+    width: 200mm;
+    height: 112.5mm;
   }}
-.page_visible {{
-  visibility: visible;
-}}
-.page_hidden {{
-  visibility: visible;
-}}
+  .page_visible {{
+    visibility: visible;
+  }}
+  .page_hidden {{
+    visibility: visible;
+  }}
 }}
 '''.format(self.font_names['title'], self.font_files['title'], self.font_names['standard'], self.font_files['standard'], self.font_names['footer'], self.font_files['footer'], self.font_names['standard'], self.font_names['title'], self.font_sizes['title'], self.font_names['title'], self.font_sizes['subtitle'], self.font_names['title'], self.font_sizes['subtitle_l3'], self.font_names['title'], self.font_sizes['subtitle_l4'], self.font_sizes['standard'], self.font_names['footer'], self.font_sizes['footer'])
     #print('name',self.font_names['footer'])
