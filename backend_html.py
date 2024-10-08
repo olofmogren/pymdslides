@@ -268,7 +268,9 @@ border: 1px #ccc solid;
     print-color-adjust: exact !important;           /* Firefox 97+, Safari 15.4+ */
 
   }}
-  body {{ margin:0px; }}
+  body {{
+    margin:0px;
+  }}
   div.page_div {{
     position: relative;
     visibility: visible;

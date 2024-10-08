@@ -842,8 +842,17 @@ if __name__ == "__main__":
 
   if '--pdf' in sys.argv:
     pdf_file = '.'.join(md_file.split('.')[:-1])+'.pdf'
-    command = 'chromium --headless --print-to-pdf={} {}'.format(pdf_file, output_file) # output_file is the html target.
-    print(command)
-    os.system(command)
+    executables = ['chromium','chrome',None]
+    for executable in executables:
+      if executable is None:
+        print('error: found no supported browser to generate pdf. supported: {}'.format(executables[:-1]))
+        break
+      if shutil.which(executable) is not None:
+        print('{} exists on the system')
+        break
+    if executable is not None:
+      command = 'chromium --headless --print-to-pdf={} {}'.format(pdf_file, output_file) # output_file is the html target.
+      print(command)
+      os.system(command)
 
 
