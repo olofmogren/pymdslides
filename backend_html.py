@@ -219,6 +219,7 @@ div.loading_div {{
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 1vw;
 }}
 div.l4_box {{
   position: absolute;
@@ -261,6 +262,11 @@ border: 1px #ccc solid;
 @media print {{
   @page {{
     size: 160mm 90mm;
+    margin: 0;
+    -webkit-print-color-adjust: exact !important;   /* Chrome, Safari 6 – 15.3, Edge */
+    color-adjust: exact !important;                 /* Firefox 48 – 96 */
+    print-color-adjust: exact !important;           /* Firefox 97+, Safari 15.4+ */
+
   }}
   body {{ margin:0px; }}
   div.page_div {{
@@ -269,8 +275,10 @@ border: 1px #ccc solid;
     break-after: always;
     break-inside: avoid;
     display: table;
-    width: 200mm;
-    height: 112.5mm;
+    width: 160mm;
+    height: 90mm;
+/*    width: 200mm;
+    height: 112.5mm;*/
   }}
   .page_visible {{
     visibility: visible;
@@ -489,10 +497,16 @@ MathJax = {
     loading_span2 = ET.Element('p')
     loading_span2.text = 'PYMD slides requires a javascript-enabled browser.'
     loading_span3 = ET.Element('p')
-    loading_span3.text = 'Usage. Arrow buttons, page up/down, or space to navigate. F for fullscreen. B for blank. Click on leftmost quarter for previous slide, the rest for next.'
+    loading_span3.text = 'Usage: Arrow buttons, page up/down, or space to navigate.'
+    loading_span4 = ET.Element('p')
+    loading_span4.text = 'F for fullscreen. B for blank. Click on leftmost quarter for previous slide, the rest for next.'
+    loading_span5 = ET.Element('p')
+    loading_span5.text = 'More info: see https://github.com/olofmogren/pymdslides/ .'
     loading_subdiv.append(loading_span1)
     loading_subdiv.append(loading_span2)
     loading_subdiv.append(loading_span3)
+    loading_subdiv.append(loading_span4)
+    loading_subdiv.append(loading_span5)
     self.body.append(loading_div)
     self.overwrite_images = overwrite_images
     self.onload_added = False

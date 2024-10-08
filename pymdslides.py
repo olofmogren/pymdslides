@@ -29,9 +29,7 @@ import yaml
 import copy
 #from markdown_it import MarkdownIt
 #from mdit_plain.renderer import RendererPlain
-from backend_pdf import backend_pdf
 from backend_html import backend_html
-from fpdf import FPDF # still required for vector images on pdf backend.
 
 import copy
 
@@ -103,21 +101,9 @@ def dump_page_content(backend, content, formatting, headlines, raster_images, tr
         alt_texts.append(alt_text)
       elif l4_subtitle is not None:
         #print('l4 line:', line)
-        if backend.get_format() == 'pdf':
-          if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
-	    # a hack. assumes that if we have selected a font, it is a unicode enabled font, with the bullet symbol.
-            if line.startswith('* '):
-              # pretty bullet symbols
-              line = '• '+line[2:]
         l4_lines.append(line)
       else:
       #elif line:
-        if backend.get_format() == 'pdf':
-          if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
-          # a hack. assumes that if we have selected a font, it is a unicode enabled font, with the bullet symbol.
-            if line.startswith('* '):
-              # pretty bullet symbols
-              line = '• '+line[2:]
         if line == '__':
           print('{}:{}: ignoring empty line "{}"'.format(md_file_stripped, line_number, line))
         else:
@@ -154,7 +140,6 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
     packed_images = False
   print('{}:{}: crop_images {}'.format(md_file_stripped, line_number, formatting['crop_images']))
   put_images_on_page(md_file_stripped, line_number, images, alt_texts, formatting['layout'], len(lines) > 0, packed_images, formatting['crop_images'], background=False, raster_images=raster_images, treat_as_raster_images=treat_as_raster_images)
-  # vector images are saved to put on the page using pdf_rw afterwards.
   
   offsets = get_offsets(formatting['layout'])
   x = offsets['x0']
@@ -678,7 +663,7 @@ if __name__ == "__main__":
   md_file = ''
   for i in range(len(sys.argv)-1, 0, -1):
     md_file = sys.argv[i]
-    if md_file.startswith('--') or md_file == 'pdf' or md_file == 'html':
+    if md_file.startswith('--'):
       continue
     else:
       break
@@ -686,11 +671,7 @@ if __name__ == "__main__":
   output_format = 'html'
   if not md_file.endswith('.md'):
     md_file += '.md'
-  if len(sys.argv) > 2 and sys.argv[len(sys.argv)-1] in ['pdf', 'html']:
-    output_format = sys.argv[len(sys.argv)-1]
-  output_file = '.'.join(md_file.split('.')[:-1])+'.'+output_format
-  if output_format == 'html':
-    output_file = os.path.join('.'.join(md_file.split('.')[:-1]),'index.'+output_format)
+  output_file = os.path.join('.'.join(md_file.split('.')[:-1]),'index.'+output_format)
   md_file_stripped = md_file.split('/')[-1]
 
   raster_images = False
@@ -811,9 +792,7 @@ if __name__ == "__main__":
     document_title = 'PYMD HTML SLIDES'
   # INITIALIZE FPDF:
 
-  if output_format == 'pdf':
-    backend = backend_pdf(md_file_stripped, formatting, script_home)
-  elif output_format == 'html':
+  if output_format == 'html':
     backend = backend_html(md_file_stripped, formatting, script_home, overwrite_images=overwrite_images)
   else:
     raise Exception('Dude! Unknown output format: '+output_format)
@@ -860,5 +839,11 @@ if __name__ == "__main__":
   backend.set_creation_date(datetime.now(datetime.now().astimezone().tzinfo))
 
   backend.output()
+
+  if '--pdf' in sys.argv:
+    pdf_file = '.'.join(md_file.split('.')[:-1])+'.pdf'
+    command = 'chromium --headless --print-to-pdf={} {}'.format(pdf_file, output_file) # output_file is the html target.
+    print(command)
+    os.system(command)
 
 
