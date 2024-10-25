@@ -851,8 +851,21 @@ if __name__ == "__main__":
         print('{} exists on the system')
         break
     if executable is not None:
-      command = 'chromium --headless --print-to-pdf={} {}'.format(pdf_file, output_file) # output_file is the html target.
+      command = '{} --headless --print-to-pdf={} {}'.format(executable, pdf_file, output_file) # output_file is the html target.
       print(command)
       os.system(command)
+
+      executables = ['pdfjam',None]
+      for executable in executables:
+        if executable is None:
+          print('error: did not find pdfjam. will not be able to fix margins in generated pdf.')
+          break
+        if shutil.which(executable) is not None:
+          print('{} exists on the system')
+          break
+      if executable is not None:
+        command = 'pdfjam --keepinfo --papersize \'{159mm,89mm}\' --trim \'2mm 1mm 1mm 1mm\' --clip true --suffix "fixed-margins" {}'.format(pdf_file)
+        print(command)
+        os.system(command)
 
 
