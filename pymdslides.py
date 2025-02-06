@@ -30,6 +30,7 @@ import copy
 #from markdown_it import MarkdownIt
 #from mdit_plain.renderer import RendererPlain
 from backend_html import backend_html
+from backend_odp import backend_odp
 
 import copy
 
@@ -663,12 +664,14 @@ if __name__ == "__main__":
   md_file = ''
   for i in range(len(sys.argv)-1, 0, -1):
     md_file = sys.argv[i]
-    if md_file.startswith('--'):
+    if md_file.startswith('--') or md_file == 'html' or md_file == 'odp':
       continue
     else:
       break
   print('md_file:',md_file)
   output_format = 'html'
+  if 'odp' in sys.argv:
+    output_format = 'odp'
   if not md_file.endswith('.md'):
     md_file += '.md'
   output_file = os.path.join('.'.join(md_file.split('.')[:-1]),'index.'+output_format)
@@ -793,7 +796,11 @@ if __name__ == "__main__":
   # INITIALIZE FPDF:
 
   if output_format == 'html':
+    print('backend_html('+md_file_stripped, formatting, script_home+', overwrite_images='+str(overwrite_images)+')')
     backend = backend_html(md_file_stripped, formatting, script_home, overwrite_images=overwrite_images)
+  elif output_format == 'odp':
+    print('backend_odp('+md_file_stripped, formatting, script_home+', overwrite_images='+str(overwrite_images)+')')
+    backend = backend_odp(md_file_stripped, formatting, script_home, overwrite_images=overwrite_images)
   else:
     raise Exception('Dude! Unknown output format: '+output_format)
 

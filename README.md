@@ -82,9 +82,17 @@ All colors can also take color shorthands in place of the RGB list mentioned abo
 
 Also supported is html hex syntax: "#ffffff" (quotes required; forgetting them leads to cryptic error message).
 
+## Usage
+
+* --overwrite-images
+* --raster_images
+* --pdf currently unsupported
+
 ## Dependencies
 
-* For eps support with html output: svg2eps in the geg package
+* You will want the convert tool from Imagemagick
+* For eps support with html output: svg2eps in the geg package (without it, eps images will be converted to png)
+* For pdf support with html output: svg2eps in the pdf2svg package (without it, pdf pages will be converted to png)
 * For animated gifs etc with html output, you should install the webp package.
 
 ## Why another tool

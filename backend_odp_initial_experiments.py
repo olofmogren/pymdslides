@@ -20,13 +20,343 @@ from PIL import Image
 from urllib.parse import urlparse
 import requests
 
+
+
 treat_as_raster_images = ['svg']
 DOWNSCALE_SLACK = 0.75
 
+#template_preface = '''<?xml version="1.0" encoding="UTF-8"?>
+template_preface = '''<?xml version="1.0"?>
+<office:document-content xmlns:anim="urn:oasis:names:tc:opendocument:xmlns:animation:1.0" xmlns:smil="urn:oasis:names:tc:opendocument:xmlns:smil-compatible:1.0" xmlns:presentation="urn:oasis:names:tc:opendocument:xmlns:presentation:1.0" xmlns:css3t="http://www.w3.org/TR/css3-text/" xmlns:grddl="http://www.w3.org/2003/g/data-view#" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xforms="http://www.w3.org/2002/xforms" xmlns:dom="http://www.w3.org/2001/xml-events" xmlns:script="urn:oasis:names:tc:opendocument:xmlns:script:1.0" xmlns:form="urn:oasis:names:tc:opendocument:xmlns:form:1.0" xmlns:math="http://www.w3.org/1998/Math/MathML" xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:ooo="http://openoffice.org/2004/office" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" xmlns:ooow="http://openoffice.org/2004/writer" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:drawooo="http://openoffice.org/2010/draw" xmlns:oooc="http://openoffice.org/2004/calc" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:calcext="urn:org:documentfoundation:names:experimental:calc:xmlns:calcext:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:of="urn:oasis:names:tc:opendocument:xmlns:of:1.2" xmlns:tableooo="http://openoffice.org/2009/table" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:dr3d="urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0" xmlns:rpt="http://openoffice.org/2005/report" xmlns:formx="urn:openoffice:names:experimental:ooxml-odf-interop:xmlns:form:1.0" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" xmlns:chart="urn:oasis:names:tc:opendocument:xmlns:chart:1.0" xmlns:officeooo="http://openoffice.org/2009/office" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" xmlns:loext="urn:org:documentfoundation:names:experimental:office:xmlns:loext:1.0" xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0" xmlns:field="urn:openoffice:names:experimental:ooo-ms-interop:xmlns:field:1.0" office:version="1.3">
+  <office:scripts/>
+  <office:font-face-decls>
+    <style:font-face style:name="DejaVu Sans" svg:font-family="'DejaVu Sans'" style:font-family-generic="system" style:font-pitch="variable"/>
+    <style:font-face style:name="Liberation Sans" svg:font-family="'Liberation Sans'" style:font-family-generic="roman" style:font-pitch="variable"/>
+    <style:font-face style:name="Liberation Serif" svg:font-family="'Liberation Serif'" style:font-family-generic="roman" style:font-pitch="variable"/>
+    <style:font-face style:name="Noto Sans" svg:font-family="'Noto Sans'" style:font-family-generic="roman" style:font-pitch="variable"/>
+    <style:font-face style:name="Noto Sans CJK SC" svg:font-family="'Noto Sans CJK SC'" style:font-family-generic="system" style:font-pitch="variable"/>
+    <style:font-face style:name="Noto Sans Devanagari" svg:font-family="'Noto Sans Devanagari'" style:font-family-generic="system" style:font-pitch="variable"/>
+    <style:font-face style:name="Noto Sans1" svg:font-family="'Noto Sans'" style:font-family-generic="system" style:font-pitch="variable"/>
+  </office:font-face-decls>
+  <office:automatic-styles>
+    <style:style style:name="dp1" style:family="drawing-page">
+      <style:drawing-page-properties presentation:background-visible="true" presentation:background-objects-visible="true" presentation:display-footer="true" presentation:display-page-number="false" presentation:display-date-time="true"/>
+    </style:style>
+    <style:style style:name="dp2" style:family="drawing-page">
+      <style:drawing-page-properties presentation:display-header="true" presentation:display-footer="true" presentation:display-page-number="false" presentation:display-date-time="true"/>
+    </style:style>
+    <style:style style:name="gr1" style:family="graphic">
+      <style:graphic-properties style:protect="size" loext:decorative="false"/>
+    </style:style>
+    <style:style style:name="gr2" style:family="graphic" style:parent-style-name="Object_20_with_20_no_20_fill_20_and_20_no_20_line">
+      <style:graphic-properties draw:textarea-horizontal-align="center" draw:textarea-vertical-align="middle" draw:color-mode="standard" draw:luminance="0%" draw:contrast="0%" draw:gamma="100%" draw:red="0%" draw:green="0%" draw:blue="0%" fo:clip="rect(0cm, 0cm, 0cm, 0cm)" draw:image-opacity="100%" style:mirror="none" loext:decorative="false"/>
+    </style:style>
+    <style:style style:name="pr1" style:family="presentation" style:parent-style-name="Default-title">
+      <style:graphic-properties fo:min-height="2.629cm" loext:decorative="false"/>
+      <style:paragraph-properties style:writing-mode="lr-tb"/>
+    </style:style>
+    <style:style style:name="pr2" style:family="presentation" style:parent-style-name="Default-subtitle">
+      <style:graphic-properties draw:fill-color="#ffffff" fo:min-height="9.134cm" loext:decorative="false"/>
+      <style:paragraph-properties style:writing-mode="lr-tb"/>
+    </style:style>
+    <style:style style:name="pr3" style:family="presentation" style:parent-style-name="Default-notes">
+      <style:graphic-properties draw:fill-color="#ffffff" fo:min-height="13.364cm" loext:decorative="false"/>
+      <style:paragraph-properties style:writing-mode="lr-tb"/>
+    </style:style>
+    <style:style style:name="pr4" style:family="presentation" style:parent-style-name="Default-outline1">
+      <style:graphic-properties fo:min-height="8.884cm" loext:decorative="false"/>
+      <style:paragraph-properties style:writing-mode="lr-tb"/>
+    </style:style>
+    <style:style style:name="P1" style:family="paragraph">
+      <loext:graphic-properties draw:fill-color="#ffffff"/>
+    </style:style>
+    <style:style style:name="P2" style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="0.5cm" fo:margin-bottom="0cm"/>
+    </style:style>
+    <style:style style:name="P3" style:family="paragraph">
+      <style:paragraph-properties fo:text-align="center"/>
+    </style:style>
+    <text:list-style style:name="L1">
+      <text:list-level-style-bullet text:level="1" text:bullet-char="●">
+        <style:list-level-properties text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="2" text:bullet-char="●">
+        <style:list-level-properties text:space-before="0.6cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="3" text:bullet-char="●">
+        <style:list-level-properties text:space-before="1.2cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="4" text:bullet-char="●">
+        <style:list-level-properties text:space-before="1.8cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="5" text:bullet-char="●">
+        <style:list-level-properties text:space-before="2.4cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="6" text:bullet-char="●">
+        <style:list-level-properties text:space-before="3cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="7" text:bullet-char="●">
+        <style:list-level-properties text:space-before="3.6cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="8" text:bullet-char="●">
+        <style:list-level-properties text:space-before="4.2cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="9" text:bullet-char="●">
+        <style:list-level-properties text:space-before="4.8cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="10" text:bullet-char="●">
+        <style:list-level-properties text:space-before="5.4cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+    </text:list-style>
+    <text:list-style style:name="L2">
+      <text:list-level-style-bullet text:level="1" text:bullet-char="●">
+        <style:list-level-properties text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="2" text:bullet-char="●">
+        <style:list-level-properties text:space-before="0.6cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="3" text:bullet-char="●">
+        <style:list-level-properties text:space-before="1.2cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="4" text:bullet-char="●">
+        <style:list-level-properties text:space-before="1.8cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="5" text:bullet-char="●">
+        <style:list-level-properties text:space-before="2.4cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="6" text:bullet-char="●">
+        <style:list-level-properties text:space-before="3cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="7" text:bullet-char="●">
+        <style:list-level-properties text:space-before="3.6cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="8" text:bullet-char="●">
+        <style:list-level-properties text:space-before="4.2cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="9" text:bullet-char="●">
+        <style:list-level-properties text:space-before="4.8cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="10" text:bullet-char="●">
+        <style:list-level-properties text:space-before="5.4cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+    </text:list-style>
+    <text:list-style style:name="L3">
+      <text:list-level-style-bullet text:level="1" text:bullet-char="●">
+        <style:list-level-properties text:space-before="0.3cm" text:min-label-width="0.9cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="2" text:bullet-char="–">
+        <style:list-level-properties text:space-before="1.5cm" text:min-label-width="0.9cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="75%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="3" text:bullet-char="●">
+        <style:list-level-properties text:space-before="2.8cm" text:min-label-width="0.8cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="4" text:bullet-char="–">
+        <style:list-level-properties text:space-before="4.2cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="75%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="5" text:bullet-char="●">
+        <style:list-level-properties text:space-before="5.4cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="6" text:bullet-char="●">
+        <style:list-level-properties text:space-before="6.6cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="7" text:bullet-char="●">
+        <style:list-level-properties text:space-before="7.8cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="8" text:bullet-char="●">
+        <style:list-level-properties text:space-before="9cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="9" text:bullet-char="●">
+        <style:list-level-properties text:space-before="10.2cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="10" text:bullet-char="●">
+        <style:list-level-properties text:space-before="11.4cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+    </text:list-style>
+    <text:list-style style:name="L4">
+      <text:list-level-style-bullet text:level="1" text:bullet-char="●">
+        <style:list-level-properties text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="2" text:bullet-char="●">
+        <style:list-level-properties text:space-before="0.6cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="3" text:bullet-char="●">
+        <style:list-level-properties text:space-before="1.2cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="4" text:bullet-char="●">
+        <style:list-level-properties text:space-before="1.8cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="5" text:bullet-char="●">
+        <style:list-level-properties text:space-before="2.4cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="6" text:bullet-char="●">
+        <style:list-level-properties text:space-before="3cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="7" text:bullet-char="●">
+        <style:list-level-properties text:space-before="3.6cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="8" text:bullet-char="●">
+        <style:list-level-properties text:space-before="4.2cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="9" text:bullet-char="●">
+        <style:list-level-properties text:space-before="4.8cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+      <text:list-level-style-bullet text:level="10" text:bullet-char="●">
+        <style:list-level-properties text:space-before="5.4cm" text:min-label-width="0.6cm"/>
+        <style:text-properties fo:font-family="OpenSymbol" style:use-window-font-color="true" fo:font-size="45%"/>
+      </text:list-level-style-bullet>
+    </text:list-style>
+  </office:automatic-styles>
+  <office:body>
+'''
+template_postface = '''
+  </office:body>
+</office:document-content>
+'''
+template_pages='''
+    <office:presentation>
+      <draw:page draw:name="page1" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL1T0">
+        <draw:frame presentation:style-name="pr1" draw:layer="layout" svg:width="25.199cm" svg:height="2.629cm" svg:x="1.4cm" svg:y="0.628cm" presentation:class="title">
+          <draw:text-box>
+            <text:p>Main presentation title OLOF</text:p>
+          </draw:text-box>
+        </draw:frame>
+        <draw:frame presentation:style-name="pr2" draw:text-style-name="P1" draw:layer="layout" svg:width="25.199cm" svg:height="9.134cm" svg:x="1.4cm" svg:y="3.685cm" presentation:class="subtitle">
+          <draw:text-box>
+            <text:p>First slide text, OLOF</text:p>
+          </draw:text-box>
+        </draw:frame>
+        <presentation:notes draw:style-name="dp2">
+          <draw:page-thumbnail draw:style-name="gr1" draw:layer="layout" svg:width="19.798cm" svg:height="11.136cm" svg:x="0.6cm" svg:y="2.257cm" draw:page-number="1" presentation:class="page"/>
+          <draw:frame presentation:style-name="pr3" draw:text-style-name="P1" draw:layer="layout" svg:width="16.799cm" svg:height="13.364cm" svg:x="2.1cm" svg:y="14.107cm" presentation:class="notes" presentation:placeholder="true">
+            <draw:text-box/>
+          </draw:frame>
+        </presentation:notes>
+      </draw:page>
+      <draw:page draw:name="page2" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL2T1">
+        <draw:frame presentation:style-name="pr1" draw:layer="layout" svg:width="25.199cm" svg:height="2.629cm" svg:x="1.4cm" svg:y="0.628cm" presentation:class="title">
+          <draw:text-box>
+            <text:p>Second slide title OLOF</text:p>
+          </draw:text-box>
+        </draw:frame>
+        <draw:frame presentation:style-name="pr4" draw:layer="layout" svg:width="25.199cm" svg:height="9.134cm" svg:x="1.4cm" svg:y="3.685cm" presentation:class="outline">
+          <draw:text-box>
+            <text:list text:style-name="L3">
+              <text:list-item>
+                <text:p>Second slide, first bullet, OLOF</text:p>
+              </text:list-item>
+              <text:list-item>
+                <text:p text:style-name="P2">Second slide, second bullet, OLOF</text:p>
+              </text:list-item>
+            </text:list>
+          </draw:text-box>
+        </draw:frame>
+        <presentation:notes draw:style-name="dp2">
+          <draw:page-thumbnail draw:style-name="gr1" draw:layer="layout" svg:width="19.798cm" svg:height="11.136cm" svg:x="0.6cm" svg:y="2.257cm" draw:page-number="2" presentation:class="page"/>
+          <draw:frame presentation:style-name="pr3" draw:text-style-name="P1" draw:layer="layout" svg:width="16.799cm" svg:height="13.364cm" svg:x="2.1cm" svg:y="14.107cm" presentation:class="notes" presentation:placeholder="true">
+            <draw:text-box/>
+          </draw:frame>
+        </presentation:notes>
+      </draw:page>
+      <draw:page draw:name="page3" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL2T1">
+        <draw:frame presentation:style-name="pr1" draw:layer="layout" svg:width="25.199cm" svg:height="2.629cm" svg:x="1.4cm" svg:y="0.628cm" presentation:class="title">
+          <draw:text-box>
+            <text:p>Third slide OLOF</text:p>
+          </draw:text-box>
+        </draw:frame>
+        <draw:frame presentation:style-name="pr4" draw:layer="layout" svg:width="25.199cm" svg:height="9.134cm" svg:x="1.4cm" svg:y="3.685cm" presentation:class="outline">
+          <draw:text-box>
+            <text:list text:style-name="L3">
+              <text:list-item>
+                <text:p>Third slide, first bullet OLOF</text:p>
+              </text:list-item>
+              <text:list-item>
+                <text:p>Third slide, second bullet OLOF</text:p>
+              </text:list-item>
+            </text:list>
+          </draw:text-box>
+        </draw:frame>
+        <presentation:notes draw:style-name="dp2">
+          <draw:page-thumbnail draw:style-name="gr1" draw:layer="layout" svg:width="19.798cm" svg:height="11.136cm" svg:x="0.6cm" svg:y="2.257cm" draw:page-number="3" presentation:class="page"/>
+          <draw:frame presentation:style-name="pr3" draw:text-style-name="P1" draw:layer="layout" svg:width="16.799cm" svg:height="13.364cm" svg:x="2.1cm" svg:y="14.107cm" presentation:class="notes" presentation:placeholder="true">
+            <draw:text-box/>
+          </draw:frame>
+        </presentation:notes>
+      </draw:page>
+      <draw:page draw:name="page4" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL2T1">
+        <draw:frame presentation:style-name="pr1" draw:layer="layout" svg:width="25.199cm" svg:height="2.629cm" svg:x="1.4cm" svg:y="0.628cm" presentation:class="title">
+          <draw:text-box>
+            <text:p>Fourth slide OLOF</text:p>
+          </draw:text-box>
+        </draw:frame>
+        <draw:frame presentation:style-name="pr4" draw:layer="layout" svg:width="12.53cm" svg:height="9.134cm" svg:x="1.4cm" svg:y="3.685cm" presentation:class="outline" presentation:user-transformed="true">
+          <draw:text-box>
+            <text:list text:style-name="L3">
+              <text:list-item>
+                <text:p>Fourth slide first bullet OLOF</text:p>
+              </text:list-item>
+            </text:list>
+          </draw:text-box>
+        </draw:frame>
+        <draw:frame draw:style-name="gr2" draw:text-style-name="P3" draw:layer="layout" svg:width="7.796cm" svg:height="7.796cm" svg:x="16.964cm" svg:y="4.981cm">
+          <draw:image xlink:href="Pictures/10000001000003EC000003EC334A6A99.png" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad" draw:mime-type="image/png">
+            <text:p/>
+          </draw:image>
+        </draw:frame>
+        <presentation:notes draw:style-name="dp2">
+          <draw:page-thumbnail draw:style-name="gr1" draw:layer="layout" svg:width="19.798cm" svg:height="11.136cm" svg:x="0.6cm" svg:y="2.257cm" draw:page-number="4" presentation:class="page"/>
+          <draw:frame presentation:style-name="pr3" draw:text-style-name="P1" draw:layer="layout" svg:width="16.799cm" svg:height="13.364cm" svg:x="2.1cm" svg:y="14.107cm" presentation:class="notes" presentation:placeholder="true">
+            <draw:text-box/>
+          </draw:frame>
+        </presentation:notes>
+      </draw:page>
+      <presentation:settings presentation:mouse-visible="false"/>
+    </office:presentation>
+'''
 
-class backend_html:
+class backend_odp:
   def __init__(self, input_file, formatting, script_home, overwrite_images=False):
-    self.html_output_filename = os.path.join(os.path.splitext(input_file)[0],'index.html')
+    # (title_font_color='black', subtitle_font_color='#666666', background_image='', background_color='white', grad_start_color='', grad_end_color='', grad_angle_deg=0, grad_draw_style='linear', show_date=False, date_font_color='#666666', footer='', footer_font_color='#666666', show_page_numbers=True, page_number_font_color='#666666')
+
+    self.html_output_filename = os.path.join(os.path.splitext(input_file)[0]+'-odp','content.xml')
     self.output_dir = os.path.dirname(self.html_output_filename)
     #print('output_dir',self.output_dir)
     if len(self.output_dir) > 0 and self.output_dir[-1] != '/':
@@ -118,401 +448,36 @@ class backend_html:
       mathjax_url = mathjax_local_file
       print('mathjax_url',mathjax_local_file)
       
-      
+    #self.et_root = ET.fromstring(template_preface+template_postface)
+    #q = self.et_root.xpath('/office:document-content/office:body')
+    #print(q)
+    #self.et_body = q[0]
+    #self.et_presentation = ET.Element(ET.QName("urn:oasis:names:tc:opendocument:xmlns:office:1.0", 'presentation'))
+    #self.et_body.append(self.et_presentation)
 
-    screen_css = '''
-@font-face {{
-  font-family: {};
-  src: url('{}') format('woff2');
-}}
-@font-face {{
-  font-family: {};
-  src: url('{}') format('woff2');
-}}
-@font-face {{
-  font-family: {};
-  src: url('{}') format('woff2');
-}}
-body {{
-  overflow: hidden;
-  background-color: black;
-  font-family: {}, Arial, Sans-Serif;
-  font-weight: normal;
-}}
-h1 {{
-  font-family: {}, Arial, Sans-Serif;
-  /*font-size: 4cqw;*/
-  font-size: {};
-  font-weight: normal;
-}}
-h2 {{
-  font-family: {}, Arial, Sans-Serif;
-  /*font-size: 2.8cqw;*/
-  font-size: {};
-  font-weight: normal;
-}}
-h3 {{
-  font-family: {}, Arial, Sans-Serif;
-  /*font-size: 2cqw;*/
-  font-size: {};
-  font-weight: normal;
-}}
-h4 {{
-  font-family: {}, Arial, Sans-Serif;
-  /*font-size: 2cqw;*/
-  font-size: {};
-  font-weight: normal;
-}}
-.page_visible {{
-  visibility: visible;
-}}
-.page_hidden {{
-  visibility: hidden;
-}}
-div.page_div {{
-  background-color: #fff;
-}}
-div.page_div {{
-  background-color: #fff;
-  width: 100vw;
-  height: 56.25vw; /* height:width ratio = 9/16 = .5625  */
-  max-height: 100vh;
-  max-width: 177.78vh; /* 16/9 = 1.778 */
-  margin: auto;
-  position: absolute;
-  top:0;
-  bottom:0; /* vertical center */
-  left:0;
-  right:0; /* horizontal center */'
-  container-type: size;
-  overflow: hidden;
-  z-index: 2;
-}}
-div.subcontainer {{
-  container-type: size;
-  width: 100%;
-  height: 100%;
-  font-size: {};
-}}
-div.black_div {{
-  background-color: #000;
-  color: #fff;
-  position: absolute;
-  top:0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  visibility: hidden;
-  z-index: 8;
-}}
-div.loading_div {{
-  background-color: black;
-  color: white;
-  position: absolute;
-  top:0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  visibility: visible;
-  z-index: 1;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1vw;
-}}
-div.l4_box {{
-  position: absolute;
-  border-radius: 1cqw;
-  overflow: hidden;
-}}
-div.l4_box p {{
-  margin: 1.2cqw;
-}}
-div.footer {{
-  font-family: {}, Arial, Sans-Serif;
-  /*font-size: 1cqw;*/
-  font-size: {};
-  font-weight: normal;
-}}
-ul {{
-  margin-top: 0;
-  border: 1px;
-}}
-li {{
-  margin-top: 0em;
-  margin-bottom: 0.3em;
-}}
-p {{
-  margin-top: 0;
-  margin-bottom: 0.3em;
-}}
-/*div {{
-border: 1px #ccc solid;
-/* for debugging: borders for all divs */
-}}
-p {{
-border: 1px #ccc solid;
-}}*/
-@page
-{{
-    size: A4 landscape;
-    margin: 0;
-}}
-@media print {{
-  @page {{
-    size: 160mm 90mm;
-    margin: 0;
-    -webkit-print-color-adjust: exact !important;   /* Chrome, Safari 6 – 15.3, Edge */
-    color-adjust: exact !important;                 /* Firefox 48 – 96 */
-    print-color-adjust: exact !important;           /* Firefox 97+, Safari 15.4+ */
+    self.pages = []
+    self.current_page = None
 
-  }}
-  body {{
-    margin:0px;
-  }}
-  div.page_div {{
-    position: relative;
-    visibility: visible;
-    break-after: always;
-    break-inside: avoid;
-    display: table;
-    width: 160mm;
-    height: 90mm;
-/*    width: 200mm;
-    height: 112.5mm;*/
-  }}
-  .page_visible {{
-    visibility: visible;
-  }}
-  .page_hidden {{
-    visibility: visible;
-  }}
-}}
-'''.format(self.font_names['title'], self.font_files['title'], self.font_names['standard'], self.font_files['standard'], self.font_names['footer'], self.font_files['footer'], self.font_names['standard'], self.font_names['title'], self.font_sizes['title'], self.font_names['title'], self.font_sizes['subtitle'], self.font_names['title'], self.font_sizes['subtitle_l3'], self.font_names['title'], self.font_sizes['subtitle_l4'], self.font_sizes['standard'], self.font_names['footer'], self.font_sizes['footer'])
-    #print('name',self.font_names['footer'])
-    #print('size',self.font_sizes['footer'])
+    #mathjax0 = ET.Element('script')
+    #mathjax0.text = '''
+#MathJax = {
+#  tex: {
+#    inlineMath: [['$', '$']]
+#  },
+#  svg: {
+#    fontCache: 'global'
+#  }
+#};
+#'''
+    #self.head.append(mathjax0)
+    #mathjax2 = ET.Element('script')
+    #mathjax2.set('id', 'MathJax-script')
+    #mathjax2.set('async', 'true')
+    #mathjax2.set('src', mathjax_url)
+    #mathjax2.text = ' '
+    #self.head.append(mathjax2)
 
-
-    default_javascript = '''
-var currentPageId = "page-1";
-var blackPageVar = false;
-var lastPage = 0;
-
-function blackPage() {
-  if (blackPageVar) {
-    document.getElementById('black_div').style.visibility = 'hidden';
-    //alert('un-black page');
-  }
-  else {
-    document.getElementById('black_div').style.visibility = 'visible';
-    //alert('black page');
-  }
-  blackPageVar = !blackPageVar;
-}
-function mouseuphandler(e) {
-  e.pageX;
-  width = document.getElementById(currentPageId).offsetWidth;
-  //alert(width);
-  if (e.pageX < 0.25*width) {
-    prevPage();
-  }
-  else {
-    nextPage()
-  }
-}
-function gotoHash(){
-  var currentPageId = "page-1";
-  newPageId = window.location.hash.substring(1);
-  if (newPageId == "") {
-    newPageId = currentPageId;
-  }
-  goToPage(newPageId);
-}
-function prevPage(){
-  //alert('prevPage')
-  splits = currentPageId.split("-");
-  currentPageNumber = parseInt(splits[1]);
-  prevPageNumber = currentPageNumber-1;
-  pageId = "page-"+prevPageNumber;
-  element = document.getElementById(pageId);
-  if (element) {
-    document.getElementById(currentPageId).classList.remove('page_visible');
-    document.getElementById(currentPageId).classList.add('page_hidden');
-    document.getElementById(pageId).classList.remove('page_hidden');
-    document.getElementById(pageId).classList.add('page_visible');
-    //document.getElementById(currentPageId).style.visibility="hidden";
-    //document.getElementById(pageId).style.visibility="visible";
-    currentPageId = pageId;
-    window.location.hash = pageId;
-  }
-}
-function nextPage(){
-  //alert('nextPage')
-  splits = currentPageId.split("-");
-  currentPageNumber = parseInt(splits[1]);
-  nextPageNumber = currentPageNumber+1;
-  pageId = "page-"+nextPageNumber;
-  element = document.getElementById(pageId);
-  if (element) {
-    document.getElementById(currentPageId).classList.remove('page_visible');
-    document.getElementById(currentPageId).classList.add('page_hidden');
-    document.getElementById(pageId).classList.remove('page_hidden');
-    document.getElementById(pageId).classList.add('page_visible');
-    //document.getElementById(currentPageId).style.visibility="hidden";
-    //document.getElementById(pageId).style.visibility="visible";
-    currentPageId = pageId;
-    window.location.hash = pageId;
-  }
-}
-function goToPage(pageId){
-  //alert(pageId);
-  if (!document.getElementById(pageId)){
-    //alert(pageId+": page not found")
-    pageId = "page-1";
-  }
-  document.getElementById(currentPageId).classList.remove('page_visible');
-  document.getElementById(currentPageId).classList.add('page_hidden');
-  document.getElementById(pageId).classList.remove('page_hidden');
-  document.getElementById(pageId).classList.add('page_visible');
-  //document.getElementById(currentPageId).style.visibility="hidden";
-  //document.getElementById(pageId).style.visibility="visible";
-  currentPageId = pageId;
-  window.location.hash = pageId;
-}
-function localPageLink(pageId, event){
-  //alert(pageId);
-  event.stopPropagation(); // do not fire event on parent elements.
-  goToPage(pageId);
-}
-function stopProp(event){
-  event.stopPropagation();
-}
-document.onkeydown = function(event) {
-  switch (event.keyCode) {
-    case 33:
-      // page up
-      prevPage();
-    break;
-    case 34:
-      // page down
-      nextPage();
-    break;
-    case 35:
-      // end
-      goToPage('page-'+lastPage);
-    break;
-    case 36:
-      // home
-      goToPage('page-0');
-    break;
-    case 37:
-      // left arrow
-      prevPage();
-    break;
-    case 38:
-      // up arrow
-      prevPage();
-    break;
-    case 32:
-      //space
-      nextPage();
-    break;
-    case 39:
-      // right arrow
-      nextPage();
-    break;
-    case 40:
-      // down arrow
-      nextPage();
-    break;
-    case 66:
-      // b - blank/black
-      blackPage();
-    break;
-    case 70:
-      // f - fulscreen
-      if (window.fullScreen) {
-        document.exitFullscreen();
-      }
-      else {
-        document.documentElement.requestFullscreen();
-      }
-    break;
-  }
-};
-'''
-
-    self.html = ET.Element('html')
-    self.head = ET.Element('head')
-    self.html.append(self.head)
-    self.doc_style = ET.Element('style')
-    #self.doc_style.set('media', 'screen')
-    self.doc_style.text = screen_css
-    self.head.append(self.doc_style)
-    self.title = ET.Element('title')
-    self.title.text = 'PYMD HTML SLIDES'
-    self.head.append(self.title)
-    self.script = ET.Element('script')
-    self.script.text = default_javascript
-    self.head.append(self.script)
-    mathjax0 = ET.Element('script')
-    mathjax0.text = '''
-MathJax = {
-  tex: {
-    inlineMath: [['$', '$']]
-  },
-  svg: {
-    fontCache: 'global'
-  }
-};
-'''
-    self.head.append(mathjax0)
-    #mathjax1 = ET.Element('script')
-    #mathjax1.set('src', 'https://polyfill.io/v3/polyfill.min.js?features=es6')
-    #mathjax1.text = ' '
-    #self.head.append(mathjax1)
-    mathjax2 = ET.Element('script')
-    mathjax2.set('id', 'MathJax-script')
-    mathjax2.set('async', 'true')
-    mathjax2.set('src', mathjax_url)
-    mathjax2.text = ' '
-    self.head.append(mathjax2)
-
-    self.body = ET.Element('body')
-    #self.body.set('onload', 'gotoHash();')
-    self.body.set('onhashchange', 'gotoHash();')
-    self.html.append(self.body)
     self.current_page_div = None
-
-    black_div = ET.Element('div')
-    black_div.set('class', 'black_div')
-    black_div.set('id', 'black_div')
-    #black_div.set('class', 'page_div')
-    self.body.append(black_div)
-    loading_div = ET.Element('div')
-    loading_div.set('class', 'loading_div')
-    loading_subdiv = ET.Element('div')
-    loading_div.append(loading_subdiv)
-    loading_span1 = ET.Element('p')
-    loading_span1.text = 'Loading.'
-    loading_span2 = ET.Element('p')
-    loading_span2.text = 'PYMD slides requires a javascript-enabled browser.'
-    loading_span3 = ET.Element('p')
-    loading_span3.text = 'Usage: Arrow buttons, page up/down, or space to navigate.'
-    loading_span4 = ET.Element('p')
-    loading_span4.text = 'F for fullscreen. B for blank. Click on leftmost quarter for previous slide, the rest for next.'
-    loading_span5 = ET.Element('p')
-    loading_span5.text = 'More info: see https://github.com/olofmogren/pymdslides/ .'
-    loading_subdiv.append(loading_span1)
-    loading_subdiv.append(loading_span2)
-    loading_subdiv.append(loading_span3)
-    loading_subdiv.append(loading_span4)
-    loading_subdiv.append(loading_span5)
-    self.body.append(loading_div)
-    self.overwrite_images = overwrite_images
-    self.onload_added = False
-
 
   def set_logo(self, logo, x, y, w, h):
     #print('setting_logo', str(logo))
@@ -566,31 +531,48 @@ MathJax = {
     return local_contexter()
 
   def add_page(self):
+    page_preamble='''
+      <draw:page draw:name="PAGE_NAME" draw:style-name="dp1" draw:master-page-name="Default" presentation:presentation-page-layout-name="AL1T0">
+    '''
+    title_preamble='''
+        <draw:frame presentation:style-name="pr1" draw:layer="layout" svg:width="25.199cm" svg:height="2.629cm" svg:x="1.4cm" svg:y="0.628cm" presentation:class="title">
+          <draw:text-box>
+            <text:p>Main presentation title OLOF</text:p>
+    '''
+    title_postamble='''
+          </draw:text-box>
+        </draw:frame>
+    '''
+    text_preamble='''
+        <draw:frame presentation:style-name="pr2" draw:text-style-name="P1" draw:layer="layout" svg:width="25.199cm" svg:height="9.134cm" svg:x="1.4cm" svg:y="3.685cm" presentation:class="subtitle">
+          <draw:text-box>
+            <text:p>First slide text, OLOF</text:p>
+    '''
+    text_postamble='''
+          </draw:text-box>
+        </draw:frame>
+    '''
+    page_postamble='''
+        <presentation:notes draw:style-name="dp2">
+          <draw:page-thumbnail draw:style-name="gr1" draw:layer="layout" svg:width="19.798cm" svg:height="11.136cm" svg:x="0.6cm" svg:y="2.257cm" draw:page-number="1" presentation:class="page"/>
+          <draw:frame presentation:style-name="pr3" draw:text-style-name="P1" draw:layer="layout" svg:width="16.799cm" svg:height="13.364cm" svg:x="2.1cm" svg:y="14.107cm" presentation:class="notes" presentation:placeholder="true">
+            <draw:text-box/>
+          </draw:frame>
+        </presentation:notes>
+      </draw:page>
+'''
     # onmouseup (onclick fires also with onmousedown, resulting in two events) on previous page will take us to this one
     self.override_font = {}
     self.override_font_size = {} # override fonts are per page.
     self.pages_count += 1
-    self.current_page_div = ET.Element('div')
-    self.body.append(self.current_page_div)
-    self.current_page_div.set('id', 'page-{}'.format(self.pages_count))
-    html_class = 'page_div page_hidden'
-    style = ''
-    self.current_page_div.set('class', html_class)
-    #if self.pages_count == 1:
-    #    style += 'visibility: visible; '
-    #else:
-    #    style += 'visibility: hidden; '
-    #style += 'visibility: hidden; ' # all pages hidden at first
-    style += 'background-color: white; '
-    self.current_page_div.set('style', style)
-    subcontainer = ET.Element('div')
-    subcontainer.set('class', 'subcontainer')
-    self.current_page_div.append(subcontainer)
-    self.current_page_div = subcontainer
-    self.current_page_div.set('onmouseup', 'mouseuphandler(event);')
-    #self.current_page_div.set('style', 'width: 100vw; height: 56.25vw; /* height:width ratio = 9/16 = .5625  */ background: pink; max-height: 100vh; max-width: 177.78vh; /* 16/9 = 1.778 */ margin: auto; position: absolute; top:0;bottom:0; /* vertical center */ left:0;right:0; /* horizontal center */')
-    if len(self.current_page_div) == 0 and self.current_page_div.text == '':
-      self.current_page_div.text = ' ' # no break space
+
+    self.current_page_div = ET.Element(ET.QName('urn:oasis:names:tc:opendocument:xmlns:drawing:1.0', 'page'))
+    self.current_page_div.set('draw:name', 'page{}'.format(self.pages_count))
+    self.current_page_div.set('draw:style-name', 'dp1')
+    self.current_page_div.set('draw:master-page-name', 'Default')
+    self.current_page_div.set('presentation:presentation-page-layout-name', 'AL1T0')
+    self.et_presentation.append(self.current_page_div)
+
     if self.logo is not None:
       logo_img = ET.Element('img')
       #print('setting src', self.logo)
@@ -729,6 +711,27 @@ MathJax = {
     return True
 
   def textbox(self, lines, x, y, w, h, headlines, h_level=None, align='left', markdown_format=True, text_color=None):
+    '''
+        <draw:frame presentation:style-name="pr1" draw:layer="layout" svg:width="25.199cm" svg:height="2.629cm" svg:x="1.4cm" svg:y="0.628cm" presentation:class="title">
+          <draw:text-box>
+            <text:p>Main presentation title OLOF</text:p>
+          </draw:text-box>
+        </draw:frame>
+        <draw:frame presentation:style-name="pr2" draw:text-style-name="P1" draw:layer="layout" svg:width="25.199cm" svg:height="9.134cm" svg:x="1.4cm" svg:y="3.685cm" presentation:class="subtitle">
+          <draw:text-box>
+            <text:p>First slide text, OLOF</text:p>
+          </draw:text-box>
+        </draw:frame>
+'''
+
+    #self.current_page_div.set('draw:style-name', 'pr1')
+    #self.current_page_div.set('draw:layer', 'layout')
+    #self.current_page_div.set('svg:width', self.width)
+    #self.current_page_div.set('svg:height', self.height)
+    #self.current_page_div.set('svg:x', '1.4cm') # TODO magic number
+    #self.current_page_div.set('svg:y', '0.628cm')
+    #self.current_page_div.set('presentation:class', 'title')
+
     #print('textbox', h_level, lines)
     formatted_lines = lines
     if align == 'left':
@@ -1010,13 +1013,12 @@ MathJax = {
       if '#' in current_filename:
         page_no = current_filename.split('#')[1]
         page_no_is_set = True
-        current_ext = current_ext.split('#')[0]
       if is_vector_format(current_filename) and not current_ext in treat_as_raster_images:
         command_is_chosen = False
-        #print('possible conversion of vector format:', current_ext, shutil.which('pdf2svg'), shutil.which('eps2svg'))
+        #print(current_ext)
         if current_ext == 'pdf' and shutil.which('pdf2svg') is not None:
           target_extension = 'svg'
-          target_filename = target_filename_no_ext+'-'+page_no+'.'+target_extension
+          target_filename = target_filename_no_ext+'.'+target_extension
           command = 'pdf2svg {} {} {}'.format(input_file, target_filename, int(page_no)+1) # page_no is zero-indexed
           current_ext = target_extension
           command_is_chosen = True
@@ -1027,10 +1029,6 @@ MathJax = {
           current_ext = target_extension
           command_is_chosen = True
         if not command_is_chosen:
-          if current_ext == 'pdf':
-            print('pdf: pdf2svg not found. falling back to converting to png.')
-          if current_ext == 'eps':
-            print('eps: eps2svg not found. falling back to converting to png.')
           target_extension = 'png'
           target_filename = target_filename_no_ext+'.'+target_extension
           command = 'convert -density 150 '+input_file+'['+page_no+'] '+target_filename
