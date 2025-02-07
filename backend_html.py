@@ -311,6 +311,11 @@ function blackPage() {
   blackPageVar = !blackPageVar;
 }
 function mouseuphandler(e) {
+  var selection = window.getSelection();
+  if(selection.toString().length > 0) {
+    //alert('there was something selected'+selection.toString().length);
+    return;
+  }
   e.pageX;
   width = document.getElementById(currentPageId).offsetWidth;
   //alert(width);
