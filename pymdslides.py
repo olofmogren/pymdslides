@@ -848,14 +848,16 @@ if __name__ == "__main__":
   backend.output()
 
   if '--pdf' in sys.argv:
-    pdf_file = '.'.join(md_file.split('.')[:-1])+'.pdf'
+    pdf_file_final = '.'.join(md_file.split('.')[:-1])+'.pdf'
+    pdf_file = '.'.join(md_file.split('.')[:-1])+'-pre-cropping.pdf'
+    pdf_file_post_cropping = '.'.join(md_file.split('.')[:-1])+'-pre-cropping-fixed-margins.pdf'
     executables = ['chromium','chrome',None]
     for executable in executables:
       if executable is None:
         print('error: found no supported browser to generate pdf. supported: {}'.format(executables[:-1]))
         break
       if shutil.which(executable) is not None:
-        print('{} exists on the system')
+        print('{} exists on the system'.format(executable))
         break
     if executable is not None:
       command = '{} --headless --print-to-pdf={} {}'.format(executable, pdf_file, output_file) # output_file is the html target.
@@ -871,7 +873,10 @@ if __name__ == "__main__":
           print('{} exists on the system')
           break
       if executable is not None:
-        command = 'pdfjam --keepinfo --papersize \'{159mm,89mm}\' --trim \'2mm 1mm 1mm 1mm\' --clip true --suffix "fixed-margins" {}'.format(pdf_file)
+        command = 'pdfjam --keepinfo --papersize \'{{159mm,89mm}}\' --trim \'2mm 1mm 1mm 1mm\' --clip true --suffix "fixed-margins" {}'.format(pdf_file)
+        print(command)
+        os.system(command)
+        command = 'mv {} {}'.format(pdf_file_post_cropping, pdf_file_final)
         print(command)
         os.system(command)
 
