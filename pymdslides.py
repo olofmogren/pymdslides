@@ -285,12 +285,28 @@ def preprocess_formatting(formatting):
         formatting[color] = [0,0,255]
       elif formatting[color] == 'yellow':
         formatting[color] = [255,255,0]
+      elif formatting[color] == 'purple':
+        formatting[color] = [225,0,255]
+      elif formatting[color] == 'pink':
+        formatting[color] = [255,86,235]
+      elif formatting[color] == 'darkorange':
+        formatting[color] = [180,100,0]
       elif formatting[color] == 'darkred':
         formatting[color] = [100,0,0]
       elif formatting[color] == 'darkgreen':
-        formatting[color] = [0,100,0]
+        formatting[color] = [0,80,45]
       elif formatting[color] == 'darkblue':
         formatting[color] = [0,0,100]
+      elif formatting[color] == 'darkpurple':
+        formatting[color] = [120,0,140]
+      elif formatting[color] == 'lightgrey':
+        formatting[color] = [180,180,180]
+      elif formatting[color] == 'lightpink':
+        formatting[color] = [255,155,235]
+      elif formatting[color] == 'lightgreen':
+        formatting[color] = [120,255,180]
+      elif formatting[color] == 'lightblue':
+        formatting[color] = [160,180,255]
       elif formatting[color] is not None and formatting[color][0] == '#':
         # html:
         r_hex = formatting[color][1:3]
