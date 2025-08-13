@@ -867,7 +867,7 @@ if __name__ == "__main__":
     pdf_file_final = '.'.join(md_file.split('.')[:-1])+'.pdf'
     pdf_file = '.'.join(md_file.split('.')[:-1])+'-pre-cropping.pdf'
     pdf_file_post_cropping = '.'.join(md_file.split('.')[:-1])+'-pre-cropping-fixed-margins.pdf'
-    executables = ['chromium','chrome',None]
+    executables = ['chrome','chromium',None]
     for executable in executables:
       if executable is None:
         print('error: found no supported browser to generate pdf. supported: {}'.format(executables[:-1]))

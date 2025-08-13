@@ -121,44 +121,53 @@ class backend_html:
       
 
     screen_css = '''
+:root {{
+  /* 16:9 slide box derived from viewport */
+  --slide-w: min(100vw, 177.78vh);
+  --slide-h: calc(var(--slide-w) * 0.5625); /* 9/16 */
+
+  /* 1% of the slide’s width/height */
+  --cqw: calc(var(--slide-w) / 100);
+  --cqh: calc(var(--slide-h) / 100);
+}}
 @font-face {{
-  font-family: {};
+  font-family: "{}";
   src: url('{}') format('woff2');
 }}
 @font-face {{
-  font-family: {};
+  font-family: "{}";
   src: url('{}') format('woff2');
 }}
 @font-face {{
-  font-family: {};
+  font-family: "{}";
   src: url('{}') format('woff2');
 }}
 body {{
   overflow: hidden;
   background-color: black;
-  font-family: {}, Arial, Sans-Serif;
+  font-family: "{}", Arial, Sans-Serif;
   font-weight: normal;
 }}
 h1 {{
-  font-family: {}, Arial, Sans-Serif;
+  font-family: "{}", Arial, Sans-Serif;
   /*font-size: 4cqw;*/
-  font-size: {};
+  font-size: "{}";
   font-weight: normal;
 }}
 h2 {{
-  font-family: {}, Arial, Sans-Serif;
+  font-family: "{}", Arial, Sans-Serif;
   /*font-size: 2.8cqw;*/
-  font-size: {};
+  font-size: "{}";
   font-weight: normal;
 }}
 h3 {{
-  font-family: {}, Arial, Sans-Serif;
+  font-family: "{}", Arial, Sans-Serif;
   /*font-size: 2cqw;*/
   font-size: {};
   font-weight: normal;
 }}
 h4 {{
-  font-family: {}, Arial, Sans-Serif;
+  font-family: "{}", Arial, Sans-Serif;
   /*font-size: 2cqw;*/
   font-size: {};
   font-weight: normal;
@@ -183,8 +192,8 @@ div.page_div {{
   top:0;
   bottom:0; /* vertical center */
   left:0;
-  right:0; /* horizontal center */'
-  container-type: size;
+  right:0; /* horizontal center */
+  /* container-type: size; */
   overflow: hidden;
   z-index: 2;
 }}
@@ -230,7 +239,7 @@ div.l4_box p {{
   margin: 1.2cqw;
 }}
 div.footer {{
-  font-family: {}, Arial, Sans-Serif;
+  font-family: "{}", Arial, Sans-Serif;
   /*font-size: 1cqw;*/
   font-size: {};
   font-weight: normal;
@@ -268,6 +277,14 @@ border: 1px #ccc solid;
     print-color-adjust: exact !important;           /* Firefox 97+, Safari 15.4+ */
 
   }}
+
+  :root {{
+    --slide-w: 160mm;
+    --slide-h: 90mm;
+    --cqw: calc(var(--slide-w) / 100);
+    --cqh: calc(var(--slide-h) / 100);
+  }}
+
   body {{
     margin:0px;
   }}
@@ -277,10 +294,10 @@ border: 1px #ccc solid;
     break-after: always;
     break-inside: avoid;
     display: table;
-    width: 160mm;
-    height: 90mm;
-/*    width: 200mm;
-    height: 112.5mm;*/
+    /* width: 160mm;
+    height: 90mm;*/
+    width: var(--slide-w);
+    height: var(--slide-h);
   }}
   .page_visible {{
     visibility: visible;
@@ -546,7 +563,8 @@ MathJax = {
 
   def html_font_size(self, font_size):
     #print(font_size)
-    result = '{:.3f}cqw'.format(32*font_size/self.page_width)
+    #result = '{:.3f}cqw'.format(32*font_size/self.page_width)
+    result = 'calc({:.3f} * var(--cqw))'.format(32*font_size/self.page_width)
     #print(result)
     return result
 
@@ -868,11 +886,14 @@ MathJax = {
         href = child.get('href')
         if len(href) > 0 and href[0] == '#':
           print('looking for local link',href)
-          page_no = int(headlines.index(href[1:].strip()))+1
-          print('found local link', page_no)
-          child.set('href', '#')
-          child.set('onclick', 'localPageLink("page-{}", event); return false;'.format(page_no))
-          child.set('onmouseup', 'stopProp(event);')
+          try:
+            page_no = int(headlines.index(href[1:].strip()))+1
+            print('found local link', page_no)
+            child.set('href', '#')
+            child.set('onclick', 'localPageLink("page-{}", event); return false;'.format(page_no))
+            child.set('onmouseup', 'stopProp(event);')
+          except ValueError:
+            print('Warning: Link to heading:',href[1:].strip(),'not found. Not linking.')
       self.fix_local_links(child, headlines)
     
   def fix_external_links(self, tag):
