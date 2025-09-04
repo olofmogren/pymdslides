@@ -214,67 +214,21 @@ div.black_div {{
   visibility: hidden;
   z-index: 8;
 }}
-/* Floating instructions panel (reuses .loading_div element) */
 div.loading_div {{
-  position: fixed;
-  bottom: calc(1vw + 4vw + 0.75vw); /* sit above the circle */
-  right: 1vw;
-  max-width: 36vw;
-  background-color: rgba(0,0,0,0.85);
+  background-color: black;
   color: white;
-  visibility: hidden;   /* hidden by default */
-  opacity: 0;
-  z-index: 20;
-  text-align: left;
-  display: block;
-  align-items: start;
-  justify-content: start;
-  font-size: 1vw;
-  padding: 1vw 1.2vw;
-  border-radius: 0.8vw;
-  box-shadow: 0 0.6vw 1.6vw rgba(0,0,0,0.4);
-  transition: opacity .25s ease, visibility .25s ease;
-  pointer-events: none; /* no clicks when hidden */
-}}
-div.loading_div.visible {{
+  position: absolute;
+  top:0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   visibility: visible;
-  opacity: 1;
-  pointer-events: auto; /* clickable when shown */
-}}
-div.loading_div.as-help .splash-only {{
-  display: none;
-}}
-
-/* Floating question mark button */
-#help_btn {{
-  position: fixed;
-  bottom: 1vw;
-  right: 1vw;
-  width: 4vw;                /* 4% of screen width */
-  height: 4vw;
-  min-width: 28px;           /* sensible floor for tiny screens */
-  min-height: 28px;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.65);
-  color: #fff;
+  z-index: 1;
+  text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2vw;
-  line-height: 1;
-  cursor: pointer;
-  user-select: none;
-  z-index: 21;
-  box-shadow: 0 0.5vw 1.2vw rgba(0,0,0,0.35);
-  transition: opacity .35s ease;
-  opacity: 1;
-}}
-#help_btn.hidden {{ opacity: 0; pointer-events: none; }}
-
-/* Always show the button in overview */
-body.overview #help_btn {{
-  opacity: 1 !important;
-  pointer-events: auto !important;
+  font-size: 1vw;
 }}
 div.l4_box {{
   position: absolute;
@@ -309,67 +263,6 @@ border: 1px #ccc solid;
 p {{
 border: 1px #ccc solid;
 }}*/
-
-/* --- Overview mode (toggle with 'O') --- */
-#slides {{
-  position: relative;
-  z-index: 2;
-}}
-body.overview {{
-  overflow: auto; /* allow scroll if >25 slides */
-}}
-body.overview #slides {{
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0.75vw;
-  padding: 0.75vw;
-  place-items: center;
-}}
-
-/* Force every page visible and sized as thumbnails */
-body.overview .page_div {{
-  position: relative !important;
-  visibility: visible !important;
-  width: calc(100vw / 5 - 1.2vw);
-  height: calc((100vw / 5 - 1.2vw) * 0.5625); /* keep 16:9 */
-  max-width: none;
-  max-height: none;
-  margin: 0;
-  box-shadow: 0 0.25vw 0.75vw rgba(0,0,0,0.35);
-  cursor: pointer;
-  z-index: 2;
-}}
-
-/* Prevent inner content from capturing clicks during overview */
-body.overview .page_div .subcontainer {{
-  pointer-events: none;
-}}
-
-/* Dim the current slide a bit to indicate selection */
-body.overview .page_div.is-current {{
-  outline: 0.25vw solid #888;
-  outline-offset: 0.25vw;
-}}
-
-/* Scale inner content so text shrinks in overview */
-:root {{
-  /* 5 columns => ~20% scale. Tweak if you change columns/gaps. */
-  --thumb-scale: 0.2;
-}}
-
-body.overview .page_div .subcontainer {{
-  /* Make the visual content 20% of normal size */
-  transform: scale(var(--thumb-scale));
-  transform-origin: top left;
-
-  /* Expand the layout box inversely so the scaled content still fills the thumbnail */
-  width: calc(100% / var(--thumb-scale));
-  height: calc(100% / var(--thumb-scale));
-
-  /* Keep thumbnails click-through (handled on the slide box) */
-  pointer-events: none;
-}}
-
 @page
 {{
     size: A4 landscape;
@@ -423,158 +316,6 @@ var currentPageId = "page-1";
 var blackPageVar = false;
 var lastPage = 0;
 
-var overviewMode = false; // if you already declared this earlier, keep only one
-var helpBtnTimer = null;
-
-var initialHelpShown = false;
-
-function onloadHandler() {
-  gotoHash();          // make sure we still go to the right slide
-  wireHelpUI();        // attach the click handlers (idempotent)
-  if (!initialHelpShown) {
-    var b = document.getElementById('help_btn');
-    if (b) {
-      b.classList.remove('hidden'); // show immediately
-      if (helpBtnTimer) clearTimeout(helpBtnTimer);
-      helpBtnTimer = setTimeout(function() {
-        b.classList.add('hidden');  // hide after 5s
-      }, 5000);
-    }
-    initialHelpShown = true;
-  }
-}
-function showHelpBtn() {
-  var b = document.getElementById('help_btn');
-  if (b) b.classList.remove('hidden');
-}
-function hideHelpBtn() {
-  var b = document.getElementById('help_btn');
-  if (b) b.classList.add('hidden');
-}
-
-
-function getHelpPanel() {
-  return document.getElementsByClassName('loading_div')[0];
-}
-function showHelpPanel() {
-  var p = getHelpPanel();
-  if (!p) return;
-  p.classList.add('as-help');     // ← mark as help (hides splash-only)
-  p.classList.add('visible');  // CSS transitions handle fade in
-}
-function hideHelpPanel() {
-  var p = getHelpPanel();
-  if (!p) return;
-  p.classList.remove('visible'); // fade out
-  p.classList.remove('as-help');     // ← mark as help (hides splash-only)
-}
-
-/* ensure the button works and clicks don't immediately close the panel */
-function wireHelpUI() {
-  var btn = document.getElementById('help_btn');
-  if (btn && !btn._wired) {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      showHelpPanel();
-    });
-    btn._wired = true;
-  }
-  var panel = getHelpPanel();
-  if (panel && !panel._wired) {
-    panel.addEventListener('click', function(e){ e.stopPropagation(); });
-    panel._wired = true;
-  }
-  // Any click outside closes the panel
-  if (!document._help_global_click) {
-    document.addEventListener('click', function(){ hideHelpPanel(); });
-    document._help_global_click = true;
-  }
-}
-
-var overviewMode = false;
-
-function setCurrentMarker() {
-  // mark current slide for subtle outline in overview
-  for (var i = 1; i <= lastPage; i++) {
-    var pid = 'page-' + i;
-    var el = document.getElementById(pid);
-    if (!el) continue;
-    if (pid === currentPageId) el.classList.add('is-current');
-    else el.classList.remove('is-current');
-  }
-}
-
-function enterOverview() {
-  if (overviewMode) return;
-  overviewMode = true;
-  document.body.classList.add('overview');
-
-  showHelpBtn();           // <— keep button visible in overview
-  hideHelpPanel();         // <— close panel when mode changes
-
-  // make all slides visible and clickable
-  for (var i = 1; i <= lastPage; i++) {
-    var pid = 'page-' + i;
-    var el = document.getElementById(pid);
-    if (!el) continue;
-
-    // Ensure visibility regardless of page_visible/page_hidden
-    el.classList.remove('page_hidden');
-    el.classList.add('page_visible');
-
-    // Attach a one-off click handler that exits overview and navigates
-    el.addEventListener('click', overviewClickHandler);
-  }
-  setCurrentMarker();
-}
-
-function exitOverview() {
-  if (!overviewMode) return;
-  overviewMode = false;
-  document.body.classList.remove('overview');
-
-  hideHelpPanel();
-  hideHelpBtn();           // <— fade if not within 5s
-
-  // Remove click handlers
-  for (var i = 1; i <= lastPage; i++) {
-    var pid = 'page-' + i;
-    var el = document.getElementById(pid);
-    if (!el) continue;
-    el.removeEventListener('click', overviewClickHandler);
-    el.classList.remove('is-current');
-  }
-
-  // Restore single-slide view based on currentPageId
-  for (var i = 1; i <= lastPage; i++) {
-    var pid = 'page-' + i;
-    var el = document.getElementById(pid);
-    if (!el) continue;
-    if (pid === currentPageId) {
-      el.classList.remove('page_hidden');
-      el.classList.add('page_visible');
-    } else {
-      el.classList.remove('page_visible');
-      el.classList.add('page_hidden');
-    }
-  }
-}
-
-function toggleOverview() {
-  if (overviewMode) exitOverview();
-  else enterOverview();
-}
-
-function overviewClickHandler(e) {
-  // During overview, clicking a slide selects it and exits
-  var parent = e.currentTarget; // .page_div
-  var pid = parent.id;
-  currentPageId = pid;
-  window.location.hash = pid;
-  exitOverview();
-  e.stopPropagation();
-}
-
 function blackPage() {
   if (blackPageVar) {
     document.getElementById('black_div').style.visibility = 'hidden';
@@ -612,8 +353,6 @@ function gotoHash(){
 }
 function prevPage(){
   //alert('prevPage')
-  if (overviewMode) return;  // do nothing in overview
-  hideHelpPanel();
   splits = currentPageId.split("-");
   currentPageNumber = parseInt(splits[1]);
   prevPageNumber = currentPageNumber-1;
@@ -632,8 +371,6 @@ function prevPage(){
 }
 function nextPage(){
   //alert('nextPage')
-  if (overviewMode) return;  // do nothing in overview
-  hideHelpPanel();
   splits = currentPageId.split("-");
   currentPageNumber = parseInt(splits[1]);
   nextPageNumber = currentPageNumber+1;
@@ -652,7 +389,6 @@ function nextPage(){
 }
 function goToPage(pageId){
   //alert(pageId);
-  hideHelpPanel();
   if (!document.getElementById(pageId)){
     //alert(pageId+": page not found")
     pageId = "page-1";
@@ -665,7 +401,6 @@ function goToPage(pageId){
   //document.getElementById(pageId).style.visibility="visible";
   currentPageId = pageId;
   window.location.hash = pageId;
-  setCurrentMarker();
 }
 function localPageLink(pageId, event){
   //alert(pageId);
@@ -676,7 +411,6 @@ function stopProp(event){
   event.stopPropagation();
 }
 document.onkeydown = function(event) {
-  hideHelpPanel();
   switch (event.keyCode) {
     case 33:
       // page up
@@ -726,10 +460,6 @@ document.onkeydown = function(event) {
       else {
         document.documentElement.requestFullscreen();
       }
-    case 79:
-      // o - overview
-      toggleOverview();
-    break;
     break;
   }
 };
@@ -772,11 +502,8 @@ MathJax = {
     self.head.append(mathjax2)
 
     self.body = ET.Element('body')
-    self.slides_container = ET.Element('div')
-    self.slides_container.set('id', 'slides')
-    self.body.append(self.slides_container)
-    self.body.set('onload', 'onloadHandler();')
-    #self.body.set('onhashchange', 'gotoHash();')
+    #self.body.set('onload', 'gotoHash();')
+    self.body.set('onhashchange', 'gotoHash();')
     self.html.append(self.body)
     self.current_page_div = None
 
@@ -789,32 +516,21 @@ MathJax = {
     loading_div.set('class', 'loading_div')
     loading_subdiv = ET.Element('div')
     loading_div.append(loading_subdiv)
-    # Floating help button (question mark)
-    help_btn = ET.Element('div')
-    help_btn.set('id', 'help_btn')
-    help_btn.set('class', 'hidden')
-    help_btn.text = '?'
-    self.body.append(help_btn)
     loading_span1 = ET.Element('p')
     loading_span1.text = 'Loading.'
-    loading_span1.set('class', 'splash-only')
     loading_span2 = ET.Element('p')
     loading_span2.text = 'PYMD slides requires a javascript-enabled browser.'
-    loading_span2.set('class', 'splash-only')
     loading_span3 = ET.Element('p')
     loading_span3.text = 'Usage: Arrow buttons, page up/down, or space to navigate.'
     loading_span4 = ET.Element('p')
     loading_span4.text = 'F for fullscreen. B for blank. Click on leftmost quarter for previous slide, the rest for next.'
     loading_span5 = ET.Element('p')
-    loading_span5.text = 'O for overview grid. Click a slide to jump.'
-    loading_span6 = ET.Element('p')
-    loading_span6.text = 'More info: see https://github.com/olofmogren/pymdslides/ .'
+    loading_span5.text = 'More info: see https://github.com/olofmogren/pymdslides/ .'
     loading_subdiv.append(loading_span1)
     loading_subdiv.append(loading_span2)
     loading_subdiv.append(loading_span3)
     loading_subdiv.append(loading_span4)
     loading_subdiv.append(loading_span5)
-    loading_subdiv.append(loading_span6)
     self.body.append(loading_div)
     self.overwrite_images = overwrite_images
     self.onload_added = False
@@ -878,7 +594,7 @@ MathJax = {
     self.override_font_size = {} # override fonts are per page.
     self.pages_count += 1
     self.current_page_div = ET.Element('div')
-    self.slides_container.append(self.current_page_div)
+    self.body.append(self.current_page_div)
     self.current_page_div.set('id', 'page-{}'.format(self.pages_count))
     html_class = 'page_div page_hidden'
     style = ''
