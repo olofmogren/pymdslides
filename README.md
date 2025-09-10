@@ -17,6 +17,7 @@ The config file, and the document preample, and each section preamble can all ta
 * title_align: **left**|center
 * page_numbering: true|**false**
 * title_vertical_center: true|**false**
+* text_vertical_align: **top**|center|bottom
 * crop_images: **true**|false
 * packed_images: **true**|false
 * text_color:

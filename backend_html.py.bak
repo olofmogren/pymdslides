@@ -371,45 +371,74 @@ body.overview .page_div .subcontainer {{
 }}
 
 @media print {{
-  @page {{
-    size: 160mm 90mm;
-    margin: 0;
-    -webkit-print-color-adjust: exact !important;   /* Chrome, Safari 6 – 15.3, Edge */
-    color-adjust: exact !important;                 /* Firefox 48 – 96 */
-    print-color-adjust: exact !important;           /* Firefox 97+, Safari 15.4+ */
-
+  /* Define a named page 'slide' with exact dimensions and no margins */
+  @page slide {{
+    size: {}mm {}mm landscape; /* Use dynamic dimensions */
+    margin: 0 !important;
+    padding: 0 !important;
   }}
 
-  :root {{
-    --slide-w: 160mm;
-    --slide-h: 90mm;
-    --cqw: calc(var(--slide-w) / 100);
-    --cqh: calc(var(--slide-h) / 100);
-  }}
-
-  body {{
-    margin:0px;
-  }}
+  /* Apply the named page to the div.page_div elements */
   div.page_div {{
-    position: relative;
-    visibility: visible;
-    break-after: always;
+    page: slide;
+    width: {}mm !important; /* Force exact dimensions */
+    height: {}mm !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    page-break-after: always;
     break-inside: avoid;
-    display: table;
-    /* width: 160mm;
-    height: 90mm;*/
-    width: var(--slide-w);
-    height: var(--slide-h);
+    background: white;
+    display: block !important;
+    position: relative !important;
+    overflow: hidden !important; /* Ensure content doesn't bleed */
+    /* Webkit-specific to ensure background colors/images print */
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }}
-  .page_visible {{
-    visibility: visible;
+
+  /* Also remove margins/padding from body and html for good measure */
+  html, body {{
+    margin: 0 !important;
+    padding: 0 !important;
+    background: black; /* Or white, depending on if you want page background or outer container */
+    width: 100vw !important;
+    height: 100vh !important;
+    overflow: hidden !important;
   }}
+
+  /* Target the subcontainer within each slide as well */
+  div.page_div .subcontainer {{
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      box-sizing: border-box !important; /* Include padding/border in total size */
+  }}
+
+  /* Make sure all children of the subcontainer are also reset */
+  div.page_div .subcontainer > * {{
+      margin: 0 !important;
+      padding: 0 !important;
+  }}
+
+  .page_visible,
   .page_hidden {{
-        visibility: visible;
+    visibility: visible !important;
   }}
-  #help_btn {{ opacity: 0; }}
 }}
-'''.format(self.font_names['title'], self.font_files['title'], self.font_names['standard'], self.font_files['standard'], self.font_names['footer'], self.font_files['footer'], self.font_names['standard'], self.font_names['title'], self.font_sizes['title'], self.font_names['title'], self.font_sizes['subtitle'], self.font_names['title'], self.font_sizes['subtitle_l3'], self.font_names['title'], self.font_sizes['subtitle_l4'], self.font_sizes['standard'], self.font_names['footer'], self.font_sizes['footer'])
+
+/* Extra safety for Firefox */
+@-moz-document url-prefix() {{
+  @media print {{
+    /* Fallback if named page is ignored, using dynamic dimensions */
+    @page {{ size: {}mm {}mm landscape; margin: 0 !important; padding: 0 !important; }}
+    div.page_div {{ page: auto; }} /* let the fallback @page apply */
+  }}
+}}
+
+'''.format(self.font_names['title'], self.font_files['title'], self.font_names['standard'], self.font_files['standard'], self.font_names['footer'], self.font_files['footer'], self.font_names['standard'], self.font_names['title'], self.font_sizes['title'], self.font_names['title'], self.font_sizes['subtitle'], self.font_names['title'], self.font_sizes['subtitle_l3'], self.font_names['title'], self.font_sizes['subtitle_l4'], self.font_sizes['standard'], self.font_names['footer'], self.font_sizes['footer'], self.page_width, self.page_height, self.page_width, self.page_height, self.page_width, self.page_height)
     #print('name',self.font_names['footer'])
     #print('size',self.font_sizes['footer'])
 
@@ -1037,7 +1066,7 @@ MathJax = {
 
     return True
 
-  def textbox(self, lines, x, y, w, h, headlines, h_level=None, align='left', markdown_format=True, text_color=None, text_vertical_align=None):
+  def textbox(self, lines, x, y, w, h, headlines, h_level=None, align='left', markdown_format=True, text_color=None):
     #print('textbox', h_level, lines)
     formatted_lines = lines
     if align == 'left':
@@ -1051,11 +1080,7 @@ MathJax = {
       text_color = dec_to_hex_color(text_color)
     else:
       text_color = self.text_color
-    style = 'position: absolute; left: {}; top: {}; width: {}; height: {}; text-align: {}; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: {};'.format(self.html_x(x), self.html_y(y), self.html_x(w), self.html_y(h), align, text_color)
-    if text_vertical_align and text_vertical_align is not 'top':
-      if text_vertical_align == 'bottom':
-        text_vertical_align = 'flex-end'
-      style += 'display: flex; align-items: {};'.format(text_vertical_align)
+    style = 'position: absolute; left: {}; top: {}; width: {}; height: {}; text-align: {}; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: {}; '.format(self.html_x(x), self.html_y(y), self.html_x(w), self.html_y(h), align, text_color)
     #print('textbox div style', style)
     if h_level is not None:
       text_div.set('style', style)
@@ -1112,7 +1137,7 @@ MathJax = {
     return x,y+h
 
 
-  def l4_box(self, lines, x, y, w, h, headlines, align='left', border_color=[0,0,0], border_opacity=0.75, background_color=[255,255,255], background_opacity=0.75, markdown_format=True, text_color=None, text_vertical_center=None):
+  def l4_box(self, lines, x, y, w, h, headlines, align='left', border_color=[0,0,0], border_opacity=0.75, background_color=[255,255,255], background_opacity=0.75, markdown_format=True, text_color=None):
     formatted_lines = lines
     if align == 'left':
       align = 'start'
@@ -1129,11 +1154,7 @@ MathJax = {
       text_color = dec_to_hex_color(text_color)
     else:
       text_color = self.text_color
-    style = 'left: {}; top: {}; width: {}; text-align: {}; z-index: 4; margin: 0; padding: -1cqw .5cqw .5cqw .5cqw; background-color: {}; border: 1px {} solid; color: {}; display: flex; align-items: center;   /* vertical centering */'.format(self.html_x(x), self.html_y(y), self.html_x(w), align, bgcolor, bcolor, text_color)
-    if text_vertical_align and text_vertical_align is not 'top':
-      if text_vertical_align == 'bottom':
-        text_vertical_align = 'flex-end'
-      style += 'display: flex; align-items: {};'.format(text_vertical_align)
+    style = 'left: {}; top: {}; width: {}; text-align: {}; z-index: 4; margin: 0; padding: -1cqw .5cqw .5cqw .5cqw; background-color: {}; border: 1px {} solid; color: {}; '.format(self.html_x(x), self.html_y(y), self.html_x(w), align, bgcolor, bcolor, text_color)
     print('align', align)
     if align == 'center':
       style += 'align-items: center; '
@@ -1356,7 +1377,7 @@ MathJax = {
           command = 'magick -density 150 '+input_file+'['+page_no+'] '+target_filename
           current_ext = target_extension
           command_is_chosen = True
-        print('magick image:',command)
+        print('converting image:',command)
         os.system(command)
       else:
         target_extension = current_ext
@@ -1399,7 +1420,7 @@ MathJax = {
           print('exists', os.path.exists(target_filename), 'overwrite', self.overwrite_images)
           if not os.path.exists(target_filename) or self.overwrite_images:
             if target_extension != current_ext:
-              command = 'magick -define webp:lossless=false '+current_filename+' '+target_filename
+              command = 'convert -define webp:lossless=false '+current_filename+' '+target_filename
               #if target_extension == 'webp':
               #  command = 'cwebp {} -o {}'.format(current_filename, target_filename)
               if current_ext == 'gif' and target_extension == 'webp':
@@ -1540,11 +1561,7 @@ def md_reconstruct_math(html, formulas):
 def dec_to_hex_color(color, alpha=1.0):
   a = 'ff'
   if type(color) == str:
-    if color[0] == '#' and len(color) == 7:
-      c = color[1:]
-    if color[0] == '#' and len(color) == 4:
-      c = color[1]+color[1]+color[2]+color[2]+color[3]+color[3]
-    elif color == 'white':
+    if color == 'white':
       c = 'ffffff'
     elif color == 'grey':
       c = '646464'

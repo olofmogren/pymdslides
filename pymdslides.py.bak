@@ -14,7 +14,7 @@
 
 import os
 
-import sys,math,time,re
+import sys,math,time,re,pathlib
 from PIL import Image, ImageOps
 from subprocess import Popen,PIPE
 from datetime import datetime
@@ -198,10 +198,7 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
       backend.set_font('standard', '', formatting['dimensions']['font_size_standard'])
     else:
       backend.set_font_size('standard', formatting['dimensions']['font_size_standard'])
-    vertical_align = None
-    if 'text_vertical_align' in formatting:
-      vertical_align = formatting['text_vertical_align']
-    backend.textbox(lines=lines_this_column, x=x, y=y, w=column_offsets['w'], h=column_offsets['h'], headlines=headlines, h_level=None, text_color=text_color, align=get_alignment(formatting), markdown_format=True, text_vertical_align=vertical_align)
+    backend.textbox(lines=lines_this_column, x=x, y=y, w=column_offsets['w'], h=column_offsets['h'], headlines=headlines, h_level=None, text_color=text_color, align=get_alignment(formatting), markdown_format=True)
     # for next column:
     column_offsets = get_column_offsets(offsets, num_columns, column=c+1)
   if 'footer' in formatting:
@@ -239,12 +236,9 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
       y_offset += j_box_offset['h']+formatting['dimensions']['internal_margin']
     box_offsets_list[i]['y0'] = box_offsets_list[i]['y0']-y_offset
 #
-  vertical_align = None
-  if 'text_vertical_align' in formatting:
-    vertical_align = formatting['text_vertical_align']
   for i,(lines,box_offsets) in enumerate(zip(l4_boxes,box_offsets_list)):
     with backend.local_context(fill_opacity=0.75, stroke_opacity=0.75):
-      backend.l4_box(lines, box_offsets['x0'], box_offsets['y0'], box_offsets['w'], box_offsets['h'], headlines, align=get_alignment(formatting), border_color=default_l4_box_border_color, border_opacity=0.75, background_color=default_l4_box_fill_color, background_opacity=0.75, markdown_format=True, text_color=[0,0,0], text_vertical_align=vertical_align)
+      backend.l4_box(lines, box_offsets['x0'], box_offsets['y0'], box_offsets['w'], box_offsets['h'], headlines, align=get_alignment(formatting), border_color=default_l4_box_border_color, border_opacity=0.75, background_color=default_l4_box_fill_color, background_opacity=0.75, markdown_format=True, text_color=[0,0,0])
 
 def split_lines_into_columns(lines, num_columns):
   if num_columns == 1:
@@ -676,89 +670,6 @@ def get_alignment(formatting, section='text'):
   return formatting.get(key, 'left')  
 
 if __name__ == "__main__":
-  if "--help" in sys.argv:
-    print('''pymdslides usage
-pymdslides [options] inputfile.md
-
-options:
-  --help             - print this message and exit
-  --pdf              - produce a pdf output file
-  --raster-images    - generate raster images from vector images
-  --overwrite-images - overwrite images in target directory
-
-  Input files are formatted using markdown. you can configure the processing
-  using yaml snippets either in the beginning of the file (global scope) or
-  in the beginning of a slide (scoping to current slide). See below for
-  allowed configuration options and their defaults.
-
-
-  ### Configuration allowed everywhere:
-
-  * layout: **image_center**|image_left_half|image_left_small|image_right_half|image_right_small|image_fill
-  * text_align: **left**|center
-  * title_align: **left**|center
-  * page_numbering: true|**false**
-  * title_vertical_center: true|**false**
-  * text_vertical_align: **top**|center|bottom
-  * crop_images: **true**|false
-  * packed_images: **true**|false
-  * text_color:
-      - 0
-      - 0
-      - 0
-      -- colors are coded with RGB, 0-255.
-  * background_color:
-      - 255
-      - 255
-      - 255
-      -- colors are coded with RGB, 0-255.
-  * background_image: path_to_background_image_file.png
-  * footer: Made with PYMDSLIDES
-  * footer_color:
-      - 128
-      - 128
-      - 128
-      -- colors are coded with RGB, 0-255.
-  * logo_path: logo_path.png
-  * columns: integer_value, the number of columns for content
-  * incremental_bullets: true|**false**
-  * l4_box_fill_color:
-      - 230
-      - 240
-      - 255
-      -- colors are coded with RGB, 0-255.
-  * fonts:
-      - font_file_standard: Path to supported font file
-      - font_name_standard: Name of standard font
-      - font_file_title: Path to supported font file
-      - font_name_title: Name of title font
-      - font_file_footer: Path to supported font file
-      - font_name_footer: Name of footer font
-      -- pymdfiles will work without specifying fonts. If files are specified but not font names, names will be guessed from file names.
-
-  ### Document-wide configuration
-
-  * dimensions:
-      - em: 18
-      - em_title: 26
-      - font_size_footer: 12
-      - font_size_standard: 34
-      - font_size_subtitle: 40
-      - font_size_title: 72
-      - internal_margin: 10
-      - margin_footer: 4
-      - page_height: 270
-      - page_margins:
-          - x0: 30
-          - x1: 30
-          - y0: 40
-          - y1: 40
-      - page_width: 480
-      - pixel_per_mm: 0.15
-      - footer_em: 6
-  ''');
-    sys.exit()
-
   md_file = ''
   for i in range(len(sys.argv)-1, 0, -1):
     md_file = sys.argv[i]
@@ -946,36 +857,162 @@ options:
   backend.output()
 
   if '--pdf' in sys.argv:
-    pdf_file_final = '.'.join(md_file.split('.')[:-1])+'.pdf'
-    pdf_file = '.'.join(md_file.split('.')[:-1])+'-pre-cropping.pdf'
-    pdf_file_post_cropping = '.'.join(md_file.split('.')[:-1])+'-pre-cropping-fixed-margins.pdf'
-    executables = ['chrome','chromium',None]
-    for executable in executables:
-      if executable is None:
-        print('error: found no supported browser to generate pdf. supported: {}'.format(executables[:-1]))
-        break
-      if shutil.which(executable) is not None:
-        print('{} exists on the system'.format(executable))
-        break
-    if executable is not None:
-      command = '{} --headless --print-to-pdf={} {}'.format(executable, pdf_file, output_file) # output_file is the html target.
-      print(command)
-      os.system(command)
+    pdf_file = '.'.join(md_file.split('.')[:-1])+'.pdf'
+    #try:
+    if True:
+      from selenium import webdriver
+      from selenium.webdriver.firefox.options import Options
 
-      executables = ['pdfjam',None]
+      s = '''options = Options()
+      options.headless = True
+
+      driver = webdriver.Firefox(options=options)
+
+      url = "file://"+os.path.abspath(output_file)
+      print(url)
+      driver.get(url)
+
+      # Firefox-specific WebDriver command
+      print_settings = {
+        "printBackground": True,
+        "landscape": True,
+        "margin": {"top": 0, "bottom": 0, "left": 0, "right": 0},
+      }
+      pdf = driver.execute("print", {"print": print_settings})["value"]
+
+      with open(pdf_file, "wb") as f:
+        f.write(bytes(pdf, "utf-8"))
+
+      driver.quit()'''
+
+      width_mm=160
+      height_mm=90
+      landscape=False
+      timeout_s=15
+
+      html_url = pathlib.Path(os.path.abspath(output_file)).resolve().as_uri()
+      pdf_path = str(pathlib.Path(os.path.abspath(pdf_file)).resolve())
+      out_dir = str(pathlib.Path(pdf_path).resolve().parent)
+
+      # Printer key used by modern Firefox builds
+      printer = "Mozilla Save to PDF"
+
+      opts = Options()
+      opts.headless = True
+
+      # Make printing silent and default to the PDF "printer"
+      opts.set_preference("print.always_print_silent", True)
+      opts.set_preference("print.save_print_settings", True)
+      opts.set_preference("print_printer", printer)
+
+      pk = f"print.printer_{printer.replace(' ', '_')}"
+
+      # Output path
+      opts.set_preference(f"{pk}.print_to_file", True)
+      opts.set_preference(f"{pk}.print_to_filename", pdf_path)
+      # Some older builds use this:
+      opts.set_preference(f"{pk}.print_to_filename.print_directory", out_dir)
+
+      # Paper size in mm (unit 1 = mm; 0 = inches)
+      opts.set_preference(f"{pk}.print_paper_size_type", 2)  # 2 = custom size
+      opts.set_preference(f"{pk}.print_paper_size_unit", 1)
+      opts.set_preference(f"{pk}.print_paper_width", int(width_mm))
+      opts.set_preference(f"{pk}.print_paper_height", int(height_mm))
+
+      # Zero margins
+      for edge in ("top", "bottom", "left", "right"):
+          opts.set_preference(f"{pk}.print_margin_{edge}", 0)
+
+      # Backgrounds + color fidelity
+      opts.set_preference(f"{pk}.print_bgcolor", True)
+      opts.set_preference(f"{pk}.print_background", True)
+
+      # Orientation: 0=portrait, 1=landscape
+      opts.set_preference(f"{pk}.print_orientation", 1 if landscape else 0)
+
+      # Disable tab-modal print UI (older builds)
+      opts.set_preference("print.tab_modal.enabled", False)
+
+      opts.set_preference("print_footerleft", "")
+      opts.set_preference("print_footerright", "")
+      opts.set_preference("print_headerleft", "")
+      opts.set_preference("print_headerright", "")
+
+      opts.set_preference("print_paper_data", 0)          # 0 = custom size
+      opts.set_preference("print_paper_width", 160)       # mm, must be int
+      opts.set_preference("print_paper_height", 90)       # mm
+      opts.set_preference("print_scaling", 1)             # 1 = 100% (no shrink-to-fit)
+      opts.set_preference(f"{pk}.print_shrink_to_fit", False)
+
+      for edge in ("top","bottom","left","right"):
+        opts.set_preference(f"{pk}.print_margin_{edge}", 0)
+        opts.set_preference(f"{pk}.print_unwriteable_margin_{edge}", 0)
+
+      opts.set_preference("print.tab_modal.enabled", False)
+
+      # Start driver
+      driver = webdriver.Firefox(options=opts)
+
+      try:
+          driver.get(html_url)
+
+          # Give MathJax / resources a moment if needed
+          time.sleep(0.8)
+
+          # Trigger print
+          driver.execute_script("window.focus(); window.print();")
+
+          # Wait for the PDF file to appear & stabilize size
+          target = pathlib.Path(pdf_path)
+          t0 = time.time()
+          last_size = -1
+          while time.time() - t0 < timeout_s:
+              if target.exists():
+                  sz = target.stat().st_size
+                  if sz > 0 and sz == last_size:
+                      break
+                  last_size = sz
+              time.sleep(0.2)
+
+          if not target.exists() or target.stat().st_size == 0:
+              raise RuntimeError("PDF not created (check Firefox/driver versions and prefs).")
+
+          #return pdf_path
+      finally:
+          driver.quit()
+    #except:
+    else:
+      # there was no selenium
+      pdf_file_final = pdf_file
+      pdf_file = '.'.join(md_file.split('.')[:-1])+'-pre-cropping.pdf'
+      pdf_file_post_cropping = '.'.join(md_file.split('.')[:-1])+'-pre-cropping-fixed-margins.pdf'
+      executables = ['chrome','chromium',None]
       for executable in executables:
         if executable is None:
-          print('error: did not find pdfjam. will not be able to fix margins in generated pdf.')
+          print('error: found no supported browser to generate pdf. supported: {}'.format(executables[:-1]))
           break
         if shutil.which(executable) is not None:
-          print('{} exists on the system')
+          print('{} exists on the system'.format(executable))
           break
       if executable is not None:
-        command = 'pdfjam --keepinfo --papersize \'{{159mm,89mm}}\' --trim \'2mm 1mm 1mm 1mm\' --clip true --suffix "fixed-margins" {}'.format(pdf_file)
+        command = '{} --headless --print-to-pdf={} {}'.format(executable, pdf_file, output_file) # output_file is the html target.
         print(command)
         os.system(command)
-        command = 'mv {} {}'.format(pdf_file_post_cropping, pdf_file_final)
-        print(command)
-        os.system(command)
+
+        executables = ['pdfjam',None]
+        for executable in executables:
+          if executable is None:
+            print('error: did not find pdfjam. will not be able to fix margins in generated pdf.')
+            break
+          if shutil.which(executable) is not None:
+            print('{} exists on the system')
+            break
+        if executable is not None:
+          command = 'pdfjam --keepinfo --papersize \'{{159mm,89mm}}\' --trim \'2mm 1mm 1mm 1mm\' --clip true --suffix "fixed-margins" {}'.format(pdf_file)
+          print(command)
+          os.system(command)
+          command = 'mv {} {}'.format(pdf_file_post_cropping, pdf_file_final)
+          print(command)
+          os.system(command)
 
 
