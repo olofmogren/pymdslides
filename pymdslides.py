@@ -136,12 +136,15 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
   put_images_on_page(md_file_stripped, line_number, images, alt_texts, formatting['layout'], len(lines) > 0, packed_images, formatting['crop_images'], background=False, raster_images=raster_images, treat_as_raster_images=treat_as_raster_images)
   
   offsets = get_offsets(formatting['layout'])
-  x = offsets['x0']
-  y = offsets['y0']
+  offsets_title = offsets
+  if 'title_full_width' in formatting and formatting['title_full_width']:
+    offsets_title = get_offsets('image_center')
+  x_title = offsets_title['x0']
+  y_title = offsets_title['y0']
 
   # if title_vertical_center, put it in middle of page
   if 'title_vertical_center' in formatting and formatting['title_vertical_center']: # and formatting['layout'] in ['image_full', 'image_left_half', 'image_left_small', 'image_right_half', 'image_right_full']:
-    y = formatting['dimensions']['page_height']//2-int(1.5*formatting['dimensions']['em_title'])
+    y_title = formatting['dimensions']['page_height']//2-int(1.5*formatting['dimensions']['em_title'])
   if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
     print('Setting font title with size',formatting['dimensions']['font_size_title'])
     backend.set_font('title', '', formatting['dimensions']['font_size_title'])
@@ -149,36 +152,24 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
     print('Setting font size title',formatting['dimensions']['font_size_title'])
     backend.set_font_size('title', formatting['dimensions']['font_size_title'])
 
-  backend.set_xy(x,y)
-  backend.textbox(lines=[title], x=x, y=y, w=offsets['w'], h=int(formatting['dimensions']['em_title']*1.3), h_level=1, headlines=headlines, text_color=text_color, align=get_alignment(formatting, 'title'), markdown_format=False)
-  x = offsets['x0']
-  y += formatting['dimensions']['em_title']
+  backend.set_xy(x_title,y_title)
+  backend.textbox(lines=[title], x=x_title, y=y_title, w=offsets_title['w'], h=int(formatting['dimensions']['em_title']*1.3), h_level=1, headlines=headlines, text_color=text_color, align=get_alignment(formatting, 'title'), markdown_format=False)
 
   if subtitle:
-    x_subtitle = x
+    x_subtitle = x_title
     if get_alignment(formatting, 'title') == 'left':
-      x_subtitle = x+formatting['dimensions']['em']
-    y_subtitle = y-formatting['dimensions']['em_title']//5
+      x_subtitle = x_subtitle+formatting['dimensions']['em']
+    y_subtitle = y_title+formatting['dimensions']['em_title']*.8
     if 'fonts' in formatting and 'font_file_subtitle' in formatting['fonts']:
       backend.set_font('subtitle', '', formatting['dimensions']['font_size_subtitle'])
     else:
       backend.set_font_size('subtitle', formatting['dimensions']['font_size_subtitle'])
 
-    # CENTERING SUBTITLE:
-    #if formatting['layout'] == 'center':
-    #  x_subtitle = x
-    #  width = backend.get_string_width(subtitle)
-    #  centering_offset = round((offsets['w']-width)/2)
-    #  print('subtitle','"{}"'.format(subtitle))
-    #  print('subtitle_width',width,'x',x,'centering_offset',centering_offset)
-    #  print('offsets', offsets)
-    #  x_subtitle = x_subtitle+centering_offset
-    # MOVED TO BACKEND
-
     backend.set_xy(x_subtitle,y_subtitle)
-    backend.textbox(lines=[subtitle], x=x_subtitle, y=y_subtitle, w=offsets['w'], h=int(formatting['dimensions']['em_subtitle']*1.5), h_level=2, headlines=headlines, text_color=text_color, align=get_alignment(formatting, 'title'), markdown_format=False)
+    backend.textbox(lines=[subtitle], x=x_subtitle, y=y_subtitle, w=offsets_title['w'], h=int(formatting['dimensions']['em_subtitle']*1.5), h_level=2, headlines=headlines, text_color=text_color, align=get_alignment(formatting, 'title'), markdown_format=False)
+
   x = offsets['x0']
-  y += formatting['dimensions']['em_title']
+  y = y_title+formatting['dimensions']['em_title']
 
   print('images', len(images))
   offsets = get_offsets_for_text(formatting['layout'], images=(len(images) > 0))
@@ -598,7 +589,8 @@ def recursive_dict_update(d1, d2):
   return d1
 
 def cleanup_md_line(line):
-  line = re.sub(r'(?<!\*)\*(?![\*\s])', '__', line)
+  #line = re.sub(r'(?<!\*)\*(?![\*\s])', '__', line)
+  line = re.sub(r'(?<![\\*])\*(?![\*\s])', '__', line)
   if '$' in line:
     splits = line.split('$')
     corrected_splits = []
@@ -695,30 +687,31 @@ options:
   ### Configuration allowed everywhere:
 
   * layout: **image_center**|image_left_half|image_left_small|image_right_half|image_right_small|image_fill
-  * text_align: **left**|center
   * title_align: **left**|center
-  * page_numbering: true|**false**
   * title_vertical_center: true|**false**
+  * title_full_width: true|**false**
+  * text_align: **left**|center
   * text_vertical_align: **top**|center|bottom
+  * page_numbering: true|**false**
   * crop_images: **true**|false
   * packed_images: **true**|false
   * text_color:
       - 0
       - 0
       - 0
-      -- colors are coded with RGB, 0-255.
+      -- colors are coded with RGB, 0-255, or with names, or with html hex strings (but these require quotation marks).
   * background_color:
       - 255
       - 255
       - 255
-      -- colors are coded with RGB, 0-255.
+      -- colors are coded with RGB, 0-255, or with names, or with html hex strings (but these require quotation marks).
   * background_image: path_to_background_image_file.png
   * footer: Made with PYMDSLIDES
   * footer_color:
       - 128
       - 128
       - 128
-      -- colors are coded with RGB, 0-255.
+      -- colors are coded with RGB, 0-255, or with names, or with html hex strings (but these require quotation marks).
   * logo_path: logo_path.png
   * columns: integer_value, the number of columns for content
   * incremental_bullets: true|**false**
@@ -726,7 +719,7 @@ options:
       - 230
       - 240
       - 255
-      -- colors are coded with RGB, 0-255.
+      -- colors are coded with RGB, 0-255, or with names, or with html hex strings (but these require quotation marks).
   * fonts:
       - font_file_standard: Path to supported font file
       - font_name_standard: Name of standard font
@@ -756,6 +749,9 @@ options:
       - page_width: 480
       - pixel_per_mm: 0.15
       - footer_em: 6
+
+Available colors: white, grey, black, orange, red, green, blue, yellow, purple, pink, darkorange, darkred, darkgreen, darkblue, darkpurple, lightgrey, lightpink, lightgreen, lightblue.
+
   ''');
     sys.exit()
 
@@ -911,8 +907,8 @@ options:
     else:
       logo_path = formatting['logo_path']
   if output_format == 'html':
-    logo_width=20
-    logo_height=26
+    logo_width=18
+    logo_height=23
     if logo_path is not None:
       backend.set_logo(logo_path, x=formatting['dimensions']['page_width']-logo_width-formatting['dimensions']['margin_footer'], y=formatting['dimensions']['page_height']-logo_height-formatting['dimensions']['margin_footer'] , w=logo_width, h=logo_height)
 

@@ -722,10 +722,10 @@ document.onkeydown = function(event) {
       else {
         document.documentElement.requestFullscreen();
       }
+    break;
     case 79:
       // o - overview
       toggleOverview();
-    break;
     break;
   }
 };
@@ -1112,7 +1112,7 @@ MathJax = {
     return x,y+h
 
 
-  def l4_box(self, lines, x, y, w, h, headlines, align='left', border_color=[0,0,0], border_opacity=0.75, background_color=[255,255,255], background_opacity=0.75, markdown_format=True, text_color=None, text_vertical_center=None):
+  def l4_box(self, lines, x, y, w, h, headlines, align='left', border_color=[0,0,0], border_opacity=0.75, background_color=[255,255,255], background_opacity=0.75, markdown_format=True, text_color=None, text_vertical_align=None):
     formatted_lines = lines
     if align == 'left':
       align = 'start'
