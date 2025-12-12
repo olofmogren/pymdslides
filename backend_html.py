@@ -723,6 +723,15 @@ document.onkeydown = function(event) {
         document.documentElement.requestFullscreen();
       }
     break;
+    case 76:
+      // l - laser pointer
+      if (document.getElementsByTagName("body")[0].style.cursor.includes("cursor.png")) {
+        document.getElementsByTagName("body")[0].style.cursor = "initial";
+      }
+      else {
+        document.getElementsByTagName("body")[0].style.cursor = "url('graphics/pointer.png'), auto";
+      }
+    break;
     case 79:
       // o - overview
       toggleOverview();
@@ -820,6 +829,8 @@ MathJax = {
     self.body.append(loading_div)
     self.overwrite_images = overwrite_images
     self.onload_added = False
+    new_filename = os.path.join(self.graphics_dir,'pointer.png')
+    shutil.copyfile(os.path.join(script_home, 'pointer.png'), new_filename)
 
 
   def set_logo(self, logo, x, y, w, h):
