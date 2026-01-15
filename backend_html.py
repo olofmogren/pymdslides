@@ -1363,7 +1363,7 @@ MathJax = {
           if current_ext == 'eps':
             print('eps: eps2svg not found. falling back to converting to png.')
           target_extension = 'png'
-          target_filename = target_filename_no_ext+'.'+target_extension
+          target_filename = target_filename_no_ext+'-'+page_no+'.'+target_extension
           command = 'magick -density 150 '+input_file+'['+page_no+'] '+target_filename
           current_ext = target_extension
           command_is_chosen = True
