@@ -725,7 +725,7 @@ document.onkeydown = function(event) {
     break;
     case 76:
       // l - laser pointer
-      if (document.getElementsByTagName("body")[0].style.cursor.includes("cursor.png")) {
+      if (document.getElementsByTagName("body")[0].style.cursor.includes("pointer.png")) {
         document.getElementsByTagName("body")[0].style.cursor = "initial";
       }
       else {
