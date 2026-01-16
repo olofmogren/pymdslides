@@ -954,7 +954,7 @@ Available colors: white, grey, black, orange, red, green, blue, yellow, purple, 
         print('{} exists on the system'.format(executable))
         break
     if executable is not None:
-      command = '{} --headless --print-to-pdf={} {}'.format(executable, pdf_file, output_file) # output_file is the html target.
+      command = '{} --headless --disable-gpu --print-to-pdf={} {}'.format(executable, pdf_file, output_file) # output_file is the html target.
       print(command)
       os.system(command)
 
@@ -964,10 +964,10 @@ Available colors: white, grey, black, orange, red, green, blue, yellow, purple, 
           print('error: did not find pdfjam. will not be able to fix margins in generated pdf.')
           break
         if shutil.which(executable) is not None:
-          print('{} exists on the system')
+          print('{} exists on the system', executable)
           break
       if executable is not None:
-        command = 'pdfjam --keepinfo --papersize \'{{159mm,89mm}}\' --trim \'2mm 1mm 1mm 1mm\' --clip true --suffix "fixed-margins" {}'.format(pdf_file)
+        command = 'pdfjam --quiet --keepinfo --papersize \'{{159mm,89mm}}\' --trim \'2mm 1mm 1mm 1mm\' --clip true --suffix "fixed-margins" {}'.format(pdf_file)
         print(command)
         os.system(command)
         command = 'mv {} {}'.format(pdf_file_post_cropping, pdf_file_final)
