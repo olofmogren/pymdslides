@@ -1063,7 +1063,7 @@ MathJax = {
     else:
       text_color = self.text_color
     style = 'position: absolute; left: {}; top: {}; width: {}; height: {}; text-align: {}; overflow: hidden; padding-top: 0; /* text-wrap: nowrap; */ color: {};'.format(self.html_x(x), self.html_y(y), self.html_x(w), self.html_y(h), align, text_color)
-    if text_vertical_align and text_vertical_align is not 'top':
+    if text_vertical_align and text_vertical_align != 'top':
       if text_vertical_align == 'bottom':
         text_vertical_align = 'flex-end'
       style += 'display: flex; align-items: {};'.format(text_vertical_align)
@@ -1141,7 +1141,7 @@ MathJax = {
     else:
       text_color = self.text_color
     style = 'left: {}; top: {}; width: {}; text-align: {}; z-index: 4; margin: 0; padding: -1cqw .5cqw .5cqw .5cqw; background-color: {}; border: 1px {} solid; color: {}; display: flex; align-items: center;   /* vertical centering */'.format(self.html_x(x), self.html_y(y), self.html_x(w), align, bgcolor, bcolor, text_color)
-    if text_vertical_align and text_vertical_align is not 'top':
+    if text_vertical_align and text_vertical_align != 'top':
       if text_vertical_align == 'bottom':
         text_vertical_align = 'flex-end'
       style += 'display: flex; align-items: {};'.format(text_vertical_align)
@@ -1367,8 +1367,11 @@ MathJax = {
           command = 'magick -density 150 '+input_file+'['+page_no+'] '+target_filename
           current_ext = target_extension
           command_is_chosen = True
-        print('magick image:',command)
-        os.system(command)
+        if not os.path.exists(target_filename) or self.overwrite_images:
+          print('image conversion:',command)
+          os.system(command)
+        else:
+          print('reusing image at ',target_filename)
       else:
         target_extension = current_ext
         if current_ext in ['png', 'gif']:
@@ -1396,11 +1399,11 @@ MathJax = {
               #print('target_width_pixels, im_w', target_width_pixels, im_w)
               if target_width_pixels < im_w*DOWNSCALE_SLACK:
                 print('image requires downscaling {}, {}x{} pixels'.format(os.path.basename(current_filename), target_width_pixels, target_height_pixels))
-                im = im.resize((target_width_pixels, target_height_pixels))
                 target_filename = target_filename_no_ext+ '-{}x{}'.format(target_width_pixels, target_height_pixels)+'.'+target_extension
                 print('target_filename', target_filename)
                 print('exists', os.path.exists(target_filename), 'overwrite', self.overwrite_images)
                 if not os.path.exists(target_filename) or self.overwrite_images:
+                  im = im.resize((target_width_pixels, target_height_pixels))
                   im.save(target_filename)
                   print('saved image at ', target_filename)
                 else:

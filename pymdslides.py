@@ -764,7 +764,8 @@ Available colors: white, grey, black, orange, red, green, blue, yellow, purple, 
       break
   print('md_file:',md_file)
   output_format = 'html'
-  if 'odp' in sys.argv:
+  if '--odp' in sys.argv:
+    print('Using the OpenDocument odp output format.')
     output_format = 'odp'
   if not md_file.endswith('.md'):
     md_file += '.md'
