@@ -128,12 +128,12 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
   packed_images = True
   if 'background_image' in formatting:
     print('{}:{}: background_image {}'.format(md_file_stripped, line_number, formatting['background_image']))
-    put_images_on_page(md_file_stripped, line_number, [formatting['background_image']], [''], formatting['layout'], len(lines) > 0, packed_images, True, background=True, raster_images=raster_images, treat_as_raster_images=treat_as_raster_images)
+    put_images_on_page(md_file_stripped, line_number, [formatting['background_image']], [''], formatting['layout'], len(lines) > 0, packed_images, True, formatting, background=True, raster_images=raster_images, treat_as_raster_images=treat_as_raster_images)
 
   if 'packed_images' in formatting and formatting['packed_images'] == False:
     packed_images = False
   print('{}:{}: crop_images {}'.format(md_file_stripped, line_number, formatting['crop_images']))
-  put_images_on_page(md_file_stripped, line_number, images, alt_texts, formatting['layout'], len(lines) > 0, packed_images, formatting['crop_images'], background=False, raster_images=raster_images, treat_as_raster_images=treat_as_raster_images)
+  put_images_on_page(md_file_stripped, line_number, images, alt_texts, formatting['layout'], len(lines) > 0, packed_images, formatting['crop_images'], formatting, background=False, raster_images=raster_images, treat_as_raster_images=treat_as_raster_images)
   
   offsets = get_offsets(formatting['layout'])
   offsets_title = offsets
@@ -171,8 +171,10 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
   x = offsets['x0']
   y = y_title+formatting['dimensions']['em_title']
 
-  print('images', len(images))
-  offsets = get_offsets_for_text(formatting['layout'], images=(len(images) > 0))
+  has_page_images = any(not alt.startswith('credits:') for alt in alt_texts)
+  print('render_page: images', len(images), 'has_page_images', has_page_images)
+  offsets = get_offsets_for_text(formatting['layout'], images=has_page_images)
+
   column_offsets = offsets
   num_columns = 1
   if 'columns' in formatting and formatting['columns'] > 1:
@@ -379,16 +381,25 @@ def get_column_offsets(offsets, num_columns, column):
   return column_offsets
 
 def get_offsets_for_text(layout, images=True):
-  # returns offsets for text area.
-  # layouts = ['image_left_half', 'image_left_small', 'image_right_half', 'image_right_small', 'image_center', 'image_fill']
+  margin = formatting['dimensions']['internal_margin']
+  y_top = formatting['dimensions']['page_margins']['y0'] + formatting['dimensions']['em_title'] + margin
+  y_bottom = formatting['dimensions']['page_height'] - formatting['dimensions']['page_margins']['y1']
+  drawable_height = y_bottom - y_top
+
   if layout in ['image_center']:
-    y = formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2
-    drawable_height = formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y0']-formatting['dimensions']['em_title']-formatting['dimensions']['page_margins']['y1']
     if images:
-      drawable_height = drawable_height//2
-      y += formatting['dimensions']['internal_margin']//2
-      y += drawable_height
-    offsets = {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': y, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
+      # Lower section: starts exactly (margin // 2) below the midpoint
+      midpoint = y_top + (drawable_height // 2)
+      text_y0 = midpoint + (margin // 2)
+    else:
+      text_y0 = y_top
+
+    offsets = {
+      'x0': formatting['dimensions']['page_margins']['x0'],
+      'y0': text_y0,
+      'x1': formatting['dimensions']['page_width'] - formatting['dimensions']['page_margins']['x1'],
+      'y1': y_bottom
+    }
   elif layout == 'image_left_half':
     offsets =  {'x0': (formatting['dimensions']['page_width']//2)+formatting['dimensions']['internal_margin']//2, 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
   elif layout == 'image_left_small':
@@ -424,7 +435,7 @@ def get_offsets(layout):
   offsets['h'] = offsets['y1']-offsets['y0']
   return offsets
 
-def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout, has_text, packed_images, crop_images, background=False, raster_images=False, treat_as_raster_images=[]):
+def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout, has_text, packed_images, crop_images, formatting, background=False, raster_images=False, treat_as_raster_images=[]):
   #print('crop_images', crop_images)
   #print('put_images_on_page()', 'layout', layout)
   if len(images) == 0:
@@ -451,7 +462,7 @@ def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout,
       locations = [{'x0': 0, 'y0': 0, 'w': formatting['dimensions']['page_width'], 'h': formatting['dimensions']['page_height']}]
       #print('background location', locations)
     else:
-      locations = get_images_locations(page_images, layout, has_text, packed_images, cred=False)
+      locations = get_images_locations(page_images, layout, has_text, formatting, packed_images, cred=False)
       #print('locations',locations)
     for image,location in zip(page_images,locations):
       image_to_display = image
@@ -459,100 +470,137 @@ def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout,
 
   # credit images:
   if len(credit_images):
-    locations = get_images_locations(credit_images, layout, has_text, packed_images, cred=True)
+    locations = get_images_locations(credit_images, layout, has_text, formatting, packed_images, cred=True)
     # print("credit_images", credit_images)
     for image,location in zip(credit_images,locations):
       backend.image(image, x=location['x0'], y = location['y0'], w = location['w'], h = location['h'], link = '', crop_images=True)
   return 
 
-def get_images_locations(images, layout, has_text, packed_images=False, cred=False):
-  # layouts = ['image_left_half', 'image_left_small', 'image_right_half', 'image_right_small', 'image_center', 'image_fill']
-  #print('get_images_locations()', 'layout', layout)
-  locations = []
-  image_area = [0,0,formatting['dimensions']['page_width'],formatting['dimensions']['page_height']]
-  #print('formatting['dimensions']['page_margins']',formatting['dimensions']['page_margins'])
-  #print('layout',layout)
-  image_area = get_image_area(layout, has_text)
+# TODO: remove layout, as its included in "formatting".
 
-  #print('num_images', len(images))
-  #print('cred', cred)
-  cred_aspect_ratio = 1.05 # /1.1
-  cred_fraction = 0.6 # TODO: set reasonable constant somewhere, or let it be configurable.
-  if cred:
-    image_area = get_offsets_for_text(layout)
-    cred_image_height = int(cred_fraction*formatting['dimensions']['page_margins']['y1'])
-    image_area['y0'] = formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']+int((formatting['dimensions']['page_margins']['y1']-cred_image_height)/2)
-    image_area['y1'] = image_area['y0']+cred_image_height
+def get_images_locations(images, layout, has_text, formatting, packed_images=False, cred=False):
+    locations = []
+    image_area = get_image_area(layout, has_text, formatting)
 
-  image_area['w'] = image_area['x1']-image_area['x0']
-  image_area['h'] = image_area['y1']-image_area['y0']
+    cred_aspect_ratio = 1.05
+    cred_fraction = 0.8
+    if cred:
+        image_area = get_offsets_for_text(layout)
+        cred_image_height = int(cred_fraction * formatting['dimensions']['page_margins']['y1'])
+        image_area['y0'] = formatting['dimensions']['page_height'] - formatting['dimensions']['page_margins']['y1'] + int((formatting['dimensions']['page_margins']['y1'] - cred_image_height) / 2)
+        image_area['y1'] = image_area['y0'] + cred_image_height
 
-  if cred:
-    grid_width = len(images)
-    grid_height = 1
-  elif layout in ['image_center']:
-    grid_width = len(images)
-    grid_height = 1
-  else:
-    grid_height = math.sqrt(len(images))
-    #print(grid_height)
-    if grid_height - int(grid_height) > 0.0:
-      grid_height = int(grid_height)+1
-      grid_width = math.ceil(len(images)/grid_height)
+    image_area['w'] = image_area['x1'] - image_area['x0']
+    image_area['h'] = image_area['y1'] - image_area['y0']
+
+    MAX_SINGLE_ROW = 3  # 1 to 3 images side-by-side
+
+    # Check for manual override from slide YAML frontmatter
+    if cred:
+        grid_width = len(images)
+        grid_height = 1
+    elif 'images_per_row' in formatting:
+        grid_width = int(formatting['images_per_row'])
+        grid_height = math.ceil(len(images) / grid_width)
+    elif layout in ['image_center'] and len(images) <= MAX_SINGLE_ROW:
+        grid_width = len(images)
+        grid_height = 1
+    elif len(images) == 4:
+        # Explicit 2x2 for 4 images
+        grid_width = 2
+        grid_height = 2
     else:
-      grid_height = int(grid_height)
-      grid_width = grid_height
+        # Check aspect ratio of the actual allocated image area
+        area_aspect = image_area['w'] / max(1, image_area['h'])
 
-  if layout in ['image_fill'] and not cred:
-    # prefer to put images side-by-side instead of on top of each other:
-    g_w = grid_height
-    grid_height = grid_width
-    grid_width = g_w
-  #print('grid',grid_width,grid_height)
-  #print('images',len(images))
+        if area_aspect > 1.2:
+            # Wide/landscape area: bias towards more columns
+            grid_width = math.ceil(math.sqrt(len(images) * area_aspect))
+        else:
+            # Square or tall column area (e.g. image_right_half): standard square packing
+            grid_width = math.ceil(math.sqrt(len(images)))
 
-  if cred:
-    tot_height = image_area['h']
-    tot_width = int(image_area['h']*cred_aspect_ratio*len(images))
-    image_area['x0'] = image_area['x0']+image_area['w']//2-tot_width//2
-    image_area['x1'] = image_area['x0']+tot_width
-    image_area['w'] = image_area['x1']-image_area['x0']
-    image_area['h'] = image_area['y1']-image_area['y0']
+        grid_height = math.ceil(len(images) / grid_width)
 
-  #print('image area size:', image_area['w'], image_area['h'], 'image grid:', grid_width, grid_height, 'margin',formatting['dimensions']['internal_margin'])
-  image_size = {'w': int(image_area['w']/grid_width),
-                'h': int(image_area['h']/grid_height)}
-  if not packed_images and not cred:
-    image_size = {'w': int((image_area['w']-(grid_width-1)*formatting['dimensions']['internal_margin'])/grid_width),
-                  'h': int((image_area['h']-(grid_height-1)*formatting['dimensions']['internal_margin'])/grid_height)}
-  
-  #print('image_size', image_size)
-  for i,image in enumerate(images):
-    pos_x = i % grid_width
-    pos_y = i // grid_width
-    marg_x = 0
-    if not packed_images and not cred:
-      marg_x = formatting['dimensions']['internal_margin']
-    marg_y = 0
-    if not packed_images and not cred:
-      marg_y = formatting['dimensions']['internal_margin']
-    #print('image-grid:', pos_x, pos_y, marg_x, marg_y)
-    #location  = {'x0': image_area['x0']+pos_x*image_size['w']+marg_x, 'y0': image_area['y0']+pos_y*image_size['h']+marg_y, 'w': image_size['w']-marg_x, 'h': image_size['h']-marg_y}
-    location  = {'x0': image_area['x0']+pos_x*(image_size['w']+marg_x),
-                 'y0': image_area['y0']+pos_y*(image_size['h']+marg_y),
-                 'w': image_size['w'],
-                 'h': image_size['h']}
-    #print('location',location)
-    locations.append(location)
-  return locations
+    if cred:
+        tot_height = image_area['h']
+        tot_width = int(image_area['h'] * cred_aspect_ratio * len(images))
+        credits_align = formatting.get('credits_align', 'center')
+        margin_footer = formatting['dimensions']['margin_footer']
+        page_width = formatting['dimensions']['page_width']
 
-def get_image_area(layout, has_text):
+        print('credits_align', credits_align)
+
+        # Check if a logo is active (default logo.png is used unless logo_path is explicitly empty '')
+        has_logo = True
+        if 'logo_path' in formatting and formatting['logo_path'] == '':
+            has_logo = False
+        logo_width = 18 if has_logo else 0
+
+        if credits_align == 'left':
+            image_area['x0'] = margin_footer
+        elif credits_align == 'right':
+            if has_logo:
+                # Align just to the left of the logo, with margin_footer gap
+                logo_x = page_width - logo_width - margin_footer
+                image_area['x0'] = logo_x - margin_footer - tot_width
+            else:
+                image_area['x0'] = page_width - margin_footer - tot_width
+        else:  # 'center' (default)
+            image_area['x0'] = image_area['x0'] + image_area['w'] // 2 - tot_width // 2
+
+        image_area['x1'] = image_area['x0'] + tot_width
+        image_area['w'] = image_area['x1'] - image_area['x0']
+        image_area['h'] = image_area['y1'] - image_area['y0']
+
+    marg_y = formatting['dimensions']['internal_margin'] if (not packed_images and not cred) else 0
+    row_height = int((image_area['h'] - (grid_height - 1) * marg_y) / grid_height)
+
+    marg_x = formatting['dimensions']['internal_margin'] if (not packed_images and not cred) else 0
+
+    for i, image in enumerate(images):
+        row = i // grid_width
+        col = i % grid_width
+
+        # How many images are in this specific row:
+        images_in_this_row = min(grid_width, len(images) - row * grid_width)
+
+        # Dynamic width: stretches across the row based on item count:
+        current_w = int((image_area['w'] - (images_in_this_row - 1) * marg_x) / images_in_this_row)
+
+        location = {
+            'x0': image_area['x0'] + col * (current_w + marg_x),
+            'y0': image_area['y0'] + row * (row_height + marg_y),
+            'w': current_w,
+            'h': row_height
+        }
+        locations.append(location)
+
+    return locations
+
+def get_image_area(layout, has_text, formatting):
+  margin = formatting['dimensions']['internal_margin']
+  y_top = formatting['dimensions']['page_margins']['y0'] + formatting['dimensions']['em_title'] + margin
+  y_bottom = formatting['dimensions']['page_height'] - formatting['dimensions']['page_margins']['y1']
+  drawable_height = y_bottom - y_top
+
   if layout in ['image_center']:
-    drawable_height = formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y0']-formatting['dimensions']['em_title']-formatting['dimensions']['page_margins']['y1']
     if has_text:
-      image_area = {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': drawable_height//2+formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']-formatting['dimensions']['internal_margin']//2}
+      # Upper section: stops exactly (margin // 2) above the midpoint
+      midpoint = y_top + (drawable_height // 2)
+      image_area = {
+        'x0': formatting['dimensions']['page_margins']['x0'],
+        'y0': y_top,
+        'x1': formatting['dimensions']['page_width'] - formatting['dimensions']['page_margins']['x1'],
+        'y1': midpoint - (margin // 2)
+      }
     else:
-      image_area = {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
+      image_area = {
+        'x0': formatting['dimensions']['page_margins']['x0'],
+        'y0': y_top,
+        'x1': formatting['dimensions']['page_width'] - formatting['dimensions']['page_margins']['x1'],
+        'y1': y_bottom
+      }
   elif layout == 'image_left_half':
     image_area =  {'x0': 0, 'y0': 0, 'x1': formatting['dimensions']['page_width']//2, 'y1': formatting['dimensions']['page_height']}
   elif layout == 'image_left_small':
@@ -687,13 +735,15 @@ options:
   ### Configuration allowed everywhere:
 
   * layout: **image_center**|image_left_half|image_left_small|image_right_half|image_right_small|image_fill
+  * title_full_width: true|**false**
   * title_align: **left**|center
   * title_vertical_center: true|**false**
-  * title_full_width: true|**false**
   * text_align: **left**|center
+  * credits_align: left|**center**|right
   * text_vertical_align: **top**|center|bottom
   * page_numbering: true|**false**
   * crop_images: **true**|false
+  * images_per_row: <number> -- forces the number of columns in image grid layout.
   * packed_images: **true**|false
   * text_color:
       - 0
@@ -742,10 +792,10 @@ options:
       - margin_footer: 4
       - page_height: 270
       - page_margins:
-          - x0: 30
-          - x1: 30
-          - y0: 40
-          - y1: 40
+          x0: 30
+          x1: 30
+          y0: 40
+          y1: 40
       - page_width: 480
       - pixel_per_mm: 0.15
       - footer_em: 6
@@ -820,54 +870,58 @@ Available colors: white, grey, black, orange, red, green, blue, yellow, purple, 
 
   preprocessed_md = []
 
-  previous_headline = -1
-  
-  for line_number,line in enumerate(md_contents_lines):
+  yaml_start_line = -1
+
+  for line_number, line in enumerate(md_contents_lines):
+    is_h1 = line.startswith('#') and (len(line) <= 1 or line[1] != '#')
+
     if current_yaml:
-      # this line contains a continuation of yaml content. Parsing later.
-      current_yaml += '\n'+line
-      #print('current_yaml',current_yaml)
-    elif line.startswith('#') and (len(line) <= 1 or line[1] != '#'):
+      if is_h1:
+        raise SyntaxError(
+            f"Line {line_number + 1}: Encountered slide headline '{line}' inside an unclosed YAML block "
+            f"(started on line {yaml_start_line + 1}). Did you forget a closing '---'?"
+        )
+      current_yaml += '\n' + line
+    elif is_h1:
       if preamble:
-        # formatting from preamble is global for whole document:
-        #print('preamble. setting global formatting')
+        # Preamble before first '#' is global for the whole document:
         global_formatting = copy.deepcopy(formatting)
         content = [line]
         preamble = False
       else:
-        #print(yaml.dump(formatting))
         preprocessed = preprocess_md_page(content, previous_headline, formatting)
-        #print('preprocessed',preprocessed)
         preprocessed_md += preprocessed
-        # reset to global config.
+        # Strictly revert to global formatting for the new slide:
         formatting = copy.deepcopy(global_formatting)
         content = [line]
-      print('headline',line)
+      print('headline', line)
       previous_headline = line_number
-      #current_headline = line[2:]
-    elif line == '---':
-      # this line begins yaml content. Parsing later.
-      current_yaml = line
-      #print('current_yaml',current_yaml)
+    elif line.strip() == '---':
+      current_yaml = '---'
+      yaml_start_line = line_number
     else:
       content.append(line)
-    if len(current_yaml) > 3 and current_yaml[-3:] == '---':
-      # this and possibly preceding lines has contained yaml content. Parse formatting yaml:
-      current_yaml = current_yaml[3:-3] # remove beginning and ending three dashes (syntax)
+
+    if len(current_yaml) > 3 and current_yaml.strip().endswith('---'):
+      yaml_body = current_yaml.strip()[3:-3]
       try:
-        new_formatting = yaml.safe_load(current_yaml)
+        new_formatting = yaml.safe_load(yaml_body)
         if new_formatting is not None:
-          #formatting.update(new_formatting)
           formatting = recursive_dict_update(formatting, new_formatting)
-          #print('formatting', formatting)
-          print('{}:{}: Updating formatting from Yaml syntax: \n  {}'.format(md_file_stripped, line_number, current_yaml.replace('\n', '\n  ')))
-          #print(yaml.dump(formatting))
-        else:
-          print('{}:{}: Ignoring Yaml formatting configuration: \n  {}'.format(md_file_stripped, line_number, current_yaml.replace('\n', '\n  ')))
+          print('{}:{}: Updating formatting from Yaml syntax: \n  {}'.format(
+              md_file_stripped, line_number, yaml_body.replace('\n', '\n  ')))
       except Exception as e:
-        #print(e)
-        raise SyntaxError('Line '+str(line_number)+': Incorrect YAML formatting information: '+current_yaml+'\nMore information: '+str(e))
-      current_yaml = '' # reset yaml. Next line is not a continuation of a yaml configuration.
+        raise SyntaxError(
+            f"Line {line_number + 1}: Incorrect YAML formatting information: {yaml_body}\nMore information: {e}"
+        )
+      current_yaml = ''
+      yaml_start_line = -1
+
+  # Also catch an unclosed YAML block at the very end of the file:
+  if current_yaml:
+    raise SyntaxError(
+        f"Line {yaml_start_line + 1}: Unclosed YAML block at end of file. Missing closing '---'."
+    )
 
   # last page:
   preprocessed = preprocess_md_page(content, previous_headline, formatting)
@@ -907,11 +961,11 @@ Available colors: white, grey, black, orange, red, green, blue, yellow, purple, 
       logo_path = os.path.join(script_home,formatting['logo_path'])
     else:
       logo_path = formatting['logo_path']
-  if output_format == 'html':
-    logo_width=18
-    logo_height=23
-    if logo_path is not None:
-      backend.set_logo(logo_path, x=formatting['dimensions']['page_width']-logo_width-formatting['dimensions']['margin_footer'], y=formatting['dimensions']['page_height']-logo_height-formatting['dimensions']['margin_footer'] , w=logo_width, h=logo_height)
+  
+  logo_width=18
+  logo_height=23
+  if logo_path is not None:
+    backend.set_logo(logo_path, x=formatting['dimensions']['page_width']-logo_width-formatting['dimensions']['margin_footer'], y=formatting['dimensions']['page_height']-logo_height-formatting['dimensions']['margin_footer'] , w=logo_width, h=logo_height)
 
   # MAIN PROCESSING LOOP.
 

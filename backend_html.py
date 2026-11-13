@@ -1066,7 +1066,7 @@ MathJax = {
     if text_vertical_align and text_vertical_align != 'top':
       if text_vertical_align == 'bottom':
         text_vertical_align = 'flex-end'
-      style += 'display: flex; align-items: {};'.format(text_vertical_align)
+      style += 'display: flex; flex-direction: column; justify-content: {};'.format(text_vertical_align)
     #print('textbox div style', style)
     if h_level is not None:
       text_div.set('style', style)
@@ -1144,7 +1144,7 @@ MathJax = {
     if text_vertical_align and text_vertical_align != 'top':
       if text_vertical_align == 'bottom':
         text_vertical_align = 'flex-end'
-      style += 'display: flex; align-items: {};'.format(text_vertical_align)
+      style += 'display: flex; flex-direction: column; justify-content: {};'.format(text_vertical_align)
     print('align', align)
     if align == 'center':
       style += 'align-items: center; '
