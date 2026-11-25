@@ -25,7 +25,7 @@ DOWNSCALE_SLACK = 0.75
 
 
 class backend_html:
-  def __init__(self, input_file, formatting, script_home, overwrite_images=False):
+  def __init__(self, input_file, formatting, script_home, overwrite_images=False, downloadable_odp=None):
     self.html_output_filename = os.path.join(os.path.splitext(input_file)[0],'index.html')
     self.output_dir = os.path.dirname(self.html_output_filename)
     #print('output_dir',self.output_dir)
@@ -33,6 +33,8 @@ class backend_html:
       self.output_dir += '/'
     self.graphics_dir = os.path.join(self.output_dir,'graphics')
     self.resources_dir = os.path.join(self.output_dir,'resources')
+    self.downloadable_odp = downloadable_odp
+
     try:
       os.makedirs(self.graphics_dir)
     except FileExistsError:
@@ -48,6 +50,7 @@ class backend_html:
     self.page_height = formatting['dimensions']['page_height']
 
     self.text_color = dec_to_hex_color([0,0,0])
+    self.link_color = None
 
     self.oversized_images = "DOWNSCALE"
     #self.oversized_images = "DONOTDOWNSCALE"
@@ -153,6 +156,7 @@ h1 {{
   /*font-size: 4cqw;*/
   font-size: "{}";
   font-weight: normal;
+  white-space: nowrap;
 }}
 h2 {{
   font-family: "{}", Arial, Sans-Serif;
@@ -292,11 +296,15 @@ div.footer {{
 }}
 ul {{
   margin-top: 0;
+  margin-bottom: 0;
   border: 1px;
 }}
 li {{
-  margin-top: 0em;
-  margin-bottom: 0.3em;
+  margin-top: 0.25em;
+  margin-bottom: 0;
+}}
+li > ul {{
+  margin-top: 0.25em;
 }}
 p {{
   margin-top: 0;
@@ -317,6 +325,10 @@ border: 1px #ccc solid;
 }}
 body.overview {{
   overflow: auto; /* allow scroll if >25 slides */
+  --slide-w: calc((100vw / 5 - 1.2vw) / var(--thumb-scale));
+  --slide-h: calc(var(--slide-w) * 0.5625);
+  --cqw: calc(var(--slide-w) / 100);
+  --cqh: calc(var(--slide-h) / 100);
 }}
 body.overview #slides {{
   display: grid;
@@ -418,6 +430,7 @@ body.overview .page_div .subcontainer {{
 var currentPageId = "page-1";
 var blackPageVar = false;
 var lastPage = 0;
+var downloadableOdp = null;
 
 var overviewMode = false; // if you already declared this earlier, keep only one
 var helpBtnTimer = null;
@@ -582,6 +595,12 @@ function blackPage() {
   }
   blackPageVar = !blackPageVar;
 }
+
+function togglePlayAnimation(el, event) {
+  event.stopPropagation();
+  el.classList.toggle('playing');
+}
+
 function mouseuphandler(e) {
   var selection = window.getSelection();
   if(selection.toString().length > 0) {
@@ -714,6 +733,17 @@ document.onkeydown = function(event) {
       // b - blank/black
       blackPage();
     break;
+    case 68:
+      // d - download odp
+      if (downloadableOdp) {
+        var a = document.createElement('a');
+        a.href = downloadableOdp;
+        a.download = downloadableOdp;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    break;
     case 70:
       // f - fulscreen
       if (window.fullScreen) {
@@ -803,28 +833,32 @@ MathJax = {
     loading_span1 = ET.Element('p')
     loading_span1.text = 'Loading.'
     loading_span1.set('class', 'splash-only')
+    loading_subdiv.append(loading_span1)
     loading_span2 = ET.Element('p')
     loading_span2.text = 'PYMD slides requires a javascript-enabled browser.'
     loading_span2.set('class', 'splash-only')
+    loading_subdiv.append(loading_span2)
     loading_span3 = ET.Element('p')
     loading_span3.text = 'Usage: Arrow buttons, page up/down, or space to navigate.'
+    loading_subdiv.append(loading_span3)
     loading_span4 = ET.Element('p')
     loading_span4.text = 'F for fullscreen.'
+    loading_subdiv.append(loading_span4)
     loading_span5 = ET.Element('p')
     loading_span5.text = 'B for blank.'
+    loading_subdiv.append(loading_span5)
     loading_span6 = ET.Element('p')
     loading_span6.text = 'O for overview grid. Click a slide to jump.'
+    loading_subdiv.append(loading_span6)
+    if self.downloadable_odp:
+      loading_span_d = ET.Element('p')
+      loading_span_d.text = 'D to download slides as ODP.'
+      loading_subdiv.append(loading_span_d)
     loading_span7 = ET.Element('p')
     loading_span7.text = 'Click on leftmost quarter for previous slide, the rest for next.'
+    loading_subdiv.append(loading_span7)
     loading_span8 = ET.Element('p')
     loading_span8.text = 'More info: see https://github.com/olofmogren/pymdslides/ .'
-    loading_subdiv.append(loading_span1)
-    loading_subdiv.append(loading_span2)
-    loading_subdiv.append(loading_span3)
-    loading_subdiv.append(loading_span4)
-    loading_subdiv.append(loading_span5)
-    loading_subdiv.append(loading_span6)
-    loading_subdiv.append(loading_span7)
     loading_subdiv.append(loading_span8)
     self.body.append(loading_div)
     self.overwrite_images = overwrite_images
@@ -889,6 +923,9 @@ MathJax = {
     # onmouseup (onclick fires also with onmousedown, resulting in two events) on previous page will take us to this one
     self.override_font = {}
     self.override_font_size = {} # override fonts are per page.
+    self.current_title_tag = None
+    self.current_subtitle_tag = None
+    self.link_color = None
     self.pages_count += 1
     self.current_page_div = ET.Element('div')
     self.slides_container.append(self.current_page_div)
@@ -943,6 +980,13 @@ MathJax = {
 
   def set_text_color(self, color):
     self.text_color = dec_to_hex_color(color)
+    return True
+
+  def set_link_color(self, color):
+    if color is None:
+      self.link_color = None
+    else:
+      self.link_color = dec_to_hex_color(color)
     return True
 
   def set_draw_color(self, color):
@@ -1184,6 +1228,16 @@ MathJax = {
   def fix_all_links(self, tag, headlines):
     self.fix_local_links(tag, headlines)
     self.fix_external_links(tag)
+    if self.link_color is not None:
+      self.style_links(tag)
+
+  def style_links(self, tag):
+    for child in tag:
+      if child.tag == 'a':
+        style = child.get('style') or ''
+        style = self.update_css_string(style, 'color', self.link_color)
+        child.set('style', style)
+      self.style_links(child)
 
   def fix_local_links(self, tag, headlines):
     for child in tag:
@@ -1207,6 +1261,8 @@ MathJax = {
         href = child.get('href')
         if len(href) > 0 and not href[0] == '#':
           child.set('onmouseup', 'stopProp(event);')
+          child.set('target', '_blank')
+          child.set('rel', 'noopener noreferrer')
       self.fix_external_links(child)
     
   #def style_p(self, tag):
@@ -1474,7 +1530,10 @@ MathJax = {
       self.ensure_closing_tags(c)
 
   def set_last_page_js(self, html_source_code):
-    return html_source_code.replace('var lastPage = 0;', 'var lastPage = {};'.format(self.pages_count));
+    html_source_code = html_source_code.replace('var lastPage = 0;', 'var lastPage = {};'.format(self.pages_count))
+    if self.downloadable_odp:
+      html_source_code = html_source_code.replace('var downloadableOdp = null;', 'var downloadableOdp = "{}";'.format(self.downloadable_odp))
+    return html_source_code
 
   def set_onload(self):
     if not self.onload_added:

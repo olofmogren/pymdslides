@@ -14,8 +14,8 @@
 
 import os
 
-import sys,math,time,re,pathlib
-from PIL import Image, ImageOps
+import sys,math,time,re
+from PIL import Image, ImageOps, ImageFont
 from subprocess import Popen,PIPE
 from datetime import datetime
 
@@ -128,20 +128,23 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
   packed_images = True
   if 'background_image' in formatting:
     print('{}:{}: background_image {}'.format(md_file_stripped, line_number, formatting['background_image']))
-    put_images_on_page(md_file_stripped, line_number, [formatting['background_image']], [''], formatting['layout'], len(lines) > 0, packed_images, True, background=True, raster_images=raster_images, treat_as_raster_images=treat_as_raster_images)
+    put_images_on_page(md_file_stripped, line_number, [formatting['background_image']], [''], formatting['layout'], len(lines) > 0, packed_images, True, formatting, background=True, raster_images=raster_images, treat_as_raster_images=treat_as_raster_images)
 
   if 'packed_images' in formatting and formatting['packed_images'] == False:
     packed_images = False
   print('{}:{}: crop_images {}'.format(md_file_stripped, line_number, formatting['crop_images']))
-  put_images_on_page(md_file_stripped, line_number, images, alt_texts, formatting['layout'], len(lines) > 0, packed_images, formatting['crop_images'], background=False, raster_images=raster_images, treat_as_raster_images=treat_as_raster_images)
+  put_images_on_page(md_file_stripped, line_number, images, alt_texts, formatting['layout'], len(lines) > 0, packed_images, formatting['crop_images'], formatting, background=False, raster_images=raster_images, treat_as_raster_images=treat_as_raster_images)
   
   offsets = get_offsets(formatting['layout'])
-  x = offsets['x0']
-  y = offsets['y0']
+  offsets_title = offsets
+  if 'title_full_width' in formatting and formatting['title_full_width']:
+    offsets_title = get_offsets('image_center')
+  x_title = offsets_title['x0']
+  y_title = offsets_title['y0']
 
   # if title_vertical_center, put it in middle of page
   if 'title_vertical_center' in formatting and formatting['title_vertical_center']: # and formatting['layout'] in ['image_full', 'image_left_half', 'image_left_small', 'image_right_half', 'image_right_full']:
-    y = formatting['dimensions']['page_height']//2-int(1.5*formatting['dimensions']['em_title'])
+    y_title = formatting['dimensions']['page_height']//2-int(1.5*formatting['dimensions']['em_title'])
   if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
     print('Setting font title with size',formatting['dimensions']['font_size_title'])
     backend.set_font('title', '', formatting['dimensions']['font_size_title'])
@@ -149,39 +152,77 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
     print('Setting font size title',formatting['dimensions']['font_size_title'])
     backend.set_font_size('title', formatting['dimensions']['font_size_title'])
 
-  backend.set_xy(x,y)
-  backend.textbox(lines=[title], x=x, y=y, w=offsets['w'], h=int(formatting['dimensions']['em_title']*1.3), h_level=1, headlines=headlines, text_color=text_color, align=get_alignment(formatting, 'title'), markdown_format=False)
-  x = offsets['x0']
-  y += formatting['dimensions']['em_title']
+  # Compute fitted title font size
+  title_font_size = compute_fitted_font_size(
+    title,
+    formatting['dimensions']['font_size_title'],
+    offsets_title['w'],
+    formatting,
+    font_cat='title'
+  )
+
+  if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
+    backend.set_font('title', '', title_font_size)
+  else:
+    backend.set_font_size('title', title_font_size)
+
+  backend.set_xy(x_title, y_title)
+  backend.textbox(
+      lines=[title],
+      x=x_title,
+      y=y_title,
+      w=offsets_title['w'],
+      h=int(formatting['dimensions']['em_title'] * 1.3),
+      h_level=1,
+      headlines=headlines,
+      text_color=text_color,
+      align=get_alignment(formatting, 'title'),
+      markdown_format=False
+  )
 
   if subtitle:
-    x_subtitle = x
+    x_subtitle = x_title
     if get_alignment(formatting, 'title') == 'left':
-      x_subtitle = x+formatting['dimensions']['em']
-    y_subtitle = y-formatting['dimensions']['em_title']//5
+      x_subtitle = x_subtitle + formatting['dimensions']['em']
+    y_subtitle = y_title + formatting['dimensions']['em_title'] * .8
+
+    # Account for left indent when checking subtitle box width
+    subtitle_w = offsets_title['w'] - (x_subtitle)
+    subtitle_font_size = compute_fitted_font_size(
+      subtitle,
+      formatting['dimensions']['font_size_subtitle'],
+      subtitle_w,
+      formatting,
+      font_cat='subtitle'
+    )
+
     if 'fonts' in formatting and 'font_file_subtitle' in formatting['fonts']:
-      backend.set_font('subtitle', '', formatting['dimensions']['font_size_subtitle'])
+      backend.set_font('subtitle', '', subtitle_font_size)
     else:
-      backend.set_font_size('subtitle', formatting['dimensions']['font_size_subtitle'])
+      backend.set_font_size('subtitle', subtitle_font_size)
 
-    # CENTERING SUBTITLE:
-    #if formatting['layout'] == 'center':
-    #  x_subtitle = x
-    #  width = backend.get_string_width(subtitle)
-    #  centering_offset = round((offsets['w']-width)/2)
-    #  print('subtitle','"{}"'.format(subtitle))
-    #  print('subtitle_width',width,'x',x,'centering_offset',centering_offset)
-    #  print('offsets', offsets)
-    #  x_subtitle = x_subtitle+centering_offset
-    # MOVED TO BACKEND
+    backend.set_xy(x_subtitle, y_subtitle)
+    backend.textbox(
+        lines=[subtitle],
+        x=x_subtitle,
+        y=y_subtitle,
+        w=subtitle_w,
+        h=int(formatting['dimensions']['em_subtitle'] * 1.5),
+        h_level=2,
+        headlines=headlines,
+        text_color=text_color,
+        align=get_alignment(formatting, 'title'),
+        markdown_format=False
+    )
 
-    backend.set_xy(x_subtitle,y_subtitle)
-    backend.textbox(lines=[subtitle], x=x_subtitle, y=y_subtitle, w=offsets['w'], h=int(formatting['dimensions']['em_subtitle']*1.5), h_level=2, headlines=headlines, text_color=text_color, align=get_alignment(formatting, 'title'), markdown_format=False)
+
   x = offsets['x0']
-  y += formatting['dimensions']['em_title']
+  y = y_title+formatting['dimensions']['em_title']
 
-  print('images', len(images))
-  offsets = get_offsets_for_text(formatting['layout'], images=(len(images) > 0))
+  has_page_images = any(not alt.startswith('credits:') for alt in alt_texts)
+  print('render_page: images', len(images), 'has_page_images', has_page_images)
+  offsets = get_offsets_for_text(formatting['layout'], images=has_page_images)
+
   column_offsets = offsets
   num_columns = 1
   if 'columns' in formatting and formatting['columns'] > 1:
@@ -198,7 +239,10 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
       backend.set_font('standard', '', formatting['dimensions']['font_size_standard'])
     else:
       backend.set_font_size('standard', formatting['dimensions']['font_size_standard'])
-    backend.textbox(lines=lines_this_column, x=x, y=y, w=column_offsets['w'], h=column_offsets['h'], headlines=headlines, h_level=None, text_color=text_color, align=get_alignment(formatting), markdown_format=True)
+    vertical_align = None
+    if 'text_vertical_align' in formatting:
+      vertical_align = formatting['text_vertical_align']
+    backend.textbox(lines=lines_this_column, x=x, y=y, w=column_offsets['w'], h=column_offsets['h'], headlines=headlines, h_level=None, text_color=text_color, align=get_alignment(formatting), markdown_format=True, text_vertical_align=vertical_align)
     # for next column:
     column_offsets = get_column_offsets(offsets, num_columns, column=c+1)
   if 'footer' in formatting:
@@ -236,9 +280,12 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
       y_offset += j_box_offset['h']+formatting['dimensions']['internal_margin']
     box_offsets_list[i]['y0'] = box_offsets_list[i]['y0']-y_offset
 #
+  vertical_align = None
+  if 'text_vertical_align' in formatting:
+    vertical_align = formatting['text_vertical_align']
   for i,(lines,box_offsets) in enumerate(zip(l4_boxes,box_offsets_list)):
     with backend.local_context(fill_opacity=0.75, stroke_opacity=0.75):
-      backend.l4_box(lines, box_offsets['x0'], box_offsets['y0'], box_offsets['w'], box_offsets['h'], headlines, align=get_alignment(formatting), border_color=default_l4_box_border_color, border_opacity=0.75, background_color=default_l4_box_fill_color, background_opacity=0.75, markdown_format=True, text_color=[0,0,0])
+      backend.l4_box(lines, box_offsets['x0'], box_offsets['y0'], box_offsets['w'], box_offsets['h'], headlines, align=get_alignment(formatting), border_color=default_l4_box_border_color, border_opacity=0.75, background_color=default_l4_box_fill_color, background_opacity=0.75, markdown_format=True, text_color=[0,0,0], text_vertical_align=vertical_align)
 
 def split_lines_into_columns(lines, num_columns):
   if num_columns == 1:
@@ -371,6 +418,74 @@ def strip_lines_division(lines):
     lines = lines[1:]
   return lines
 
+def load_measurement_font(formatting, font_cat='title', ref_px=400):
+    """Strictly resolves and loads the configured font for glyph measurement.
+    Raises FileNotFoundError if a configured font file is missing or unreadable.
+    """
+    fonts_cfg = formatting.get('fonts', {})
+    key = f'font_file_{font_cat}'
+
+    if key in fonts_cfg and fonts_cfg[key]:
+        f_rel = fonts_cfg[key]
+        candidates = [
+            f_rel,
+            os.path.join(script_home, f_rel),
+            os.path.join(script_home, 'fonts', os.path.basename(f_rel)),
+            os.path.join(script_home, 'resources', os.path.basename(f_rel)),
+        ]
+        for path in candidates:
+            if path and os.path.exists(path):
+                return ImageFont.truetype(path, ref_px), path
+
+        raise FileNotFoundError(
+            f"Configured font '{f_rel}' for '{font_cat}' was not found. "
+            f"Searched: {candidates}"
+        )
+
+    # No font_file_<cat> configured: look for standard system sans-serif matching CSS/ODP default (Arial)
+    default_candidates = [
+        '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+        '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+        '/System/Library/Fonts/Helvetica.ttc',
+    ]
+    for path in default_candidates:
+        if os.path.exists(path):
+            return ImageFont.truetype(path, ref_px), path
+
+    raise FileNotFoundError(
+        f"No '{key}' configured and none of the default fallback fonts exist: {default_candidates}"
+    )
+
+_MEASUREMENT_FONT_CACHE = {}
+
+def compute_fitted_font_size(text, base_font_size, box_width, formatting, font_cat='title'):
+    """Scales down base_font_size using exact Pillow font metrics so text fits box_width."""
+    clean_text = text.strip()
+    if not clean_text:
+        return base_font_size
+
+    ref_px = 400
+    cache_key = (formatting.get('fonts', {}).get(f'font_file_{font_cat}'), font_cat)
+    if cache_key not in _MEASUREMENT_FONT_CACHE:
+        font, loaded_path = load_measurement_font(formatting, font_cat=font_cat, ref_px=ref_px)
+        print(f"Using font '{loaded_path}' for '{font_cat}' width measurement.")
+        _MEASUREMENT_FONT_CACHE[cache_key] = font
+    else:
+        font = _MEASUREMENT_FONT_CACHE[cache_key]
+
+    advance_w = font.getlength(clean_text)
+    bbox = font.getbbox(clean_text)
+    ink_w = bbox[2] - min(0, bbox[0])
+    text_width_in_ems = max(advance_w, ink_w) / float(ref_px)
+
+    estimated_width = text_width_in_ems * (base_font_size * 0.32)
+
+    if estimated_width > box_width:
+        scale = (box_width / estimated_width) * 0.96
+        return max(12, round(base_font_size * scale, 2))
+
+    return base_font_size
+
 def get_column_offsets(offsets, num_columns, column):
   #print('get_column_offsets',offsets, num_columns, column)
   column_offsets = offsets.copy()
@@ -382,16 +497,25 @@ def get_column_offsets(offsets, num_columns, column):
   return column_offsets
 
 def get_offsets_for_text(layout, images=True):
-  # returns offsets for text area.
-  # layouts = ['image_left_half', 'image_left_small', 'image_right_half', 'image_right_small', 'image_center', 'image_fill']
+  margin = formatting['dimensions']['internal_margin']
+  y_top = formatting['dimensions']['page_margins']['y0'] + formatting['dimensions']['em_title'] + margin
+  y_bottom = formatting['dimensions']['page_height'] - formatting['dimensions']['page_margins']['y1']
+  drawable_height = y_bottom - y_top
+
   if layout in ['image_center']:
-    y = formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2
-    drawable_height = formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y0']-formatting['dimensions']['em_title']-formatting['dimensions']['page_margins']['y1']
     if images:
-      drawable_height = drawable_height//2
-      y += formatting['dimensions']['internal_margin']//2
-      y += drawable_height
-    offsets = {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': y, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
+      # Lower section: starts exactly (margin // 2) below the midpoint
+      midpoint = y_top + (drawable_height // 2)
+      text_y0 = midpoint + (margin // 2)
+    else:
+      text_y0 = y_top
+
+    offsets = {
+      'x0': formatting['dimensions']['page_margins']['x0'],
+      'y0': text_y0,
+      'x1': formatting['dimensions']['page_width'] - formatting['dimensions']['page_margins']['x1'],
+      'y1': y_bottom
+    }
   elif layout == 'image_left_half':
     offsets =  {'x0': (formatting['dimensions']['page_width']//2)+formatting['dimensions']['internal_margin']//2, 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
   elif layout == 'image_left_small':
@@ -427,7 +551,7 @@ def get_offsets(layout):
   offsets['h'] = offsets['y1']-offsets['y0']
   return offsets
 
-def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout, has_text, packed_images, crop_images, background=False, raster_images=False, treat_as_raster_images=[]):
+def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout, has_text, packed_images, crop_images, formatting, background=False, raster_images=False, treat_as_raster_images=[]):
   #print('crop_images', crop_images)
   #print('put_images_on_page()', 'layout', layout)
   if len(images) == 0:
@@ -454,7 +578,7 @@ def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout,
       locations = [{'x0': 0, 'y0': 0, 'w': formatting['dimensions']['page_width'], 'h': formatting['dimensions']['page_height']}]
       #print('background location', locations)
     else:
-      locations = get_images_locations(page_images, layout, has_text, packed_images, cred=False)
+      locations = get_images_locations(page_images, layout, has_text, formatting, packed_images, cred=False)
       #print('locations',locations)
     for image,location in zip(page_images,locations):
       image_to_display = image
@@ -462,100 +586,137 @@ def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout,
 
   # credit images:
   if len(credit_images):
-    locations = get_images_locations(credit_images, layout, has_text, packed_images, cred=True)
+    locations = get_images_locations(credit_images, layout, has_text, formatting, packed_images, cred=True)
     # print("credit_images", credit_images)
     for image,location in zip(credit_images,locations):
       backend.image(image, x=location['x0'], y = location['y0'], w = location['w'], h = location['h'], link = '', crop_images=True)
   return 
 
-def get_images_locations(images, layout, has_text, packed_images=False, cred=False):
-  # layouts = ['image_left_half', 'image_left_small', 'image_right_half', 'image_right_small', 'image_center', 'image_fill']
-  #print('get_images_locations()', 'layout', layout)
-  locations = []
-  image_area = [0,0,formatting['dimensions']['page_width'],formatting['dimensions']['page_height']]
-  #print('formatting['dimensions']['page_margins']',formatting['dimensions']['page_margins'])
-  #print('layout',layout)
-  image_area = get_image_area(layout, has_text)
+# TODO: remove layout, as its included in "formatting".
 
-  #print('num_images', len(images))
-  #print('cred', cred)
-  cred_aspect_ratio = 1.05 # /1.1
-  cred_fraction = 0.6 # TODO: set reasonable constant somewhere, or let it be configurable.
-  if cred:
-    image_area = get_offsets_for_text(layout)
-    cred_image_height = int(cred_fraction*formatting['dimensions']['page_margins']['y1'])
-    image_area['y0'] = formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']+int((formatting['dimensions']['page_margins']['y1']-cred_image_height)/2)
-    image_area['y1'] = image_area['y0']+cred_image_height
+def get_images_locations(images, layout, has_text, formatting, packed_images=False, cred=False):
+    locations = []
+    image_area = get_image_area(layout, has_text, formatting)
 
-  image_area['w'] = image_area['x1']-image_area['x0']
-  image_area['h'] = image_area['y1']-image_area['y0']
+    cred_aspect_ratio = 1.05
+    cred_fraction = 0.8
+    if cred:
+        image_area = get_offsets_for_text(layout)
+        cred_image_height = int(cred_fraction * formatting['dimensions']['page_margins']['y1'])
+        image_area['y0'] = formatting['dimensions']['page_height'] - formatting['dimensions']['page_margins']['y1'] + int((formatting['dimensions']['page_margins']['y1'] - cred_image_height) / 2)
+        image_area['y1'] = image_area['y0'] + cred_image_height
 
-  if cred:
-    grid_width = len(images)
-    grid_height = 1
-  elif layout in ['image_center']:
-    grid_width = len(images)
-    grid_height = 1
-  else:
-    grid_height = math.sqrt(len(images))
-    #print(grid_height)
-    if grid_height - int(grid_height) > 0.0:
-      grid_height = int(grid_height)+1
-      grid_width = math.ceil(len(images)/grid_height)
+    image_area['w'] = image_area['x1'] - image_area['x0']
+    image_area['h'] = image_area['y1'] - image_area['y0']
+
+    MAX_SINGLE_ROW = 3  # 1 to 3 images side-by-side
+
+    # Check for manual override from slide YAML frontmatter
+    if cred:
+        grid_width = len(images)
+        grid_height = 1
+    elif 'images_per_row' in formatting:
+        grid_width = int(formatting['images_per_row'])
+        grid_height = math.ceil(len(images) / grid_width)
+    elif layout in ['image_center'] and len(images) <= MAX_SINGLE_ROW:
+        grid_width = len(images)
+        grid_height = 1
+    elif len(images) == 4:
+        # Explicit 2x2 for 4 images
+        grid_width = 2
+        grid_height = 2
     else:
-      grid_height = int(grid_height)
-      grid_width = grid_height
+        # Check aspect ratio of the actual allocated image area
+        area_aspect = image_area['w'] / max(1, image_area['h'])
 
-  if layout in ['image_fill'] and not cred:
-    # prefer to put images side-by-side instead of on top of each other:
-    g_w = grid_height
-    grid_height = grid_width
-    grid_width = g_w
-  #print('grid',grid_width,grid_height)
-  #print('images',len(images))
+        if area_aspect > 1.2:
+            # Wide/landscape area: bias towards more columns
+            grid_width = math.ceil(math.sqrt(len(images) * area_aspect))
+        else:
+            # Square or tall column area (e.g. image_right_half): standard square packing
+            grid_width = math.ceil(math.sqrt(len(images)))
 
-  if cred:
-    tot_height = image_area['h']
-    tot_width = int(image_area['h']*cred_aspect_ratio*len(images))
-    image_area['x0'] = image_area['x0']+image_area['w']//2-tot_width//2
-    image_area['x1'] = image_area['x0']+tot_width
-    image_area['w'] = image_area['x1']-image_area['x0']
-    image_area['h'] = image_area['y1']-image_area['y0']
+        grid_height = math.ceil(len(images) / grid_width)
 
-  #print('image area size:', image_area['w'], image_area['h'], 'image grid:', grid_width, grid_height, 'margin',formatting['dimensions']['internal_margin'])
-  image_size = {'w': int(image_area['w']/grid_width),
-                'h': int(image_area['h']/grid_height)}
-  if not packed_images and not cred:
-    image_size = {'w': int((image_area['w']-(grid_width-1)*formatting['dimensions']['internal_margin'])/grid_width),
-                  'h': int((image_area['h']-(grid_height-1)*formatting['dimensions']['internal_margin'])/grid_height)}
-  
-  #print('image_size', image_size)
-  for i,image in enumerate(images):
-    pos_x = i % grid_width
-    pos_y = i // grid_width
-    marg_x = 0
-    if not packed_images and not cred:
-      marg_x = formatting['dimensions']['internal_margin']
-    marg_y = 0
-    if not packed_images and not cred:
-      marg_y = formatting['dimensions']['internal_margin']
-    #print('image-grid:', pos_x, pos_y, marg_x, marg_y)
-    #location  = {'x0': image_area['x0']+pos_x*image_size['w']+marg_x, 'y0': image_area['y0']+pos_y*image_size['h']+marg_y, 'w': image_size['w']-marg_x, 'h': image_size['h']-marg_y}
-    location  = {'x0': image_area['x0']+pos_x*(image_size['w']+marg_x),
-                 'y0': image_area['y0']+pos_y*(image_size['h']+marg_y),
-                 'w': image_size['w'],
-                 'h': image_size['h']}
-    #print('location',location)
-    locations.append(location)
-  return locations
+    if cred:
+        tot_height = image_area['h']
+        tot_width = int(image_area['h'] * cred_aspect_ratio * len(images))
+        credits_align = formatting.get('credits_align', 'center')
+        margin_footer = formatting['dimensions']['margin_footer']
+        page_width = formatting['dimensions']['page_width']
 
-def get_image_area(layout, has_text):
+        print('credits_align', credits_align)
+
+        # Check if a logo is active (default logo.png is used unless logo_path is explicitly empty '')
+        has_logo = True
+        if 'logo_path' in formatting and formatting['logo_path'] == '':
+            has_logo = False
+        logo_width = 18 if has_logo else 0
+
+        if credits_align == 'left':
+            image_area['x0'] = margin_footer
+        elif credits_align == 'right':
+            if has_logo:
+                # Align just to the left of the logo, with margin_footer gap
+                logo_x = page_width - logo_width - margin_footer
+                image_area['x0'] = logo_x - margin_footer - tot_width
+            else:
+                image_area['x0'] = page_width - margin_footer - tot_width
+        else:  # 'center' (default)
+            image_area['x0'] = image_area['x0'] + image_area['w'] // 2 - tot_width // 2
+
+        image_area['x1'] = image_area['x0'] + tot_width
+        image_area['w'] = image_area['x1'] - image_area['x0']
+        image_area['h'] = image_area['y1'] - image_area['y0']
+
+    marg_y = formatting['dimensions']['internal_margin'] if (not packed_images and not cred) else 0
+    row_height = int((image_area['h'] - (grid_height - 1) * marg_y) / grid_height)
+
+    marg_x = formatting['dimensions']['internal_margin'] if (not packed_images and not cred) else 0
+
+    for i, image in enumerate(images):
+        row = i // grid_width
+        col = i % grid_width
+
+        # How many images are in this specific row:
+        images_in_this_row = min(grid_width, len(images) - row * grid_width)
+
+        # Dynamic width: stretches across the row based on item count:
+        current_w = int((image_area['w'] - (images_in_this_row - 1) * marg_x) / images_in_this_row)
+
+        location = {
+            'x0': image_area['x0'] + col * (current_w + marg_x),
+            'y0': image_area['y0'] + row * (row_height + marg_y),
+            'w': current_w,
+            'h': row_height
+        }
+        locations.append(location)
+
+    return locations
+
+def get_image_area(layout, has_text, formatting):
+  margin = formatting['dimensions']['internal_margin']
+  y_top = formatting['dimensions']['page_margins']['y0'] + formatting['dimensions']['em_title'] + margin
+  y_bottom = formatting['dimensions']['page_height'] - formatting['dimensions']['page_margins']['y1']
+  drawable_height = y_bottom - y_top
+
   if layout in ['image_center']:
-    drawable_height = formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y0']-formatting['dimensions']['em_title']-formatting['dimensions']['page_margins']['y1']
     if has_text:
-      image_area = {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': drawable_height//2+formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']-formatting['dimensions']['internal_margin']//2}
+      # Upper section: stops exactly (margin // 2) above the midpoint
+      midpoint = y_top + (drawable_height // 2)
+      image_area = {
+        'x0': formatting['dimensions']['page_margins']['x0'],
+        'y0': y_top,
+        'x1': formatting['dimensions']['page_width'] - formatting['dimensions']['page_margins']['x1'],
+        'y1': midpoint - (margin // 2)
+      }
     else:
-      image_area = {'x0': formatting['dimensions']['page_margins']['x0'], 'y0': formatting['dimensions']['page_margins']['y0']+formatting['dimensions']['em_title']+formatting['dimensions']['internal_margin']*2, 'x1': formatting['dimensions']['page_width']-formatting['dimensions']['page_margins']['x1'], 'y1': formatting['dimensions']['page_height']-formatting['dimensions']['page_margins']['y1']}
+      image_area = {
+        'x0': formatting['dimensions']['page_margins']['x0'],
+        'y0': y_top,
+        'x1': formatting['dimensions']['page_width'] - formatting['dimensions']['page_margins']['x1'],
+        'y1': y_bottom
+      }
   elif layout == 'image_left_half':
     image_area =  {'x0': 0, 'y0': 0, 'x1': formatting['dimensions']['page_width']//2, 'y1': formatting['dimensions']['page_height']}
   elif layout == 'image_left_small':
@@ -592,7 +753,8 @@ def recursive_dict_update(d1, d2):
   return d1
 
 def cleanup_md_line(line):
-  line = re.sub(r'(?<!\*)\*(?![\*\s])', '__', line)
+  #line = re.sub(r'(?<!\*)\*(?![\*\s])', '__', line)
+  #line = re.sub(r'(?<![\\*])\*(?![\*\s])', '__', line)
   if '$' in line:
     splits = line.split('$')
     corrected_splits = []
@@ -670,6 +832,95 @@ def get_alignment(formatting, section='text'):
   return formatting.get(key, 'left')  
 
 if __name__ == "__main__":
+  if "--help" in sys.argv:
+    print('''pymdslides usage
+pymdslides [options] inputfile.md
+
+options:
+  --help             - print this message and exit
+  --pdf              - produce a pdf output file
+  --raster-images    - generate raster images from vector images
+  --overwrite-images - overwrite images in target directory
+
+  Input files are formatted using markdown. you can configure the processing
+  using yaml snippets either in the beginning of the file (global scope) or
+  in the beginning of a slide (scoping to current slide). See below for
+  allowed configuration options and their defaults.
+
+
+  ### Configuration allowed everywhere:
+
+  * layout: **image_center**|image_left_half|image_left_small|image_right_half|image_right_small|image_fill
+  * title_full_width: true|**false**
+  * title_align: **left**|center
+  * title_vertical_center: true|**false**
+  * text_align: **left**|center
+  * credits_align: left|**center**|right
+  * text_vertical_align: **top**|center|bottom
+  * page_numbering: true|**false**
+  * crop_images: **true**|false
+  * images_per_row: <number> -- forces the number of columns in image grid layout.
+  * packed_images: **true**|false
+  * text_color:
+      - 0
+      - 0
+      - 0
+      -- colors are coded with RGB, 0-255, or with names, or with html hex strings (but these require quotation marks).
+  * background_color:
+      - 255
+      - 255
+      - 255
+      -- colors are coded with RGB, 0-255, or with names, or with html hex strings (but these require quotation marks).
+  * background_image: path_to_background_image_file.png
+  * footer: Made with PYMDSLIDES
+  * footer_color:
+      - 128
+      - 128
+      - 128
+      -- colors are coded with RGB, 0-255, or with names, or with html hex strings (but these require quotation marks).
+  * logo_path: logo_path.png
+  * columns: integer_value, the number of columns for content
+  * incremental_bullets: true|**false**
+  * l4_box_fill_color:
+      - 230
+      - 240
+      - 255
+      -- colors are coded with RGB, 0-255, or with names, or with html hex strings (but these require quotation marks).
+  * fonts:
+      - font_file_standard: Path to supported font file
+      - font_name_standard: Name of standard font
+      - font_file_title: Path to supported font file
+      - font_name_title: Name of title font
+      - font_file_footer: Path to supported font file
+      - font_name_footer: Name of footer font
+      -- pymdfiles will work without specifying fonts. If files are specified but not font names, names will be guessed from file names.
+
+  ### Document-wide configuration
+
+  * dimensions:
+      - em: 18
+      - em_title: 26
+      - font_size_footer: 12
+      - font_size_standard: 34
+      - font_size_subtitle: 40
+      - font_size_title: 72
+      - internal_margin: 10
+      - margin_footer: 4
+      - page_height: 270
+      - page_margins:
+          x0: 30
+          x1: 30
+          y0: 40
+          y1: 40
+      - page_width: 480
+      - pixel_per_mm: 0.15
+      - footer_em: 6
+
+Available colors: white, grey, black, orange, red, green, blue, yellow, purple, pink, darkorange, darkred, darkgreen, darkblue, darkpurple, lightgrey, lightpink, lightgreen, lightblue.
+
+  ''');
+    sys.exit()
+
   md_file = ''
   for i in range(len(sys.argv)-1, 0, -1):
     md_file = sys.argv[i]
@@ -679,7 +930,8 @@ if __name__ == "__main__":
       break
   print('md_file:',md_file)
   output_format = 'html'
-  if 'odp' in sys.argv:
+  if '--odp' in sys.argv:
+    print('Using the OpenDocument odp output format.')
     output_format = 'odp'
   if not md_file.endswith('.md'):
     md_file += '.md'
@@ -734,54 +986,58 @@ if __name__ == "__main__":
 
   preprocessed_md = []
 
-  previous_headline = -1
-  
-  for line_number,line in enumerate(md_contents_lines):
+  yaml_start_line = -1
+
+  for line_number, line in enumerate(md_contents_lines):
+    is_h1 = line.startswith('#') and (len(line) <= 1 or line[1] != '#')
+
     if current_yaml:
-      # this line contains a continuation of yaml content. Parsing later.
-      current_yaml += '\n'+line
-      #print('current_yaml',current_yaml)
-    elif line.startswith('#') and (len(line) <= 1 or line[1] != '#'):
+      if is_h1:
+        raise SyntaxError(
+            f"Line {line_number + 1}: Encountered slide headline '{line}' inside an unclosed YAML block "
+            f"(started on line {yaml_start_line + 1}). Did you forget a closing '---'?"
+        )
+      current_yaml += '\n' + line
+    elif is_h1:
       if preamble:
-        # formatting from preamble is global for whole document:
-        #print('preamble. setting global formatting')
+        # Preamble before first '#' is global for the whole document:
         global_formatting = copy.deepcopy(formatting)
         content = [line]
         preamble = False
       else:
-        #print(yaml.dump(formatting))
         preprocessed = preprocess_md_page(content, previous_headline, formatting)
-        #print('preprocessed',preprocessed)
         preprocessed_md += preprocessed
-        # reset to global config.
+        # Strictly revert to global formatting for the new slide:
         formatting = copy.deepcopy(global_formatting)
         content = [line]
-      print('headline',line)
+      print('headline', line)
       previous_headline = line_number
-      #current_headline = line[2:]
-    elif line == '---':
-      # this line begins yaml content. Parsing later.
-      current_yaml = line
-      #print('current_yaml',current_yaml)
+    elif line.strip() == '---':
+      current_yaml = '---'
+      yaml_start_line = line_number
     else:
       content.append(line)
-    if len(current_yaml) > 3 and current_yaml[-3:] == '---':
-      # this and possibly preceding lines has contained yaml content. Parse formatting yaml:
-      current_yaml = current_yaml[3:-3] # remove beginning and ending three dashes (syntax)
+
+    if len(current_yaml) > 3 and current_yaml.strip().endswith('---'):
+      yaml_body = current_yaml.strip()[3:-3]
       try:
-        new_formatting = yaml.safe_load(current_yaml)
+        new_formatting = yaml.safe_load(yaml_body)
         if new_formatting is not None:
-          #formatting.update(new_formatting)
           formatting = recursive_dict_update(formatting, new_formatting)
-          #print('formatting', formatting)
-          print('{}:{}: Updating formatting from Yaml syntax: \n  {}'.format(md_file_stripped, line_number, current_yaml.replace('\n', '\n  ')))
-          #print(yaml.dump(formatting))
-        else:
-          print('{}:{}: Ignoring Yaml formatting configuration: \n  {}'.format(md_file_stripped, line_number, current_yaml.replace('\n', '\n  ')))
+          print('{}:{}: Updating formatting from Yaml syntax: \n  {}'.format(
+              md_file_stripped, line_number, yaml_body.replace('\n', '\n  ')))
       except Exception as e:
-        #print(e)
-        raise SyntaxError('Line '+str(line_number)+': Incorrect YAML formatting information: '+current_yaml+'\nMore information: '+str(e))
-      current_yaml = '' # reset yaml. Next line is not a continuation of a yaml configuration.
+        raise SyntaxError(
+            f"Line {line_number + 1}: Incorrect YAML formatting information: {yaml_body}\nMore information: {e}"
+        )
+      current_yaml = ''
+      yaml_start_line = -1
+
+  # Also catch an unclosed YAML block at the very end of the file:
+  if current_yaml:
+    raise SyntaxError(
+        f"Line {yaml_start_line + 1}: Unclosed YAML block at end of file. Missing closing '---'."
+    )
 
   # last page:
   preprocessed = preprocess_md_page(content, previous_headline, formatting)
@@ -821,11 +1077,11 @@ if __name__ == "__main__":
       logo_path = os.path.join(script_home,formatting['logo_path'])
     else:
       logo_path = formatting['logo_path']
-  if output_format == 'html':
-    logo_width=20
-    logo_height=26
-    if logo_path is not None:
-      backend.set_logo(logo_path, x=formatting['dimensions']['page_width']-logo_width-formatting['dimensions']['margin_footer'], y=formatting['dimensions']['page_height']-logo_height-formatting['dimensions']['margin_footer'] , w=logo_width, h=logo_height)
+  
+  logo_width=18
+  logo_height=23
+  if logo_path is not None:
+    backend.set_logo(logo_path, x=formatting['dimensions']['page_width']-logo_width-formatting['dimensions']['margin_footer'], y=formatting['dimensions']['page_height']-logo_height-formatting['dimensions']['margin_footer'] , w=logo_width, h=logo_height)
 
   # MAIN PROCESSING LOOP.
 
@@ -857,162 +1113,36 @@ if __name__ == "__main__":
   backend.output()
 
   if '--pdf' in sys.argv:
-    pdf_file = '.'.join(md_file.split('.')[:-1])+'.pdf'
-    #try:
-    if True:
-      from selenium import webdriver
-      from selenium.webdriver.firefox.options import Options
+    pdf_file_final = '.'.join(md_file.split('.')[:-1])+'.pdf'
+    pdf_file = '.'.join(md_file.split('.')[:-1])+'-pre-cropping.pdf'
+    pdf_file_post_cropping = '.'.join(md_file.split('.')[:-1])+'-pre-cropping-fixed-margins.pdf'
+    executables = ['chrome','chromium',None]
+    for executable in executables:
+      if executable is None:
+        print('error: found no supported browser to generate pdf. supported: {}'.format(executables[:-1]))
+        break
+      if shutil.which(executable) is not None:
+        print('{} exists on the system'.format(executable))
+        break
+    if executable is not None:
+      command = '{} --headless --disable-gpu --print-to-pdf={} {}'.format(executable, pdf_file, output_file) # output_file is the html target.
+      print(command)
+      os.system(command)
 
-      s = '''options = Options()
-      options.headless = True
-
-      driver = webdriver.Firefox(options=options)
-
-      url = "file://"+os.path.abspath(output_file)
-      print(url)
-      driver.get(url)
-
-      # Firefox-specific WebDriver command
-      print_settings = {
-        "printBackground": True,
-        "landscape": True,
-        "margin": {"top": 0, "bottom": 0, "left": 0, "right": 0},
-      }
-      pdf = driver.execute("print", {"print": print_settings})["value"]
-
-      with open(pdf_file, "wb") as f:
-        f.write(bytes(pdf, "utf-8"))
-
-      driver.quit()'''
-
-      width_mm=160
-      height_mm=90
-      landscape=False
-      timeout_s=15
-
-      html_url = pathlib.Path(os.path.abspath(output_file)).resolve().as_uri()
-      pdf_path = str(pathlib.Path(os.path.abspath(pdf_file)).resolve())
-      out_dir = str(pathlib.Path(pdf_path).resolve().parent)
-
-      # Printer key used by modern Firefox builds
-      printer = "Mozilla Save to PDF"
-
-      opts = Options()
-      opts.headless = True
-
-      # Make printing silent and default to the PDF "printer"
-      opts.set_preference("print.always_print_silent", True)
-      opts.set_preference("print.save_print_settings", True)
-      opts.set_preference("print_printer", printer)
-
-      pk = f"print.printer_{printer.replace(' ', '_')}"
-
-      # Output path
-      opts.set_preference(f"{pk}.print_to_file", True)
-      opts.set_preference(f"{pk}.print_to_filename", pdf_path)
-      # Some older builds use this:
-      opts.set_preference(f"{pk}.print_to_filename.print_directory", out_dir)
-
-      # Paper size in mm (unit 1 = mm; 0 = inches)
-      opts.set_preference(f"{pk}.print_paper_size_type", 2)  # 2 = custom size
-      opts.set_preference(f"{pk}.print_paper_size_unit", 1)
-      opts.set_preference(f"{pk}.print_paper_width", int(width_mm))
-      opts.set_preference(f"{pk}.print_paper_height", int(height_mm))
-
-      # Zero margins
-      for edge in ("top", "bottom", "left", "right"):
-          opts.set_preference(f"{pk}.print_margin_{edge}", 0)
-
-      # Backgrounds + color fidelity
-      opts.set_preference(f"{pk}.print_bgcolor", True)
-      opts.set_preference(f"{pk}.print_background", True)
-
-      # Orientation: 0=portrait, 1=landscape
-      opts.set_preference(f"{pk}.print_orientation", 1 if landscape else 0)
-
-      # Disable tab-modal print UI (older builds)
-      opts.set_preference("print.tab_modal.enabled", False)
-
-      opts.set_preference("print_footerleft", "")
-      opts.set_preference("print_footerright", "")
-      opts.set_preference("print_headerleft", "")
-      opts.set_preference("print_headerright", "")
-
-      opts.set_preference("print_paper_data", 0)          # 0 = custom size
-      opts.set_preference("print_paper_width", 160)       # mm, must be int
-      opts.set_preference("print_paper_height", 90)       # mm
-      opts.set_preference("print_scaling", 1)             # 1 = 100% (no shrink-to-fit)
-      opts.set_preference(f"{pk}.print_shrink_to_fit", False)
-
-      for edge in ("top","bottom","left","right"):
-        opts.set_preference(f"{pk}.print_margin_{edge}", 0)
-        opts.set_preference(f"{pk}.print_unwriteable_margin_{edge}", 0)
-
-      opts.set_preference("print.tab_modal.enabled", False)
-
-      # Start driver
-      driver = webdriver.Firefox(options=opts)
-
-      try:
-          driver.get(html_url)
-
-          # Give MathJax / resources a moment if needed
-          time.sleep(0.8)
-
-          # Trigger print
-          driver.execute_script("window.focus(); window.print();")
-
-          # Wait for the PDF file to appear & stabilize size
-          target = pathlib.Path(pdf_path)
-          t0 = time.time()
-          last_size = -1
-          while time.time() - t0 < timeout_s:
-              if target.exists():
-                  sz = target.stat().st_size
-                  if sz > 0 and sz == last_size:
-                      break
-                  last_size = sz
-              time.sleep(0.2)
-
-          if not target.exists() or target.stat().st_size == 0:
-              raise RuntimeError("PDF not created (check Firefox/driver versions and prefs).")
-
-          #return pdf_path
-      finally:
-          driver.quit()
-    #except:
-    else:
-      # there was no selenium
-      pdf_file_final = pdf_file
-      pdf_file = '.'.join(md_file.split('.')[:-1])+'-pre-cropping.pdf'
-      pdf_file_post_cropping = '.'.join(md_file.split('.')[:-1])+'-pre-cropping-fixed-margins.pdf'
-      executables = ['chrome','chromium',None]
+      executables = ['pdfjam',None]
       for executable in executables:
         if executable is None:
-          print('error: found no supported browser to generate pdf. supported: {}'.format(executables[:-1]))
+          print('error: did not find pdfjam. will not be able to fix margins in generated pdf.')
           break
         if shutil.which(executable) is not None:
-          print('{} exists on the system'.format(executable))
+          print('{} exists on the system', executable)
           break
       if executable is not None:
-        command = '{} --headless --print-to-pdf={} {}'.format(executable, pdf_file, output_file) # output_file is the html target.
+        command = 'pdfjam --quiet --keepinfo --papersize \'{{159mm,89mm}}\' --trim \'2mm 1mm 1mm 1mm\' --clip true --suffix "fixed-margins" {}'.format(pdf_file)
         print(command)
         os.system(command)
-
-        executables = ['pdfjam',None]
-        for executable in executables:
-          if executable is None:
-            print('error: did not find pdfjam. will not be able to fix margins in generated pdf.')
-            break
-          if shutil.which(executable) is not None:
-            print('{} exists on the system')
-            break
-        if executable is not None:
-          command = 'pdfjam --keepinfo --papersize \'{{159mm,89mm}}\' --trim \'2mm 1mm 1mm 1mm\' --clip true --suffix "fixed-margins" {}'.format(pdf_file)
-          print(command)
-          os.system(command)
-          command = 'mv {} {}'.format(pdf_file_post_cropping, pdf_file_final)
-          print(command)
-          os.system(command)
+        command = 'mv {} {}'.format(pdf_file_post_cropping, pdf_file_final)
+        print(command)
+        os.system(command)
 
 

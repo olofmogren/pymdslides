@@ -15,7 +15,7 @@
 import os
 
 import sys,math,time,re
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageFont
 from subprocess import Popen,PIPE
 from datetime import datetime
 
@@ -124,6 +124,8 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
 
   backend.set_background_color(formatting['background_color'])
   backend.set_text_color(text_color)
+  if hasattr(backend, 'set_link_color'):
+    backend.set_link_color(formatting.get('link_color', None))
 
   packed_images = True
   if 'background_image' in formatting:
@@ -143,27 +145,34 @@ def render_page(backend, title, subtitle, images, alt_texts, lines, l4_boxes, fo
   y_title = offsets_title['y0']
 
   # if title_vertical_center, put it in middle of page
-  if 'title_vertical_center' in formatting and formatting['title_vertical_center']: # and formatting['layout'] in ['image_full', 'image_left_half', 'image_left_small', 'image_right_half', 'image_right_full']:
+  if 'title_vertical_center' in formatting and formatting['title_vertical_center']:
     y_title = formatting['dimensions']['page_height']//2-int(1.5*formatting['dimensions']['em_title'])
-  if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
-    print('Setting font title with size',formatting['dimensions']['font_size_title'])
-    backend.set_font('title', '', formatting['dimensions']['font_size_title'])
-  else:
-    print('Setting font size title',formatting['dimensions']['font_size_title'])
-    backend.set_font_size('title', formatting['dimensions']['font_size_title'])
 
-  backend.set_xy(x_title,y_title)
+  title_font_size = fit_text_font_size(title, offsets_title['w'], formatting, category='title', script_home=script_home)
+
+  if 'fonts' in formatting and 'font_file_title' in formatting['fonts']:
+    print('{}:{}: Setting font title with size'.format(md_file_stripped, line_number), title_font_size)
+    backend.set_font('title', '', title_font_size)
+  else:
+    print('{}:{}: Setting font size title'.format(md_file_stripped, line_number), title_font_size)
+    backend.set_font_size('title', title_font_size)
+
+  backend.set_xy(x_title, y_title)
   backend.textbox(lines=[title], x=x_title, y=y_title, w=offsets_title['w'], h=int(formatting['dimensions']['em_title']*1.3), h_level=1, headlines=headlines, text_color=text_color, align=get_alignment(formatting, 'title'), markdown_format=False)
 
   if subtitle:
     x_subtitle = x_title
+    w_subtitle = offsets_title['w']
     if get_alignment(formatting, 'title') == 'left':
       x_subtitle = x_subtitle+formatting['dimensions']['em']
+      w_subtitle = offsets_title['w'] - formatting['dimensions']['em']
     y_subtitle = y_title+formatting['dimensions']['em_title']*.8
+
+    subtitle_font_size = fit_text_font_size(subtitle, w_subtitle, formatting, category='subtitle', script_home=script_home)
     if 'fonts' in formatting and 'font_file_subtitle' in formatting['fonts']:
-      backend.set_font('subtitle', '', formatting['dimensions']['font_size_subtitle'])
+      backend.set_font('subtitle', '', min(subtitle_font_size, title_font_size))
     else:
-      backend.set_font_size('subtitle', formatting['dimensions']['font_size_subtitle'])
+      backend.set_font_size('subtitle', min(subtitle_font_size, title_font_size))
 
     backend.set_xy(x_subtitle,y_subtitle)
     backend.textbox(lines=[subtitle], x=x_subtitle, y=y_subtitle, w=offsets_title['w'], h=int(formatting['dimensions']['em_subtitle']*1.5), h_level=2, headlines=headlines, text_color=text_color, align=get_alignment(formatting, 'title'), markdown_format=False)
@@ -256,9 +265,46 @@ def split_lines_into_columns(lines, num_columns):
     column_lines.append([])
   return column_lines
 
+def fit_text_font_size(text, max_width, formatting, category='title', script_home='', min_font_size=12, avg_char_em_ratio=0.58):
+  base_size = formatting['dimensions'][f'font_size_{category}']
+  if not text or max_width <= 0:
+    return base_size
+
+  # In backend_html: html_font_size(s) = (32*s/page_width) cqw = 0.32*s page units
+  em_page_units = 0.32 * base_size
+  text_width = None
+
+  # 1. Measure with PIL.ImageFont (subtitle falls back to title font if not set)
+  font_path = None
+  if 'fonts' in formatting:
+    font_path = formatting['fonts'].get(f'font_file_{category}')
+    if not font_path and category == 'subtitle':
+      font_path = formatting['fonts'].get('font_file_title')
+
+  if font_path:
+    if not os.path.isfile(font_path) and script_home:
+      font_path = os.path.join(script_home, font_path)
+    if os.path.isfile(font_path):
+      try:
+        ref_size = 200
+        font = ImageFont.truetype(font_path, ref_size)
+        text_width = (font.getlength(text) / ref_size) * em_page_units
+      except Exception:
+        text_width = None
+
+  # 2. Fallback: estimate width from character count
+  if text_width is None:
+    text_width = len(text) * em_page_units * avg_char_em_ratio
+
+  usable_width = max_width * 0.98
+  if text_width > usable_width:
+    scaled_size = int(base_size * (usable_width / text_width))
+    return max(min_font_size, scaled_size)
+
+  return base_size
 
 def preprocess_formatting(formatting):
-  for color in ['background_color', 'text_color', 'footer_color', 'l4_box_fill_color']:
+  for color in ['background_color', 'text_color', 'footer_color', 'l4_box_fill_color', 'link_color']:
     if color in formatting:
       #print('color',formatting[color])
       if formatting[color] == 'white':
@@ -472,8 +518,17 @@ def put_images_on_page(md_file_stripped, line_number, images, alt_texts, layout,
   if len(credit_images):
     locations = get_images_locations(credit_images, layout, has_text, formatting, packed_images, cred=True)
     # print("credit_images", credit_images)
-    for image,location in zip(credit_images,locations):
-      backend.image(image, x=location['x0'], y = location['y0'], w = location['w'], h = location['h'], link = '', crop_images=True)
+    for image, location in zip(page_images, locations):
+      backend.image(
+          image,
+          x=location['x0'],
+          y=location['y0'],
+          w=location['w'],
+          h=location['h'],
+          link='',
+          crop_images=crop_images
+      )
+
   return 
 
 # TODO: remove layout, as its included in "formatting".
@@ -725,6 +780,7 @@ options:
   --pdf              - produce a pdf output file
   --raster-images    - generate raster images from vector images
   --overwrite-images - overwrite images in target directory
+  --downloadable     - also generate an ODP file in the HTML output folder (press 'd' in browser to download)
 
   Input files are formatted using markdown. you can configure the processing
   using yaml snippets either in the beginning of the file (global scope) or
@@ -755,8 +811,15 @@ options:
       - 255
       - 255
       -- colors are coded with RGB, 0-255, or with names, or with html hex strings (but these require quotation marks).
+  * link_color:
+      - 0
+      - 0
+      - 255
+      -- colors are coded with RGB, 0-255, or with names, or with html hex strings (but these require quotation marks).
   * background_image: path_to_background_image_file.png
   * footer: Made with PYMDSLIDES
+  * footer_append: true|**false**
+      -- Specifies wether the footer should be appended to the global footer, or replace it (default).
   * footer_color:
       - 128
       - 128
@@ -833,6 +896,8 @@ Available colors: white, grey, black, orange, red, green, blue, yellow, purple, 
   overwrite_images = False
   if '--overwrite-images' in sys.argv or '-o' in sys.argv:
     overwrite_images = True
+
+  downloadable = '--downloadable' in sys.argv
   
   script_home = os.path.dirname(os.path.realpath(__file__))
   print('script_home', script_home)
@@ -907,6 +972,12 @@ Available colors: white, grey, black, orange, red, green, blue, yellow, purple, 
       try:
         new_formatting = yaml.safe_load(yaml_body)
         if new_formatting is not None:
+          if not preamble and 'footer' in new_formatting:
+            should_append = new_formatting.get('footer_append', formatting.get('footer_append', False))
+            base_footer = formatting.get('footer', '')
+            slide_footer = new_formatting['footer'] or ''
+            if should_append and base_footer and slide_footer:
+              new_formatting['footer'] = base_footer + '&nbsp;//&nbsp;' + slide_footer
           formatting = recursive_dict_update(formatting, new_formatting)
           print('{}:{}: Updating formatting from Yaml syntax: \n  {}'.format(
               md_file_stripped, line_number, yaml_body.replace('\n', '\n  ')))
@@ -945,8 +1016,10 @@ Available colors: white, grey, black, orange, red, green, blue, yellow, purple, 
   # INITIALIZE FPDF:
 
   if output_format == 'html':
-    print('backend_html('+md_file_stripped, formatting, script_home+', overwrite_images='+str(overwrite_images)+')')
-    backend = backend_html(md_file_stripped, formatting, script_home, overwrite_images=overwrite_images)
+    odp_download_name = os.path.splitext(md_file_stripped)[0] + '.odp' if (downloadable and output_format == 'html') else None
+
+    print('backend_html('+md_file_stripped, formatting, script_home+', overwrite_images='+str(overwrite_images)+', downloadable_odp='+str(odp_download_name)+')')
+    backend = backend_html(md_file_stripped, formatting, script_home, overwrite_images=overwrite_images, downloadable_odp=odp_download_name)
   elif output_format == 'odp':
     print('backend_odp('+md_file_stripped, formatting, script_home+', overwrite_images='+str(overwrite_images)+')')
     backend = backend_odp(md_file_stripped, formatting, script_home, overwrite_images=overwrite_images)
@@ -995,6 +1068,41 @@ Available colors: white, grey, black, orange, red, green, blue, yellow, purple, 
   backend.set_creation_date(datetime.now(datetime.now().astimezone().tzinfo))
 
   backend.output()
+
+  if downloadable and output_format == 'html':
+    print('Generating downloadable ODP file...')
+    odp_backend = backend_odp(md_file_stripped, copy.deepcopy(formatting), script_home, overwrite_images=overwrite_images)
+    # put_images_on_page references the module-level `backend` variable
+    backend = odp_backend
+
+    if logo_path is not None:
+      backend.set_logo(logo_path, x=formatting['dimensions']['page_width']-logo_width-formatting['dimensions']['margin_footer'], y=formatting['dimensions']['page_height']-logo_height-formatting['dimensions']['margin_footer'], w=logo_width, h=logo_height)
+
+    display_page_number = 1
+    for page_number, page in enumerate(preprocessed_md):
+      if 'hidden' in page['config'] and page['config']['hidden']:
+        continue
+      dump_page_content(backend, page['images']+page['content'], copy.deepcopy(page['config']), headlines, False, [], md_file_stripped, page['line_numbers'][0], display_page_number)
+      display_page_number += 1
+
+    backend.set_title(document_title)
+    backend.set_producer('pymdslides, git commit: '+git_commit+' https://github.com/olofmogren/pymdslides/')
+    backend.set_creator('pymdslides, git commit: '+git_commit+' https://github.com/olofmogren/pymdslides/')
+    backend.set_creation_date(datetime.now(datetime.now().astimezone().tzinfo))
+    backend.output()
+
+    # Ensure the generated .odp is placed in the HTML output directory with the expected filename
+    html_output_dir = os.path.dirname(output_file)
+    target_odp = os.path.join(html_output_dir, odp_download_name)
+    for candidate in [
+        getattr(backend, 'odp_output_filename', None),
+        os.path.join(html_output_dir, 'index.odp'),
+        odp_download_name,
+    ]:
+      if candidate and os.path.exists(candidate) and os.path.abspath(candidate) != os.path.abspath(target_odp):
+        shutil.move(candidate, target_odp)
+        print('Moved ODP to', target_odp)
+        break
 
   if '--pdf' in sys.argv:
     pdf_file_final = '.'.join(md_file.split('.')[:-1])+'.pdf'
