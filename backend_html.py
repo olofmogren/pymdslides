@@ -500,6 +500,20 @@ function wireHelpUI() {
   }
 }
 
+function restartAnimations(pageId) {
+  var page = document.getElementById(pageId);
+  if (!page) return;
+  var imgs = page.querySelectorAll('img[data-animated="true"]');
+  var ts = Date.now();
+  for (var i = 0; i < imgs.length; i++) {
+    var img = imgs[i];
+    if (!img.dataset.origSrc) {
+      img.dataset.origSrc = img.getAttribute('src');
+    }
+    img.src = img.dataset.origSrc + '?t=' + ts;
+  }
+}
+
 var overviewMode = false;
 
 function setCurrentMarker() {
@@ -567,6 +581,7 @@ function exitOverview() {
       el.classList.add('page_hidden');
     }
   }
+  restartAnimations(currentPageId);
 }
 
 function toggleOverview() {
@@ -643,6 +658,7 @@ function prevPage(){
     //document.getElementById(pageId).style.visibility="visible";
     currentPageId = pageId;
     window.location.hash = pageId;
+    restartAnimations(pageId);
   }
 }
 function nextPage(){
@@ -663,6 +679,7 @@ function nextPage(){
     //document.getElementById(pageId).style.visibility="visible";
     currentPageId = pageId;
     window.location.hash = pageId;
+    restartAnimations(pageId);
   }
 }
 function goToPage(pageId){
@@ -681,6 +698,7 @@ function goToPage(pageId){
   currentPageId = pageId;
   window.location.hash = pageId;
   setCurrentMarker();
+  restartAnimations(pageId);
 }
 function localPageLink(pageId, event){
   //alert(pageId);
@@ -1485,6 +1503,13 @@ MathJax = {
       src_filename = '/'.join(target_filename.split('/')[1:])
       print('src_filename', src_filename)
       media_tag.set('src', src_filename)
+      if current_ext.lower() in ['gif', 'webp']:
+        try:
+          with Image.open(input_file) as im:
+            if getattr(im, 'is_animated', False) or getattr(im, 'n_frames', 1) > 1:
+              media_tag.set('data-animated', 'true')
+        except Exception:
+          pass
     style += 'position: absolute; left: {}; top: {}; width: {}; height: {};'.format(self.html_x(x), self.html_y(y), self.html_x(w), self.html_y(h))
     #print('image style',style)
     if crop_images == False:

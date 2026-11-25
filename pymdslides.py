@@ -749,19 +749,43 @@ def preprocess_md_page(content, line_number, config):
   if 'incremental_bullets' not in config or not config['incremental_bullets']:
     page_lengths = [len(content_lines)]
   else:
-    for content_line_number,line in enumerate(content_lines):
+    for content_line_number, line in enumerate(content_lines):
       stripped_line = line.strip()
       if any([stripped_line.startswith(x) for x in ['*', '1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', '9.']]):
+        page_lengths.append(content_line_number + 1)
+    if not page_lengths:
+      page_lengths = [len(content_lines)]
 
-        page_lengths.append(content_line_number+1)
+  # Find indices of images whose alt text contains the word 'incremental'
+  inc_image_indices = []
+  for idx, line in enumerate(image_lines):
+    stripped_line = line.strip()
+    if stripped_line.startswith('![') and stripped_line.endswith(')') and '](' in stripped_line[2:-1]:
+      alt_text = stripped_line[2:-1].split('](')[0]
+      if re.search(r'\bincremental\b', alt_text, re.IGNORECASE):
+        inc_image_indices.append(idx)
 
-  #print('page_lengths',page_lengths)
+  use_incremental_images = len(inc_image_indices) > 1
+  num_steps = max(len(page_lengths), len(inc_image_indices) if use_incremental_images else 1)
+
   pages = []
-  for page_length in page_lengths:
+  for step in range(num_steps):
     p = copy.deepcopy(page)
+    page_length = page_lengths[min(step, len(page_lengths) - 1)]
     p['content'] = p['content'][:page_length]
     p['line_numbers'] = p['line_numbers'][:page_length]
-    #print('p',p)
+    p['is_subslide'] = (step > 0)
+
+    if use_incremental_images:
+      active_img = image_lines[inc_image_indices[min(step, len(inc_image_indices) - 1)]]
+      first_inc_idx = inc_image_indices[0]
+      p['images'] = []
+      for idx, img in enumerate(image_lines):
+        if idx == first_inc_idx:
+          p['images'].append(active_img)
+        elif idx not in inc_image_indices:
+          p['images'].append(img)
+
     pages.append(p)
   return pages
 
@@ -1043,7 +1067,7 @@ Available colors: white, grey, black, orange, red, green, blue, yellow, purple, 
   # MAIN PROCESSING LOOP.
 
   #print('\n'.join(preprocessed_md_contents))
-  display_page_number = 1
+  display_page_number = 0
   for page_number, page in enumerate(preprocessed_md):
     if 'hidden' in page['config'] and page['config']['hidden']:
       print('------------------------------------\n{}:{}: This page is hidden. Will not generate page.'.format(md_file_stripped, page['line_numbers'][0]))
@@ -1052,9 +1076,11 @@ Available colors: white, grey, black, orange, red, green, blue, yellow, purple, 
     #print(yaml.dump(page['config']))
     # supporting single asterixes for italics in markdown.
 
+    if not page.get('is_subslide', False):
+      display_page_number += 1
+
     print('{}:{}: generating page (#) {}'.format(md_file_stripped, page['line_numbers'][-1], page_number))
     dump_page_content(backend, page['images']+page['content'], page['config'], headlines, raster_images, treat_as_raster_images, md_file_stripped, page['line_numbers'][0], display_page_number)
-    display_page_number += 1
     print('------------------------------------')
 
 
@@ -1078,12 +1104,14 @@ Available colors: white, grey, black, orange, red, green, blue, yellow, purple, 
     if logo_path is not None:
       backend.set_logo(logo_path, x=formatting['dimensions']['page_width']-logo_width-formatting['dimensions']['margin_footer'], y=formatting['dimensions']['page_height']-logo_height-formatting['dimensions']['margin_footer'], w=logo_width, h=logo_height)
 
-    display_page_number = 1
+    display_page_number = 0
     for page_number, page in enumerate(preprocessed_md):
       if 'hidden' in page['config'] and page['config']['hidden']:
         continue
+      if not page.get('is_subslide', False):
+        display_page_number += 1
+
       dump_page_content(backend, page['images']+page['content'], copy.deepcopy(page['config']), headlines, False, [], md_file_stripped, page['line_numbers'][0], display_page_number)
-      display_page_number += 1
 
     backend.set_title(document_title)
     backend.set_producer('pymdslides, git commit: '+git_commit+' https://github.com/olofmogren/pymdslides/')
