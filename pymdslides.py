@@ -811,6 +811,11 @@ options:
   in the beginning of a slide (scoping to current slide). See below for
   allowed configuration options and their defaults.
 
+  Putting the word 'incremental' into the alt tags for two or more images in one slide
+  turns that slide into an incremental slide (realised with subslides). Each of those images
+  will take up the same location as the first of them, but each of them will generate a
+  separate subslide. Page number will not increase. This works together with incremental_bullets
+  (see below).
 
   ### Configuration allowed everywhere:
 
